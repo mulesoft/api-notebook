@@ -1,0 +1,31 @@
+<% layout('layout') -%>
+
+<h1>GitHub Gists API test client</h1>
+<% if (!user) { %>
+  <h2>Welcome! Please log in.</h2>
+<% } else { %>
+  <h2>Hello, <%= user.displayName %>.</h2>
+
+  <p>Click the button below to issue a <code>GET</code> request to <code>/gists/</code></p>
+
+  <h2><button id="load-gists" type="button">Load Gists</button></h2>
+
+  <div id="gists-list"></div>
+
+  <script>
+    $(function(){
+      $('#load-gists').click(function(){
+        $.get('/gists',function(data){
+          if (data && typeof data === 'object') {
+            $('#gists-list').empty().append('<ul/>');
+            data.forEach(function(gist){
+              $('#gists-list ul').append(
+                '<li><a href="/gists/' +gist.id + '">' + gist.id + ': ' + gist.description + '</a></li>'
+                );
+            });
+          }
+        });
+      });
+    });
+  </script>
+<% } %>

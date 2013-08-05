@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Passport-GitHub Example</title>
+	</head>
+	<body>
+		<p>
+		<% if (!user) { %>
+			<a href="/">Home</a> |
+			<a href="/auth/github">Log In</a> |
+		<% } else { %>
+			<a href="/">Home</a> |
+			<a href="/account">Account</a> |
+			<a href="/logout">Log Out</a> |
+		<% } %>
+			<a href="/prototype/index.html">JSNotebook Prototype</a>
+		</p>
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+		<%-body -%>
+	</body>
+</html>
