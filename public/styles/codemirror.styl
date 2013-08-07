@@ -1,0 +1,66 @@
+// Import initial codemirror stylesheet
+@import "../../node_modules/codemirror/lib/codemirror.css"
+
+// Allow CodeMirror to have an automatic height
+.CodeMirror
+  border: 1px solid #eee
+  height: auto
+  line-height: normal
+
+.CodeMirror-gutters
+  border-right: 1px solid #eee
+
+.CodeMirror-scroll
+  overflow-y: hidden
+  overflow-x: auto
+
+
+// Theme altered from text-cell theme
+.cm-s-text-cell .cm-keyword    { color: #cda869; }
+.cm-s-text-cell .cm-atom       { color: #CF7EA9; }
+.cm-s-text-cell .cm-number     { color: #78CF8A; }
+.cm-s-text-cell .cm-def        { color: #aac6e3; }
+.cm-s-text-cell .cm-variable   { color: #ffb795; }
+.cm-s-text-cell .cm-variable-2 { color: #eed1b3; }
+.cm-s-text-cell .cm-variable-3 { color: #faded3; }
+.cm-s-text-cell .cm-property   { color: #eed1b3; }
+.cm-s-text-cell .cm-operator   { color: #fa8d6a; }
+.cm-s-text-cell .cm-comment    { color: #555; font-style: italic; }
+.cm-s-text-cell .cm-string     { color: #8f9d6a; }
+.cm-s-text-cell .cm-string-2   { color: #9d937c; }
+.cm-s-text-cell .cm-meta       { color: #D2A8A1; }
+.cm-s-text-cell .cm-error      { color: #AF2018; }
+.cm-s-text-cell .cm-qualifier  { color: yellow; }
+.cm-s-text-cell .cm-builtin    { color: #9999cc; }
+.cm-s-text-cell .cm-bracket    { color: #24C2C7; }
+.cm-s-text-cell .cm-tag        { color: #fee4ff; }
+.cm-s-text-cell .cm-attribute  { color: #9B859D; }
+// .cm-s-text-cell .cm-header     { color: blue; }
+.cm-s-text-cell .cm-quote      { color: #24C2C7; }
+.cm-s-text-cell .cm-hr         { color: pink; }
+.cm-s-text-cell .cm-link       { color: #F4C20B; }
+.cm-s-text-cell .cm-special    { color: #FF9D00; }
+
+.cm-s-text-cell .CodeMirror-matchingbracket    { color: #0f0; }
+.cm-s-text-cell .CodeMirror-nonmatchingbracket { color: #f22; }
+
+.cm-s-text-cell .CodeMirror-selected
+  background: rgba(255, 255, 255, 0.15)
+
+.cm-s-text-cell .CodeMirror-focused .CodeMirror-selected
+  background: rgba(255, 255, 255, 0.10)
+
+.cm-s-text-cell.CodeMirror
+  color: #e6e1dc
+  border-color: #444
+  background-color: #202020
+
+.cm-s-text-cell .CodeMirror-gutters
+  background: #3D3D3D
+  border-right: 1px solid #444
+
+.cm-s-text-cell .CodeMirror-linenumber
+  text-shadow: 0px 1px 1px #444
+
+.cm-s-text-cell .CodeMirror-lines .CodeMirror-cursor
+  border-left: 1px solid #7991E8

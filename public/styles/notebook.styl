@@ -1,0 +1,43 @@
+.notebook
+  width: 48em
+  margin: 0 auto
+  padding: 1em 2em
+  border: 1px solid #ccc
+  border-top: 0
+  background: #fff
+
+.notebook-header
+  width: 48em
+  margin: 1em auto 0
+  padding: 1em 2em
+  border: 1px solid #000
+  border-top: 0
+  border-radius: 5px 5px 0 0
+  background: #333
+  color: #fff
+
+  h1
+    margin: 0
+
+.notebook .cell-result
+  border: 1px solid $color-result-border
+  border-left-width: 5px
+  padding: .55em 1.1em
+  font-size: 0.95em
+  font-family: monospace
+  background-color: $color-result-bg
+  &.result-pending
+    display: none
+  &.result-error
+    border-color: $color-error-border
+    background-color: $color-error-bg
+
+.notebook > .cell
+  margin: 1em 0
+
+.notebook > .cell > .cell-result
+  position: relative
+  top: -1px // Overlap the codemirror instance
+  color: $color-result-text;
+  &.result-error
+    color: $color-error-text;

@@ -1,0 +1,95 @@
+.container
+  width: 48em
+  margin: 0 auto
+
+.col-mini
+  width: 30%
+
+.col-large
+  width: 70%
+
+.modal-toggle
+  position: relative
+  float: right
+  width: 26px
+  height: @width
+  margin-top: 5px
+  padding: 0
+  border: 2px solid #fff
+  border-radius: 50%
+
+  &:after
+    content: '?'
+    position: absolute
+    top: 3px
+    left: 6px
+    display: block
+    color: #fff
+
+.modal
+  position: fixed
+  z-index: 200
+  top: 100px
+  left: 50%
+
+  width: 48em
+  margin-left: -24em
+  border: 1px solid #aaa
+  border-radius: 5px
+
+  background: #fff
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.1)
+
+.modal-header
+  padding: 1em
+  border-bottom: 1px solid #ccc
+  border-radius: 5px 5px 0 0
+
+  background: #eee
+  text-align: center
+  text-shadow: 0 -1px 0 rgba(255,255,255,0.3)
+
+  h3
+    margin: 0
+
+.modal-body
+  padding: 1em
+
+  table
+    table-layout: fixed
+    width: 100%
+    font-size: 14px
+
+  tr
+    border-top: 1px solid #eee
+
+    &:first-child
+      border-top: 0
+
+  th,
+  td
+    padding: 8px
+
+    text-align: left
+
+.modal-backdrop
+  position: fixed
+  top: 0
+  right: 0
+  bottom: 0
+  left: 0
+  z-index: 199
+
+  background: rgba(0,0,0,0.15)
+
+.modal,
+.modal-backdrop
+  opacity: 0
+  visibility: hidden
+  transition: opacity 0.3s ease
+
+.modal-visible
+  .modal,
+  .modal-backdrop
+    opacity: 1
+    visibility: visible

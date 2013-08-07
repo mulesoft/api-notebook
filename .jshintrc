@@ -1,4 +1,5 @@
 {
+  // Formidable Labs standard .jshintrc
   // Modified by @per-nilsson from: https://gist.github.com/haschek/2595796/raw/500806cafd239ace8dc94c998a8d4f7270947b12/.jshintrc
   //
   // This is a very strict template. Use your judgment when changing features.
@@ -12,14 +13,7 @@
   "maxerr"        : 100,      // Maximum errors before stopping.
   "maxlen"        : 80,
   "predef"        : [         // Extra globals.
-    "_",
-    "$",
-    "App",
-    "Application",
-    "Backbone",
-    "Handlebars",
-    "jQuery",
-    "Thorax"
+    "CodeMirror"
   ],
 
   // == Enforcing Options ===============================================
@@ -65,7 +59,7 @@
   "iterator"      : false,    // Allow usage of __iterator__ property.
   "lastsemic"     : false,    // Tolerat missing semicolons when the it is omitted for the last statement in a one-line block.
   "laxbreak"      : false,    // Tolerate unsafe line breaks e.g. `return [\n] x` without semicolons.
-  "laxcomma"      : false,     // Suppress warnings about comma-first coding style.
+  "laxcomma"      : false,    // Suppress warnings about comma-first coding style.
   "loopfunc"      : false,    // Allow functions to be defined within loops.
   "onecase"       : false,    // Tolerate switches with just one case.
   "proto"         : false,    // Tolerate __proto__ property. This property is deprecated.

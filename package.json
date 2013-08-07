@@ -4,6 +4,10 @@
   "description": "JSNotebook API proxy",
   "private": true,
   "dependencies": {
+    "underscore": "~1.5.1",
+    "backbone": "~1.0.0",
+    "codemirror": "~3.15.0",
+    "trim": "0.0.1",
     "ejs": "~0.8",
     "ejs-locals": "~1.0",
     "express": "~3.3",
@@ -14,10 +18,25 @@
     "passport-github": "~0.1"
   },
   "devDependencies": {
+    "grunt-contrib-copy": "~0.4.1",
+    "grunt-contrib-clean": "~0.5.0",
+    "grunt-contrib-stylus": "~0.7.0",
+    "grunt-contrib-connect": "~0.3.0",
+    "grunt-contrib-watch": "~0.5.1",
+    "grunt": "~0.4.1",
+    "matchdep": "~0.1.2",
+    "handlebars-runtime": "~1.0.12",
+    "grunt-browserify": "~1.2.1",
+    "mocha-phantomjs": "~3.1.0",
+    "grunt-cli": "~0.1.9",
+    "jshint": "~2.1.9",
+    "hbsfy": "~0.1.5",
     "node-dev": "~2.0"
   },
   "scripts": {
-    "test": "jshint --config=./.jshintrc app.js config/ routes/",
+    "build": "./node_modules/.bin/grunt build",
+    "lint": "./node_modules/.bin/jshint public/scripts config routes app.js",
+    "test": "npm run lint && npm run build && ./node_modules/.bin/mocha-phantomjs ./test/index.html",
     "start": "node-dev app.js"
   },
   "repository": {
