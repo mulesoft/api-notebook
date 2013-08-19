@@ -223,33 +223,43 @@ describe('Notebook', function () {
         expect(view.collection.at(2).view.editor.getCursor().line).to.equal(0);
       });
 
+      it('should be able to reference previous results', function () {
+        var spy = sinon.spy(function (view, err, result) {
+          expect(result).to.equal(99);
+        });
+
+        codeCells[0].setValue(99);
+        codeCells[0].execute();
+
+        codeCells[1].setValue('$1');
+        codeCells[1].on('execute', spy);
+        codeCells[1].execute();
+
+        expect(spy).to.have.been.called;
+      });
+
       describe('Text Cell', function () {
-        it('should replace itself when initializing a code cell', function () {
+        it('should remove itself when initializing a code cell', function () {
           expect(view.collection.length).to.equal(4);
 
           textCells[0].trigger('code', textCells[0]);
 
-          expect(view.collection.length).to.equal(4);
+          expect(view.collection.length).to.equal(3);
           expect(textCells[0].el.parentNode).to.not.exist;
           expect(codeCells[0].el.nextSibling.className).to.contain('cell-code');
-          expect(view.collection.at(2)).to.be.an.instanceof(App.Model.CodeEntry);
-          expect(view.collection.at(2).view.el.previousSibling).to.equal(codeCells[0].el);
-          expect(view.collection.at(2).view.el.nextSibling).to.equal(codeCells[1].el);
-          expect(view.collection.at(2).view.editor.hasFocus()).to.be.ok;
+          expect(codeCells[0].el.nextSibling).to.equal(codeCells[1].el);
+          expect(codeCells[1].editor.hasFocus()).to.be.ok;
         });
 
-        it('shouldn\'t replace itself when it has content', function () {
+        it('shouldn\'t remove itself when it has content', function () {
           expect(view.collection.length).to.equal(4);
 
           textCells[0].setValue('testing');
           textCells[0].trigger('code', textCells[0]);
 
-          expect(view.collection.length).to.equal(5);
-          expect(textCells[0].el.nextSibling.className).to.contain('cell-code');
-          expect(view.collection.at(3)).to.be.an.instanceof(App.Model.CodeEntry);
-          expect(view.collection.at(3).view.el.nextSibling).to.equal(codeCells[1].el);
-          expect(view.collection.at(3).view.el.previousSibling).to.equal(textCells[0].el);
-          expect(view.collection.at(3).view.editor.hasFocus()).to.be.ok;
+          expect(view.collection.length).to.equal(4);
+          expect(textCells[0].el.nextSibling).to.equal(codeCells[1].el);
+          expect(codeCells[1].editor.hasFocus()).to.be.ok;
         });
 
         it('should initialize the new cell with content when available', function () {
@@ -383,6 +393,17 @@ describe('Notebook', function () {
           codeCells[1].browseDown();
           expect(codeCells[1].editor.getCursor().ch).to.equal(4);
           expect(codeCells[1].editor.getCursor().line).to.equal(0);
+        });
+
+        it('should be able to reference previous results', function () {
+          codeCells[0].setValue('8342');
+          codeCells[1].setValue('$1');
+
+          codeCells[0].execute();
+          codeCells[1].execute();
+
+          expect(codeCells[0].model.get('result')).to.equal(8342);
+          expect(codeCells[1].model.get('result')).to.equal(8342);
         });
       });
     });

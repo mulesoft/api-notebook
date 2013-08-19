@@ -5,6 +5,7 @@ require('backbone.native');
 // Require codemirror instance
 require('codemirror');
 require('codemirror/addon/mode/overlay');
+require('codemirror/addon/hint/show-hint');
 require('codemirror/mode/gfm/gfm');
 require('codemirror/mode/markdown/markdown');
 require('codemirror/mode/css/css');

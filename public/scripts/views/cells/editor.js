@@ -1,5 +1,6 @@
 var _    = require('underscore');
 var Cell = require('./cell');
+var trim = require('trim');
 
 var EditorCell = module.exports = Cell.extend();
 
@@ -98,7 +99,9 @@ EditorCell.prototype.getValue = function () {
 };
 
 EditorCell.prototype.setValue = function (value) {
-  this.editor.setValue((value || '').trim());
+  if (!_.isUndefined(value)) {
+    this.editor.setValue(trim('' + value));
+  }
   return this;
 };
 

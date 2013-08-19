@@ -1,0 +1,39 @@
+.inspector > .preview
+  line-height: 1.4
+  overflow: hidden
+  white-space: nowrap
+  text-overflow: ellipsis
+  > .property
+    color: #555
+    font-weight: bold
+  > .special
+    opacity: 0.9
+
+.inspector > .children
+  display: none
+  margin-left: 1.5em
+
+.inspector.open > .children
+  display: block
+
+.inspector.can-expand > .preview
+  cursor: pointer
+
+.inspector.can-expand:before
+  content: ""
+  float: left
+  margin-top: 3px
+  margin-left: -10px
+  border: 5px solid transparent
+  border-left-width: 7px
+  border-left-color: #666
+  border-right-width: 0
+
+.inspector.can-expand.open:before
+  margin-top: 5px
+  margin-left: -12px
+  border-width: 5px
+  border-color: transparent
+  border-top-width: 7px
+  border-top-color: #666
+  border-bottom-width: 0

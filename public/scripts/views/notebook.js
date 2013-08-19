@@ -1,14 +1,13 @@
 var _    = require('underscore');
 var View = require('./view');
 
-var CodeView   = require('./cells/code');
-var TextView   = require('./cells/text');
-var EditorView = require('./cells/editor');
-
-var EntryModel = require('../models/entry');
-
+var CodeView           = require('./cells/code');
+var TextView           = require('./cells/text');
+var EditorView         = require('./cells/editor');
+var EntryModel         = require('../models/entry');
 var NotebookCollection = require('../collections/notebook');
 
+var Sandbox     = require('../lib/sandbox');
 var insertAfter = require('../lib/insert-after');
 
 var Notebook = module.exports = View.extend({
@@ -16,27 +15,23 @@ var Notebook = module.exports = View.extend({
 });
 
 Notebook.prototype.initialize = function () {
+  this.sandbox    = new Sandbox();
   this.collection = this.collection || new NotebookCollection();
+  this._uniqueId  = 0;
 };
 
-Notebook.prototype.getNext = function (model) {
-  var index = this.collection.indexOf(model);
-  return index < this.collection.length - 1 ?
-    this.collection.at(index + 1) : undefined;
-};
-
-Notebook.prototype.getPrev = function (model) {
-  var index = this.collection.indexOf(model);
-  return index > 0 ? this.collection.at(index - 1) : undefined;
+Notebook.prototype.remove = function () {
+  this.sandbox.remove();
+  View.prototype.remove.call(this);
 };
 
 Notebook.prototype.getNextView = function (view) {
-  var model = this.getNext(view.model);
+  var model = this.collection.getNext(view.model);
   return model && model.view;
 };
 
 Notebook.prototype.getPrevView = function (view) {
-  var model = this.getPrev(view.model);
+  var model = this.collection.getPrev(view.model);
   return model && model.view;
 };
 
@@ -118,7 +113,12 @@ Notebook.prototype.appendView = function (view, before) {
   if (view instanceof TextView) {
     // Listen to a code event which tells us to make a new code cell
     this.listenTo(view, 'code', function (view, code) {
-      this.appendCodeView(view.el, code);
+      if (this.el.lastChild === view.el) {
+        this.appendCodeView(view.el, code);
+      } else {
+        if (code) { this.appendCodeView(view.el, code); }
+        this.getNextView(view).focus().moveCursorToEnd(0);
+      }
       if (!view.getValue()) { view.remove(); }
     });
   }
@@ -143,7 +143,7 @@ Notebook.prototype.appendView = function (view, before) {
     this.listenTo(view, 'browseUp', function (view, currentCid) {
       var model = this.collection.get(currentCid);
 
-      while (model = this.getPrev(model)) {
+      while (model = this.collection.getPrev(model)) {
         if (model.get('type') === 'code') {
           view.browseToCell(model);
           view.moveCursorToEnd();
@@ -155,7 +155,7 @@ Notebook.prototype.appendView = function (view, before) {
     this.listenTo(view, 'browseDown', function (view, currentCid) {
       var model = this.collection.get(currentCid);
 
-      while (model = this.getNext(model)) {
+      while (model = this.collection.getNext(model)) {
         if (model.get('type') === 'code') {
           view.browseToCell(model);
           view.moveCursorToEnd(0);
@@ -165,14 +165,17 @@ Notebook.prototype.appendView = function (view, before) {
     });
   }
 
+  if (view.model.get('type') === 'code') {
+    // Assign a unique index to every model for referencing upon execution
+    view.model._uniqueCellId = this._uniqueId++;
+  }
+
   // Append the view to the end of the console
   view.render().appendTo(_.bind(function (el) {
     return before ? insertAfter(el, before) : this.el.appendChild(el);
   }, this));
-  // Set a reference to the original notebook
-  view.notebook = this;
-  // Alias a reference to the view from the model. This will be needed for
-  // ordering the collection and insert before/after other input cells
+  // Some references may be needed
+  view.sandbox    = this.sandbox;
   view.model.view = view;
   // Add the model to the collection
   this.collection.push(view.model);

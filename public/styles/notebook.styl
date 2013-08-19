@@ -15,14 +15,13 @@
   border-radius: 5px 5px 0 0
   background: #333
   color: #fff
-
   h1
     margin: 0
 
 .notebook .cell-result
   border: 1px solid $color-result-border
   border-left-width: 5px
-  padding: .55em 1.1em
+  padding: 0.55em 1.4em
   font-size: 0.95em
   font-family: monospace
   background-color: $color-result-bg
@@ -34,10 +33,34 @@
 
 .notebook > .cell
   margin: 1em 0
+  position: relative
 
 .notebook > .cell > .cell-result
   position: relative
   top: -1px // Overlap the codemirror instance
-  color: $color-result-text;
+  color: $color-result-text
   &.result-error
-    color: $color-error-text;
+    color: $color-error-text
+
+.cell-code .label,
+.cell-text .comment
+  position: absolute
+  top: 50%
+  left: -1.5em
+  margin-top: -0.5em
+  font-family: monospace
+
+.cell-text .comment-close
+  left: auto
+  right: -1.5em
+
+.cell-code .label
+  left: auto
+  right: 100%
+  margin-top: -0.6em
+  margin-right: 0.5em
+  color: #aaa
+  padding: 0 0.5em
+  font-size: 0.9em
+  border-radius: 2px
+  background-color: #f4f4f4
