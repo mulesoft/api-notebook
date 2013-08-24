@@ -1,9 +1,9 @@
-var _          = require('underscore');
-var Backbone   = require('backbone');
-var EditorCell = require('./editor');
-var ResultCell = require('./result');
-var stripInput = require('../../lib/cm-strip-input');
-var completion = require('../../lib/cm-sandbox-completion');
+var _               = require('underscore');
+var Backbone        = require('backbone');
+var EditorCell      = require('./editor');
+var ResultCell      = require('./result');
+var stripInput      = require('../../lib/cm-strip-input');
+var completion      = require('../../lib/cm-sandbox-completion');
 
 var CodeCell = module.exports = EditorCell.extend({
   className: 'cell cell-code'

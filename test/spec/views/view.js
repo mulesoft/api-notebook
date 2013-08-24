@@ -1,4 +1,4 @@
-/* global describe, it */
+/* global App, expect, beforeEach, describe, it */
 
 describe('View', function () {
   var View = App.View.View;
@@ -43,5 +43,29 @@ describe('View', function () {
         expect(view.el.parentNode).to.equal(fixture);
       });
     });
+
+    describe('#prependTo', function () {
+      var fixture = document.getElementById('fixture');
+
+      it('should be able to prepend to an element, putting the prepended ' +
+        'element first in the child list', function () {
+        var view2 = new View();
+        view.prependTo(fixture);
+        view2.prependTo(fixture);
+
+        expect(view.el.parentNode).to.equal(fixture);
+        expect(fixture.firstChild).to.equal(view2.el);
+      });
+
+      it('should accept a function', function () {
+        view.appendTo(function (el) {
+          fixture.appendChild(el);
+        });
+
+        expect(view.el.parentNode).to.equal(fixture);
+      });
+    });
+
+
   });
 });

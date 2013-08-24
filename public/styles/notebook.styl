@@ -1,6 +1,9 @@
+.application
+  width: 95%
+  max-width: 52em
+  margin: 1em auto
+
 .notebook
-  width: 48em
-  margin: 0 auto 1em
   padding: 1em 2em
   border: 1px solid #ccc
   border-top: 0
@@ -8,8 +11,6 @@
   background: #fff
 
 .notebook-header
-  width: 48em
-  margin: 1em auto 0
   padding: 1em 2em
   border: 1px solid #000
   border-top: 0
@@ -30,11 +31,10 @@
   margin-top: 5px
 
   button
+    margin-left: 5px
     vertical-align: middle
 
 .banner
-  width: 48em
-  margin: 0 auto
   padding: 1em 2em
   border: 1px solid #ccc
   border-color: darken($yellow, 20%) #ccc
@@ -45,7 +45,9 @@
   margin: 0
 
 .notebook .cell-result
-  border: 1px solid $color-result-border
+  border-width: 1px 0 0 0
+  border-style: solid
+  border-color: $color-result-border
   border-left-width: 5px
   font-size: 0.95em
   line-height: 1.45
@@ -58,15 +60,17 @@
     background-color: $color-error-bg
   > .result-label
     float: left
-    padding: 0.55em 0 0.55em 0.6em
+    padding: .55em 0 .55em .45em
+    color: $color-result-label
   > .inspector
     padding: 0.55em 0 0.55em 1.5em
     overflow: hidden
 
 .notebook > .cell
+  border: 1px solid $color-cell-border
   margin: 1em 0
   position: relative
-  min-height: 1em
+  min-height: 1.55em
 
 .notebook > .cell > .cell-result
   position: relative
@@ -84,4 +88,9 @@
 
 .cell-text .comment-close
   left: auto
-  right: -1.5em
+  right: -20px
+
+.markdown
+  padding: 16px
+  h1, h2, h3, h4, h5, h6, p, ul, ol
+    margin: 0 0 24px;

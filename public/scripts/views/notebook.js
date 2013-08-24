@@ -7,6 +7,7 @@ var CodeView           = require('./cells/code');
 var TextView           = require('./cells/text');
 var EditorView         = require('./cells/editor');
 var EntryModel         = require('../models/entry');
+var CellControls       = require('./cells/cell-controls');
 var GistModel          = require('../models/gist');
 var NotebookCollection = require('../collections/notebook');
 
@@ -29,6 +30,8 @@ var saveGist = _.debounce(function () {
 
 Notebook.prototype.initialize = function (options) {
   this.sandbox    = new Sandbox();
+  this.controls   = new CellControls().render();
+  this.collection = this.collection || new NotebookCollection();
   this._uniqueId  = 0;
   this.user       = options.user;
   // Every notebook has a unique gist and collection
@@ -209,7 +212,7 @@ Notebook.prototype.appendView = function (view, before) {
     this.listenTo(view, 'clone', function (view, clone) {
       this.appendView(clone, view.el);
       // Need to work around the editor being removed and added with text cells
-      var cursor = view.editor.getCursor();
+      var cursor = view.editor && view.editor.getCursor();
       clone.focus();
       clone.editor.setCursor(cursor);
     });
@@ -235,12 +238,29 @@ Notebook.prototype.appendView = function (view, before) {
       } else {
         newView = this.appendTextView(view.el, view.getValue());
       }
-      var cursor = view.editor.getCursor();
+
+      var cursor = view.editor && view.editor.getCursor();
       view.remove();
       newView.focus();
       newView.editor.setCursor(cursor);
     });
   }
+
+  /**
+   * Event listener for 'appendNew' event.
+   * Appends a new CodeCell after the passed in CellView.
+   */
+  this.listenTo(view, 'appendNew', function (view) {
+    this.appendCodeView(view.el);
+  });
+
+  /**
+   * Event listener for 'show-cell-controls' event.
+   * Appends the UIControls to the focused cell.
+   */
+  this.listenTo(view, 'show-cell-controls', function (view) {
+    this.controls.toggleView(view);
+  });
 
   // Listening to different events for `text` cells
   if (view instanceof TextView) {

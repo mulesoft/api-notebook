@@ -38,7 +38,7 @@ ResultCell.prototype.render = function () {
   Cell.prototype.render.call(this);
 
   this.el.appendChild(domify(
-    '<div class="result-label">$' + this.model._uniqueCellId + ' = </div>'
+    '<div class="result-label">$' + this.model._uniqueCellId + '= </div>'
   ));
 
   return this;

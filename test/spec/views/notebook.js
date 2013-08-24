@@ -1,7 +1,8 @@
-/* global describe, it */
+/* global App, afterEach, beforeEach, CustomEvent, describe, expect, it */
 
 describe('Notebook', function () {
   var Notebook = App.View.Notebook;
+  var fixture   = document.getElementById('fixture');
 
   it('should exist', function () {
     expect(Notebook).to.be.a('function');
@@ -418,6 +419,60 @@ describe('Notebook', function () {
           codeCells[1].browseDown();
           expect(codeCells[1].editor.getCursor().ch).to.equal(4);
           expect(codeCells[1].editor.getCursor().line).to.equal(0);
+        });
+
+        it('should be able to reference previous results', function () {
+          codeCells[0].setValue('8342');
+          codeCells[1].setValue('$1');
+
+          codeCells[0].execute(function (err0, result0) {
+            expect(err0).to.not.exist;
+            expect(codeCells[0].model.get('result')).to.equal(8342);
+
+            codeCells[1].execute(function (err1, result1) {
+              expect(err1).to.not.exist;
+              expect(codeCells[1].model.get('result')).to.equal(8342);
+            });
+          });
+
+        });
+
+        describe('Overlay Menu', function () {
+          var getButton = function (cell) {
+            return cell.el.getElementsByClassName('btn-show-cell-controls')[0];
+          };
+
+          var getMenu = function (cell) {
+            return cell.el.getElementsByClassName('cell-controls')[0];
+          };
+
+          var simulateClick = function (element) {
+            var clickEvent = new CustomEvent("click", true, true);
+            element.dispatchEvent(clickEvent);
+          };
+
+          it('should exist as one instance', function () {
+            expect(view.controls).to.be.an('object');
+          });
+
+          it('should be appended to a cell when button is clicked', function() {
+            var btn, menu;
+
+            btn = getButton(codeCells[0]);
+            expect(btn).to.be.ok;
+
+            simulateClick(btn);
+            menu = getMenu(codeCells[0]);
+
+            expect(menu).to.be.ok;
+          });
+
+          // TODO: add tests to menu functions
+          it.skip('should be able to move cells up');
+          it.skip('should be able to move cells down');
+          it.skip('should be able to move switch cell mode');
+          it.skip('should be able to clone the cell');
+          it.skip('should be able to delete the cell');
         });
       });
     });
