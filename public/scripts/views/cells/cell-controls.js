@@ -1,15 +1,8 @@
-/*
-  TODO:
-  - Rename to cell-controls
-  - Switch mode button should change label to "Swith to Text" /
-    "Switch to Code" deopending on current mode.
-*/
-
-var _                 = require('underscore');
-var domify            = require('domify');
-var Backbone          = require('backbone');
-var View              = require('../view');
-var CellControlsModel = require('../../models/cell-controls');
+var _        = require('underscore');
+var domify   = require('domify');
+var Backbone = require('backbone');
+var View     = require('../view');
+var controls = require('../../lib/controls').editor;
 
 var ControlsView = module.exports = View.extend({
   className: 'cell-controls',
@@ -18,15 +11,6 @@ var ControlsView = module.exports = View.extend({
     'click .action': 'onClick'
   }
 });
-
-/**
- * Creates a new ControlsView. Takes an editorCell instance to control.
- *
- * @param {EditorCell} EditorCell  Instance of editorCell to control.
- */
-ControlsView.prototype.initialize = function () {
-  this.model = this.model || new CellControlsModel();
-};
 
 /**
  * Toggles the control to be appended or removed from a view. If the control
@@ -56,8 +40,13 @@ ControlsView.prototype.detach = function () {
 };
 
 ControlsView.prototype.render = function () {
-  var html = _.map(this.model.actions, function (action) {
-    var button = '<button class="action" data-action="' + action.name + '">';
+  var only = ['moveUp', 'moveDown', 'switch', 'clone', 'remove', 'appendNew'];
+
+  var html = _.map(controls, function (action) {
+    // Some items are currently being hidden from the controls menu
+    if (!_.contains(only, action.command)) { return ''; }
+
+    var button = '<button class="action" data-action="' + action.command + '">';
     button += action.label + '<span>' + action.keyCode + '</span></button>';
     return button;
   }).join('\n');

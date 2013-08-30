@@ -2,6 +2,8 @@ var _           = require('underscore');
 var trim        = require('trim');
 var Cell        = require('./cell');
 var BtnControls = require('./btn-cell-controls');
+var extraKeys   = require('./lib/extra-keys');
+var controls    = require('../../lib/controls').editor;
 
 var messages = require('../../lib/messages');
 
@@ -25,31 +27,7 @@ EditorCell.prototype.editorOptions = {
   lineNumbers:    true,
   lineWrapping:   true,
   viewportMargin: Infinity,
-  extraKeys: {
-    'Alt-Up': function (cm) {
-      cm.view.navigateUp();
-    },
-    'Alt-Down': function (cm) {
-      cm.view.navigateDown();
-    },
-    // These need to be adjusted for windows with `Ctrl`
-    'Cmd-Alt-Up': function (cm) {
-      cm.view.moveUp();
-    },
-    'Cmd-Alt-Down': function (cm) {
-      cm.view.moveDown();
-    },
-    // Need to consider `Cmd-Alt-C` since it's already taken for me
-    'Ctrl-Alt-C': function (cm) {
-      cm.view.clone();
-    },
-    'Cmd-Backspace': function (cm) {
-      cm.view.remove();
-    },
-    'Cmd-Alt-B': function (cm) {
-      cm.view.switch();
-    }
-  }
+  extraKeys:      extraKeys(controls)
 };
 
 EditorCell.prototype.remove = function () {

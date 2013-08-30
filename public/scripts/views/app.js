@@ -6,6 +6,7 @@ var domify   = require('domify');
 var View     = require('./view');
 var Notebook = require('./notebook');
 var messages = require('../lib/messages');
+var controls = require('../lib/controls');
 
 var App = module.exports = View.extend({
   className: 'application'
@@ -198,7 +199,57 @@ App.prototype.render = function () {
   View.prototype.render.call(this);
 
   this.el.appendChild(domify(
-    fs.readFileSync(__dirname + '/../../templates/application.html')
+    '<header class="notebook-header clearfix">' +
+      '<div class="notebook-header-primary">' +
+        '<h1>JSNotebook</h1>' +
+      '</div>' +
+
+      '<div class="notebook-header-secondary">' +
+        '<button class="btn-text notebook-fork">Make my own copy</button>' +
+        '<button class="btn-text notebook-auth">' +
+          'Authenticate using Github' +
+        '</button>' +
+        '<button class="notebook-exec">Run All</button>' +
+        '<button class="ir modal-toggle">Keyboard Shortcuts</button>' +
+      '</div>' +
+    '</header>' +
+
+    '<div class="banner notebook-auth">' +
+      '<p>Please sign in with Github to save the notebook.</p>' +
+    '</div>' +
+
+    '<div class="modal-backdrop"></div>'
+  ));
+
+  var allControls = controls.editor.concat(controls.code).concat(controls.text);
+
+  var controlMap = _.map(allControls, function (control) {
+    return '<tr>' +
+      '<td>' + (control.keyCode || control.shortcut) + '</td>' +
+      '<td>' + control.description + '</td>' +
+    '</tr>';
+  });
+
+  this.el.appendChild(domify(
+    '<div class="modal">' +
+      '<header class="modal-header">' +
+        '<h3>Keyboard Shortcuts</h3>' +
+      '</header>' +
+
+      '<div class="modal-body">' +
+        '<table>' +
+          '<colgroup>' +
+            '<col class="col-mini">' +
+            '<col class="col-large">' +
+          '</colgroup>' +
+          '<tr>' +
+            '<th>Key Combination</th>' +
+            '<th>Action</th>' +
+          '</tr>' +
+          controlMap.join('') +
+        '</table>' +
+      '</div>' +
+    '</div>'
   ));
 
   return this;

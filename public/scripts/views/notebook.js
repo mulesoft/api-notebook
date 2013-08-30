@@ -262,11 +262,11 @@ Notebook.prototype.appendView = function (view, before) {
    * Appends a new CodeCell after the passed in CellView.
    */
   this.listenTo(view, 'appendNew', function (view) {
-    this.appendCodeView(view.el);
+    this.appendCodeView(view.el).focus();
   });
 
   /**
-   * Event listener for 'show-cell-controls' event.
+   * Event listener for 'showControls' event.
    * Appends the UIControls to the focused cell.
    */
   this.listenTo(view, 'showControls', function (view) {
