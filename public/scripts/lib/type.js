@@ -1,8 +1,5 @@
-var _        = require('underscore');
-var toString = _.bind(Function.prototype.call, Object.prototype.toString);
-
 module.exports = function (object) {
-  switch (toString(object)) {
+  switch (Object.prototype.toString.call(object)) {
   case '[object Function]':
     return 'function';
   case '[object Date]':

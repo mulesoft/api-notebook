@@ -1,5 +1,6 @@
 var _              = require('underscore');
 var domify         = require('domify');
+var type           = require('../../lib/type');
 var Cell           = require('./cell');
 var Inspector      = require('../inspector');
 var ErrorInspector = require('../error-inspector');
@@ -20,6 +21,11 @@ ResultCell.prototype._renderInspector = function (Inspector, options) {
   this.inspector = new Inspector(options);
   this.inspector.render().appendTo(this.el);
   this.el.classList.remove('result-pending');
+  // Open the inspector automatically when the type is an object
+  var typeOf = type(this.inspector.inspect);
+  if (typeOf === 'object' || typeOf === 'array') {
+    this.inspector.open();
+  }
   return this;
 };
 
