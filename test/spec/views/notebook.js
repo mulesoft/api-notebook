@@ -292,6 +292,24 @@ describe('Notebook', function () {
           expect(view.collection.at(2).view._focus).to.be.ok;
           expect(view.collection.at(2).view.editor.getCursor().ch).to.equal(7);
         });
+
+        it('should append a new code view on blur if its the last cell', function (done) {
+          textCells.push(view.appendTextView().focus());
+
+          expect(view.collection.length).to.equal(5);
+          expect(view.collection.at(4).get('type')).to.equal('text');
+
+          setTimeout(function () {
+            var input = document.createElement('input');
+            fixture.appendChild(input);
+            input.focus();
+            fixture.removeChild(input);
+
+            expect(view.collection.length).to.equal(6);
+            expect(view.collection.at(5).get('type')).to.equal('code');
+            done();
+          }, 0);
+        });
       });
 
       describe('Code Cell', function () {

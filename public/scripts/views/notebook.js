@@ -287,6 +287,13 @@ Notebook.prototype.appendView = function (view, before) {
 
       if (!view.getValue()) { view.remove(); }
     });
+
+    // Append a new code cell when we blur a text cell and it the last cell.
+    this.listenTo(view, 'blur', function (view) {
+      if (this.el.lastChild === view.el) {
+        this.appendCodeView().focus();
+      }
+    });
   }
 
   // Listening to another set of events for `code` cells
