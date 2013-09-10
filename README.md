@@ -1,30 +1,21 @@
 # JSNotebook
 
+## Development
 
 ```bash
+# Install dependencies
 npm install
-npm start
+bower install
+# Run tests in the browser (requires server running for embed tests)
+open test/index.html
+# Run headless tests
+grunt check
 ```
-
-Github API proxy implements these REST routes:
-
-`POST /gists` - Create a gist.
-`PUT /gists/:id` - Edit a specific gist.
-`DELETE /gists/:id` - Remove a specific gist.
-`GET /gists` - Retrieve all gists for logged-in user).
-`GET /gists/:id` - Retrieve a specific gist.
-
-Authentication is done via a browser by navigating to
-[http://localhost:8000/auth/github](http://localhost:8000/auth/github).
-A cookie-based session is established. Calls to the REST API can be made via the
-browser after authentication. Test API using e.g.
-[REST console](https://chrome.google.com/webstore/detail/rest-console/cokgbflfommojglbmbpenpphppikmonn?hl=en).
-
 
 ## Environment Variables
 
 ```
-export NOTEBOOK_URL="" # Set this before building the scripts
+export NOTEBOOK_URL="http://localhost:8000" # Set this before building any scripts
 export GITHUB_CLIENT_ID=""
 export GITHUB_CLIENT_SECRET=""
 ```
@@ -51,7 +42,6 @@ new Notebook(el, {
   }
 })
 ```
-
 
 ## Deployment
 

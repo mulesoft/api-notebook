@@ -1,11 +1,11 @@
-var _         = require('underscore');
-var View      = require('./view');
-var Backbone  = require('backbone');
-var type      = require('../lib/type');
-var domify    = require('domify');
-var stringify = require('../lib/stringify');
-var state     = require('../lib/state');
-var messages  = require('../lib/messages');
+var _          = require('underscore');
+var View       = require('./view');
+var domify     = require('domify');
+var Backbone   = require('backbone');
+var stringify  = require('../lib/stringify');
+var state      = require('../state/state');
+var messages   = require('../state/messages');
+var middleware = require('../state/middleware');
 
 var InspectorView = module.exports = View.extend({
   className: 'inspector'
@@ -13,7 +13,7 @@ var InspectorView = module.exports = View.extend({
 
 InspectorView.prototype.initialize = function (options) {
   _.extend(this, _.pick(
-    options, ['prefix', 'parent', 'inspect', 'special', 'hidden']
+    options, ['property', 'parent', 'inspect', 'internal']
   ));
 
   if (this.parent) {
@@ -59,13 +59,12 @@ InspectorView.prototype.stringifyPreview = function () {
   return stringify(this.inspect);
 };
 
-InspectorView.prototype._renderChild = function (prefix, obj, special, hide) {
+InspectorView.prototype._renderChild = function (property, inspect, internal) {
   var inspector = new InspectorView({
-    parent:  this,
-    hidden:  hide,
-    prefix:  prefix,
-    inspect: obj,
-    special: special
+    parent:   this,
+    inspect:  inspect,
+    property: property,
+    internal: internal
   });
   this.children.push(inspector);
   inspector.render().appendTo(this.childrenEl);
@@ -104,38 +103,67 @@ InspectorView.prototype._renderChildrenEl = function () {
 
 InspectorView.prototype._renderChildren = function () {
   _.each(Object.getOwnPropertyNames(this.inspect), function (prop) {
-    var desc = Object.getOwnPropertyDescriptor(this.inspect, prop);
+    var descriptor = Object.getOwnPropertyDescriptor(this.inspect, prop);
 
-    if (_.isFunction(desc.get) || _.isFunction(desc.set)) {
-      if (_.isFunction(desc.get)) {
-        this._renderChild('get ' + prop, desc.get, true);
+    if (_.isFunction(descriptor.get) || _.isFunction(descriptor.set)) {
+      if (_.isFunction(descriptor.get)) {
+        this._renderChild(prop, descriptor.get, '[[Getter]]');
       }
 
-      if (_.isFunction(desc.set)) {
-        this._renderChild('set ' + prop, desc.set, true);
+      if (_.isFunction(descriptor.set)) {
+        this._renderChild(prop, descriptor.set, '[[Setter]]');
       }
     } else {
-      var isSpecial = !desc.writable || !desc.configurable || !desc.enumerable;
-      this._renderChild(prop, desc.value, isSpecial);
+      this._renderChild(prop, descriptor.value);
     }
   }, this);
 
   // Hidden prototype - super handy when debugging
-  var prototype = Object.getPrototypeOf(this.inspect);
-  this._renderChild('[[Prototype]]', prototype, true, true);
+  this._renderChild(null, Object.getPrototypeOf(this.inspect), '[[Prototype]]');
 
   return this;
 };
 
 InspectorView.prototype.renderPreview = function () {
   var html    = '';
-  var special = this.special;
+  var prefix  = '';
+  var special = !!this.internal;
+  var parent  = this.parent && this.parent.inspect;
+  var desc;
+
+  // If we have a property name, use it as the display prefix.
+  if (this.property) { prefix = this.property; }
+
+  // If we have a parent object, do some more advanced checks to establish some
+  // more advanced properties such as the prefix and special display.
+  if (parent) {
+    if (this.internal) {
+      // Internal properties are always special.
+      special = true;
+      // Getters and getters still have a descriptor available.
+      if (this.internal === '[[Getter]]' || this.internal === '[[Setter]]') {
+        if (this.internal === '[[Getter]]') {
+          prefix = 'get ' + this.property;
+        } else {
+          prefix = 'set ' + this.property;
+        }
+        desc = Object.getOwnPropertyDescriptor(parent, this.property);
+      // No other internal object property types can get a descriptive text, so
+      // we'll just use the internal property name as the prefix.
+      } else {
+        prefix = this.internal;
+      }
+    } else {
+      desc    = Object.getOwnPropertyDescriptor(parent, this.property);
+      special = !desc.writable || !desc.configurable || !desc.enumerable;
+    }
+  }
 
   html += '<div class="arrow"></div>';
-  html += '<div class="preview ' + type(this.inspect) + '">';
-  if (_.isString(this.prefix)) {
+  html += '<div class="preview">';
+  if (prefix) {
     html += '<span class="property' + (special ? ' is-special' : '') + '">';
-    html += _.escape(this.prefix);
+    html += _.escape('' + prefix);
     html += '</span>: ';
   }
   html += '<span class="inspect">';
@@ -144,19 +172,31 @@ InspectorView.prototype.renderPreview = function () {
   html += '</div>';
 
   var el = this.previewEl = domify(html);
-  this.el.appendChild(el);
 
-  var toggleExtra = _.bind(function (toggle) {
-    this.el.classList[toggle ? 'remove' : 'add']('hide');
-  }, this);
+  // Run filter middleware to check if the property should be filtered from
+  // the basic display.
+  middleware.trigger('inspector:filter', {
+    filter:     true,
+    parent:     parent,
+    property:   this.property,
+    internal:   this.internal,
+    descriptor: desc
+  }, _.bind(function (err, data) {
+    this.el.appendChild(el);
 
-  if (this.hidden) {
-    // Listen for state  changes to show extra properties/information
-    toggleExtra(state.get('showExtra'));
-    this.listenTo(state, 'change:showExtra', function (_, toggle) {
-      toggleExtra(toggle);
-    });
-  }
+    var toggleExtra = _.bind(function (toggle) {
+      this.el.classList[toggle ? 'remove' : 'add']('hide');
+    }, this);
+
+    if (!data.filter) {
+      // Listen for state changes to show extra properties/information
+      toggleExtra(state.get('showExtra'));
+      this.listenTo(state, 'change:showExtra', function (_, toggle) {
+        toggleExtra(toggle);
+      });
+    }
+  }, this));
+
 
   return this;
 };

@@ -22,24 +22,57 @@ describe('Result Cell', function () {
     });
 
     describe('#setResult', function () {
-      it('should set the result', function () {
-        view.setResult('Testing', window);
+      it('should set the result', function (done) {
+        view.setResult('Testing', false, window, function (err) {
+          expect(err).to.not.exist;
+          expect(view.el.className).to.not.contain('result-error');
+          expect(view.el.className).to.not.contain('result-pending');
+          expect(view.data.inspector).to.be.ok;
+          expect(view.el.childNodes[0]).to.equal(view.data.inspector.el);
+          done();
+        });
+      });
 
-        expect(view.el.className).to.not.contain('result-error');
-        expect(view.el.className).to.not.contain('result-pending');
-        expect(view.inspector).to.be.ok;
-        expect(view.el.childNodes[0]).to.equal(view.inspector.el);
+      it('should set an error', function (done) {
+        view.setResult(new Error('Testing'), true, window, function (err) {
+          expect(err).to.not.exist;
+          expect(view.el.className).to.contain('result-error');
+          expect(view.el.className).to.not.contain('result-pending');
+          expect(view.data.inspector).to.be.ok;
+          expect(view.el.childNodes[0]).to.equal(view.data.inspector.el);
+          done();
+        });
       });
     });
 
-    describe('#setError', function () {
-      it('should set the error', function () {
-        view.setError(new Error('Testing'), window);
+    describe('middleware', function () {
+      it('should be able to hook onto the render', function (done) {
+        var spy = sinon.spy(function (data, next, done) {
+          data.el.appendChild(document.createTextNode('some testing here'));
+          done();
+        });
 
-        expect(view.el.className).to.contain('result-error');
-        expect(view.el.className).to.not.contain('result-pending');
-        expect(view.inspector).to.be.ok;
-        expect(view.el.childNodes[0]).to.equal(view.inspector.el);
+        App.middleware.use('result:render', spy);
+
+        view.setResult(null, false, window, function () {
+          expect(spy).to.have.been.calledOnce;
+          expect(view.el.textContent).to.equal('some testing here');
+          done();
+        });
+      });
+
+      it('should be able to hook onto the clear method', function (done) {
+        var spy = sinon.spy(function (data, next) {
+          data.el.innerHTML = '';
+          next();
+        });
+
+        App.middleware.use('result:empty', spy);
+
+        view.setResult(null, true, window, function () {
+          expect(spy).to.have.been.calledOnce;
+          done();
+        });
       });
     });
   });

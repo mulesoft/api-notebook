@@ -18,7 +18,8 @@
     "brfs": "0.0.7",
     "stacktrace-js": "~0.5.0",
     "domify": "~1.0.0",
-    "css-component": "0.0.2"
+    "css-component": "0.0.2",
+    "foreach": "~2.0.4"
   },
   "devDependencies": {
     "grunt-contrib-copy": "~0.4.1",
@@ -29,14 +30,15 @@
     "matchdep": "~0.1.2",
     "handlebars-runtime": "~1.0.12",
     "grunt-browserify": "~1.2.1",
-    "mocha-phantomjs": "~3.1.0",
     "grunt-cli": "~0.1.9",
     "jshint": "~2.1.9",
     "hbsfy": "~0.1.5",
     "node-dev": "~2.0",
     "uglifyify": "0.0.1",
     "envify": "~0.1.0",
-    "grunt-shell": "~0.3.1"
+    "grunt-shell": "~0.3.1",
+    "grunt-contrib-connect": "~0.5.0",
+    "mocha-phantomjs": "~3.1.2"
   },
   "engines": {
     "node": "0.10.13",

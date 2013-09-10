@@ -1,6 +1,5 @@
-var Backbone = require('backbone');
+var View   = require('./view');
 var domify = require('domify');
-var View = require('../view');
 
 var BtnCellControls = module.exports = View.extend({
   tagName: 'button',

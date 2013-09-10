@@ -1,8 +1,8 @@
 var _        = require('underscore');
 var domify   = require('domify');
 var Backbone = require('backbone');
-var View     = require('../view');
-var controls = require('../../lib/controls').editor;
+var View     = require('./view');
+var controls = require('../lib/controls').editor;
 
 var ControlsView = module.exports = View.extend({
   className: 'cell-controls',

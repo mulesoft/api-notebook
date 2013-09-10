@@ -2,10 +2,10 @@ var _           = require('underscore');
 var marked      = require('marked');
 var domify      = require('domify');
 var Backbone    = require('backbone');
-var EditorCell  = require('./editor');
-var stripInput  = require('../../lib/cm-strip-input');
-var messages    = require('../../lib/messages');
-var insertAfter = require('../../lib/insert-after');
+var EditorCell  = require('./editor-cell');
+var messages    = require('../state/messages');
+var stripInput  = require('../lib/codemirror/strip-input');
+var insertAfter = require('../lib/browser/insert-after');
 
 var TextCell = module.exports = EditorCell.extend({
   className: 'cell cell-text'
@@ -19,7 +19,7 @@ TextCell.prototype.events = _.extend({}, EditorCell.prototype.events, {
   }
 });
 
-TextCell.prototype.EditorModel = require('../../models/text-entry');
+TextCell.prototype.EditorModel = require('../models/text-cell');
 
 TextCell.prototype.editorOptions = _.extend(
   {},
@@ -130,7 +130,7 @@ TextCell.prototype.renderEditor = function () {
     this.renderMarkdown();
   }
 
-  setTimeout(function () { messages.trigger('resize'); }, 0);
+  process.nextTick(function () { messages.trigger('resize'); }, 0);
 
   return this;
 };

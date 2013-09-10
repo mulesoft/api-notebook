@@ -26,7 +26,7 @@ describe('Session Model', function () {
       });
 
       describe('sync', function () {
-        it('should attempt to sync with /session', function (done) {
+        it.skip('should attempt to sync with /session', function (done) {
           var spy = sinon.spy(function (model, xhr) {
             expect(xhr.status).to.equal(401);
             done();
@@ -39,7 +39,7 @@ describe('Session Model', function () {
           server.respond();
         });
 
-        it('should sync with /session successfully', function (done) {
+        it.skip('should sync with /session successfully', function (done) {
           var spy = sinon.spy(function (model, data) {
             expect(data.id).to.equal(123);
             expect(model.get('id')).to.equal(123);

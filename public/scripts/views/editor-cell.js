@@ -3,9 +3,8 @@ var trim        = require('trim');
 var Cell        = require('./cell');
 var BtnControls = require('./btn-cell-controls');
 var extraKeys   = require('./lib/extra-keys');
-var controls    = require('../../lib/controls').editor;
-
-var messages = require('../../lib/messages');
+var controls    = require('../lib/controls').editor;
+var messages    = require('../state/messages');
 
 var EditorCell = module.exports = Cell.extend();
 
@@ -18,12 +17,11 @@ EditorCell.prototype.events = {
 
 EditorCell.prototype.initialize = function () {
   Cell.prototype.initialize.apply(this, arguments);
-  // Every editor cell needs a model to function
   this.model       = this.model || new this.EditorModel();
   this.btnControls = new BtnControls();
 };
 
-EditorCell.prototype.EditorModel = require('../../models/entry');
+EditorCell.prototype.EditorModel = require('../models/cell');
 
 EditorCell.prototype.editorOptions = {
   tabSize:        2,
@@ -75,7 +73,7 @@ EditorCell.prototype.focus = function () {
   this._focus = true;
   // Make focusing the editor async since it triggers other events such as
   // scrolling into view which interferes with iframe resizing events.
-  setTimeout(_.bind(this.editor.focus, this.editor), 0);
+  process.nextTick(_.bind(this.editor.focus, this.editor));
   return this;
 };
 
@@ -164,7 +162,7 @@ EditorCell.prototype.renderEditor = function () {
   this.editor.view = this;
   // Set the editor value if it already exists
   if (this.getValue()) {
-    this.setValue(this.getValue());
+    this.editor.setValue(this.getValue());
     this.moveCursorToEnd();
   }
 

@@ -1,11 +1,5 @@
-var _    = require('underscore');
-var type = require('./type');
-
-var stringifyElement = function (element) {
-  var div = document.createElement('div');
-  div.appendChild(element.cloneNode(true));
-  return div.innerHTML;
-};
+var _      = require('underscore');
+var typeOf = require('./type');
 
 var stringifyString = function (string) {
   return '"' + string.replace(/"/g, '\\"') + '"';
@@ -41,9 +35,18 @@ var stringifyError = function (error) {
   return Error.prototype.toString.call(error);
 };
 
+var stringifyElement = function (element) {
+  try {
+    var div = document.createElement('div');
+    div.appendChild(element.cloneNode(true));
+    return div.innerHTML;
+  } catch (e) {
+    return stringifyObject(element);
+  }
+};
 
 module.exports = function (object) {
-  switch (type(object)) {
+  switch (typeOf(object)) {
   case 'error':
     return stringifyError(object);
   case 'array':

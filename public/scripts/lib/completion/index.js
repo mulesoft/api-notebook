@@ -1,32 +1,36 @@
-var Widget = require('./widget');
-var Pos    = CodeMirror.Pos;
+var _            = require('underscore');
+var Widget       = require('./widget');
+var Pos          = CodeMirror.Pos;
+var autocomplete = require('../codemirror/sandbox-completion');
 
-var Completion = module.exports = function (cm, autocomplete, options) {
+var Completion = module.exports = function (cm, options) {
   var that          = this;
   var closeOnCursor = true;
   var closeOnBlur;
 
-  this.cm           = cm;
-  this.options      = options;
-  this.autocomplete = autocomplete;
-
-  // Default options
+  this.cm      = cm;
+  this.options = options || {};
   this.options.closeOn = this.options.closeOn || /[^$_a-zA-Z0-9]/;
 
-  // Add a filter function
   if (typeof this.options.filter !== 'function') {
     this.options.filter = function (string) {
       return string.substr(0, this.token.string.length) === this.token.string;
     };
   }
 
+  this.cm.state.completionActive = this;
+
   this.onBlur = function () {
     closeOnBlur = setTimeout(function () { that.removeWidget(); }, 100);
   };
+
   this.onFocus = function () {
     clearTimeout(closeOnBlur);
   };
+
   this.onChange = function (cm, data) {
+    closeOnCursor = false;
+
     // Only update the display when we are inserting or deleting characters
     if (!data.origin || data.origin.charAt(0) !== '+') {
       return that.removeWidget();
@@ -43,19 +47,27 @@ var Completion = module.exports = function (cm, autocomplete, options) {
     if (data.origin === '+delete' && closeOn.test(data.removed.join('\n'))) {
       that.removeWidget();
     }
+
+    var token = cm.getTokenAt(data.from);
+
+    // Don't want to be causing autocompletion when we are in the middle of an
+    // writing a varibable or property.
+    if (token.type && token.end !== cm.getCursor().ch) {
+      return that.removeWidget();
+    }
+
     // If the previous token is whitespace, trigger a new autocompletion widget.
-    if (/ */.test(cm.getTokenAt(data.from).string)) {
+    if (/^ *$/.test(token.string)) {
       that.removeWidget();
     }
 
-    if (that.widget) {
-      that.widget.refresh();
+    if (that._completionActive) {
+      that.refresh();
     } else {
-      that.showHints();
+      that.showWidget();
     }
-
-    closeOnCursor = false;
   };
+
   this.onCursorActivity = function (cm) {
     if (closeOnCursor) { that.removeWidget(); }
 
@@ -70,25 +82,32 @@ var Completion = module.exports = function (cm, autocomplete, options) {
 
 Completion.prototype.remove = function () {
   this.removeWidget();
+  delete this.cm.state.completionActive;
   this.cm.off('blur',           this.onBlur);
   this.cm.off('focus',          this.onFocus);
   this.cm.off('change',         this.onChange);
   this.cm.off('cursorActivity', this.onCursorActivity);
 };
 
-Completion.prototype.refresh = function () {
-  if (this.widget) { this.widget.refresh(); }
+Completion.prototype.refresh = function (done) {
+  if (this.widget) {
+    return this.widget.refresh(done);
+  }
+
+  return done && done();
 };
 
-Completion.prototype.showHints = function () {
-  this.showWidget(this.autocomplete(this.cm, this.options));
-};
-
-Completion.prototype.showWidget = function (data) {
+Completion.prototype.showWidget = function () {
   this.removeWidget();
-  this.widget = new Widget(this, data);
+  this._completionActive = true;
+  autocomplete(this.cm, this.options, _.bind(function (err, data) {
+    if (!this.widget && data) {
+      this.widget = new Widget(this, data);
+    }
+  }, this));
 };
 
 Completion.prototype.removeWidget = function () {
+  this._completionActive = false;
   if (this.widget) { this.widget.remove(); }
 };

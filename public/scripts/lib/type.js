@@ -18,10 +18,12 @@ module.exports = function (object) {
     return 'number';
   }
 
-  if (object === null)                 { return 'null'; }
-  if (object === undefined)            { return 'undefined'; }
-  if (object && object.nodeType === 1) { return 'element'; }
-  if (object === Object(object))       { return 'object'; }
+  // Detect whether an object is an element using the `nodeType` property
+  if (object && object.nodeType === +object.nodeType) { return 'element'; }
+
+  if (object === null)           { return 'null'; }
+  if (object === undefined)      { return 'undefined'; }
+  if (object === Object(object)) { return 'object'; }
 
   return typeof object;
 };

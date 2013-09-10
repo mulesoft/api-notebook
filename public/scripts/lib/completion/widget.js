@@ -1,34 +1,39 @@
+var _            = require('underscore');
 var Ghost        = require('./ghost');
-var state        = require('../state');
-var correctToken = require('../cm-correct-token');
+var state        = require('../../state/state');
+var correctToken = require('../codemirror/correct-token');
+var middleware   = require('../../state/middleware');
+var asyncSeries  = require('../async-series');
 
-var Widget = module.exports = function (completion, data) {
-  var cm   = completion.cm;
-  var that = this;
-
+var Widget = module.exports = function (completion, data, done) {
   this.data       = data;
   this.completion = completion;
 
   if (!data.list.length) { return this.remove(); }
 
-  cm.addKeyMap(this.keyMap = {
-    'Esc': function () { that.remove(); }
+  completion.cm.addKeyMap(this.keyMap = {
+    'Esc': _.bind(function () { this.remove(); }, this)
   });
 
-  this.refresh();
+  this.refresh(done);
+  CodeMirror.signal(completion.cm, 'startCompletion', completion.cm);
 };
 
 Widget.prototype.remove = function () {
   this.removeGhost();
   this.removeHints();
   this.completion.cm.removeKeyMap(this.keyMap);
+  CodeMirror.signal(this.completion.cm, 'endCompletion', this.completion.cm);
   delete this.keyMap;
   delete this.completion.widget;
 };
 
 Widget.prototype.removeHints = function () {
+  // Break rendering refresh execution.
+  if (this._refreshing) { return this._refreshing(); }
+  // No hints have been created yet.
   if (!this.hints) { return; }
-
+  // Remove all event listeners associated with the hints.
   this.completion.cm.off('scroll', this.onScroll);
   this.completion.cm.removeKeyMap(this.hintKeyMap);
   state.off('change:window.height change:window.width', this.onResize);
@@ -44,7 +49,7 @@ Widget.prototype.removeGhost = function () {
   this.ghost.remove();
 };
 
-Widget.prototype.refresh = function () {
+Widget.prototype.refresh = function (done) {
   var that        = this;
   var cm          = this.completion.cm;
   var activeHint  = 0;
@@ -52,10 +57,12 @@ Widget.prototype.refresh = function () {
 
   // If we have current hints, get the current resultId so we can set it back as
   // close as possible
-  if (this.hints && !isNaN(this.selectedHint)) {
+  if (this.hints && this.selectedHint === +this.selectedHint) {
     currentHint = this.hints.childNodes[this.selectedHint].listId;
   }
 
+  // Removes the previous ghost and hints before we start rendering the new
+  // display widgets.
   this.removeGhost();
   this.removeHints();
   delete this.selectedHint;
@@ -64,96 +71,109 @@ Widget.prototype.refresh = function () {
   this.data.to    = cm.getCursor();
   this.data.token = correctToken(cm, this.data.to);
 
-  var list     = this.data.list;
-  var text     = cm.getRange(this.data.from, this.data.to);
-  var hints    = this.hints = document.createElement('ul');
-  var results  = this._results = [];
+  // Assign the result of calling `asyncSeries` to an internal property. The
+  // returned value should be a function, that when called breaks the series
+  // execution. This stops rendering from being out of sync with keypresses.
+  this._refreshing = asyncSeries(_.map(this.data.list, function (suggestion) {
+    return _.bind(function (next) {
+      return this._filter(suggestion, next);
+    }, this);
+  }, this), function (err, results) {
+    var text      = cm.getRange(this.data.from, this.data.to);
+    var hints     = this.hints = document.createElement('ul');
+    var hintId    = 0;
+    var displayed = [];
 
-  for (var i = 0, j = 0; i < list.length; i++) {
-    var cur = list[i];
+    // Loop through each of the results and append an item to the hints list
+    _.each(results, function (data, index) {
+      if (!data.filter) { return; }
 
-    // Skip any filtered out values from being created
-    if (!this._filter(cur)) { continue; }
+      var el = hints.appendChild(document.createElement('li'));
+      el.listId    = index;
+      el.hintId    = hintId++;
+      el.className = 'CodeMirror-hint';
 
-    var el = hints.appendChild(document.createElement('li'));
-    el.hintId    = j++;
-    el.listId    = i;
-    el.className = 'CodeMirror-hint';
+      displayed.push(data.string);
 
-    // Keep an array of displayed results
-    results.push(cur);
+      if (index < currentHint) {
+        activeHint = hintId;
+      }
 
-    // Move the activeHint as close as possible to the currently selected
-    // hints list position.
-    if (i <= currentHint) {
-      activeHint = el.hintId;
+      // Do Blink-style bolding of the completed text
+      var indexOf = data.string.indexOf(text);
+      if (indexOf > -1) {
+        var prefix = data.string.substr(0, indexOf);
+        var match  = data.string.substr(indexOf, text.length);
+        var suffix = data.string.substr(indexOf + text.length);
+
+        var highlight = document.createElement('span');
+        highlight.className = 'CodeMirror-hint-match';
+        highlight.appendChild(document.createTextNode(match));
+        el.appendChild(document.createTextNode(prefix));
+        el.appendChild(highlight);
+        el.appendChild(document.createTextNode(suffix));
+      } else {
+        el.appendChild(document.createTextNode(data.string));
+      }
+    }, this);
+
+    // Add the hinting keymap here instead of later or earlier since we need to
+    // listen before we remove again, and we can't be listening when we don't
+    // display any hints to listen to.
+    cm.addKeyMap(this.hintKeyMap = {
+      'Up':       function () { that.setActive(that.selectedHint - 1); },
+      'Down':     function () { that.setActive(that.selectedHint + 1); },
+      // Enable `Alt-` navigation for when we are showing advanced properties
+      'Alt-Up':   function () { that.setActive(that.selectedHint - 1); },
+      'Alt-Down': function () { that.setActive(that.selectedHint + 1); },
+      'Home':     function () { that.setActive(0); },
+      'End':      function () { that.setActive(-1); },
+      'Enter':    function () { that.accept(); },
+      'PageUp':   function () {
+        that.setActive(that.selectedHint - that.screenAmount());
+      },
+      'PageDown': function () {
+        that.setActive(that.selectedHint + that.screenAmount());
+      }
+    });
+
+    // Remove the rendering flag now we have finished rendering the widget
+    delete this._refreshing;
+    CodeMirror.signal(cm, 'refreshCompletion', cm, displayed);
+
+    if (displayed.length < 2) {
+      this.setActive(0);
+      return this.removeHints();
     }
 
-    // Do Blink-style bolding of the completed text
-    if (cur.indexOf(text) === 0) {
-      var match = document.createElement('span');
-      match.className = 'CodeMirror-hint-match';
-      match.appendChild(document.createTextNode(cur.substr(0, text.length)));
-      el.appendChild(match);
-      el.appendChild(document.createTextNode(cur.substr(text.length)));
-    } else {
-      el.appendChild(document.createTextNode(cur));
-    }
-  }
+    hints.className = 'CodeMirror-hints';
+    document.body.appendChild(hints);
 
-  // Add the hinting keymap here instead of later or earlier since we need to
-  // listen before we remove again, and we can't be listening when we don't
-  // display any hints to listen to.
-  cm.addKeyMap(this.hintKeyMap = {
-    'Up':       function () { that.setActive(that.selectedHint - 1); },
-    'Down':     function () { that.setActive(that.selectedHint + 1); },
-    // Enable `Alt-` navigation for when we are showing advanced properties
-    'Alt-Up':   function () { that.setActive(that.selectedHint - 1); },
-    'Alt-Down': function () { that.setActive(that.selectedHint + 1); },
-    'Home':     function () { that.setActive(0); },
-    'End':      function () { that.setActive(-1); },
-    'Enter':    function () { that.accept(); },
-    'PageUp':   function () {
-      that.setActive(that.selectedHint - that.screenAmount());
-    },
-    'PageDown': function () {
-      that.setActive(that.selectedHint + that.screenAmount());
-    }
-  });
+    // Set the active element after render so we can calculate scroll positions
+    this.setActive(activeHint);
 
-  if (hints.childNodes.length < 2) {
-    this.setActive(0);
-    return this.removeHints();
-  }
+    CodeMirror.on(hints, 'click', function (e) {
+      var el = e.target || e.srcElement;
+      if (isNaN(el.hintId)) { return; }
 
-  hints.className = 'CodeMirror-hints';
-  document.body.appendChild(hints);
+      that.setActive(el.hintId);
+      that.accept();
+    });
 
-  // Refresh the positioning of the hints within the DOM
-  this.reposition();
+    CodeMirror.on(hints, 'mousedown', function () {
+      setTimeout(function () { cm.focus(); }, 20);
+    });
 
-  // Set the active element after render so we can calculate scroll positions
-  this.setActive(activeHint);
-
-  CodeMirror.on(hints, 'click', function (e) {
-    var el = e.target || e.srcElement;
-    if (isNaN(el.hintId)) { return; }
-
-    that.setActive(el.hintId);
-    that.accept();
-  });
-
-  CodeMirror.on(hints, 'mousedown', function () {
-    setTimeout(function () { cm.focus(); }, 20);
-  });
-
-  state.on(
-    'change:window.height change:window.width',
-    this.onResize = function () { that.reposition(); }
-  );
+    state.on(
+      'change:window.height change:window.width',
+      this.onResize = function () { that.reposition(); }
+    );
+  }, this);
 };
 
 Widget.prototype.reposition = function () {
+  if (this.onScroll) { this.completion.cm.off('scroll', this.onScroll); }
+
   var cm    = this.completion.cm;
   var pos   = cm.cursorCoords(this.data.from);
   var top   = pos.bottom;
@@ -161,7 +181,7 @@ Widget.prototype.reposition = function () {
   var that  = this;
   var hints = this.hints;
 
-  hints.className = hints.className.replace(' CodeMirror-hints-top', '');
+  hints.className  = hints.className.replace(' CodeMirror-hints-top', '');
   hints.style.top  = top  + 'px';
   hints.style.left = left + 'px';
 
@@ -175,10 +195,10 @@ Widget.prototype.reposition = function () {
 
   if (overlapX > 0) {
     if (box.right - box.left > winWidth) {
-      hints.style.width = (winWidth - padding) + 'px';
+      hints.style.width = (winWidth - padding * 2) + 'px';
       overlapX -= (box.right - box.left) - winWidth;
     }
-    hints.style.left = (left = pos.left - overlapX) + 'px';
+    hints.style.left = (left = pos.left - overlapX - padding) + 'px';
   }
 
   if (overlapY > 0) {
@@ -223,8 +243,13 @@ Widget.prototype.accept = function () {
   this.remove();
 };
 
-Widget.prototype._filter = function (string) {
-  return this.completion.options.filter.call(this.data, string);
+Widget.prototype._filter = function (string, done) {
+  return middleware.trigger('completion:filter', {
+    token:   this.data.token,
+    string:  string,
+    filter:  true,
+    context: this.data.context
+  }, done);
 };
 
 Widget.prototype.setActive = function (i) {
@@ -252,6 +277,13 @@ Widget.prototype.setActive = function (i) {
   node = this.hints.childNodes[this.selectedHint = i];
   node.className += ' CodeMirror-hint-active';
 
+  // Should always create new ghost nodes for any text changes. When the new
+  // ghost is appended, trigger a reposition event to align the autocompletion
+  // with the text.
+  this.removeGhost();
+  this.ghost = new Ghost(this, this.data, this.data.list[node.listId]);
+  this.reposition();
+
   if (node.offsetTop < this.hints.scrollTop) {
     this.hints.scrollTop = node.offsetTop - 3;
   } else {
@@ -260,10 +292,6 @@ Widget.prototype.setActive = function (i) {
       this.hints.scrollTop = totalOffset - this.hints.clientHeight + 3;
     }
   }
-
-  // Should always create new ghost nodes for any text changes.
-  this.removeGhost();
-  this.ghost = new Ghost(this, this.data, this.data.list[node.listId]);
 };
 
 Widget.prototype.screenAmount = function () {

@@ -15,6 +15,7 @@ Sandbox.prototype.execute = function (code, context, cb) {
   // Using an asynchronous callback to clear the any possible stack trace
   // that would include implementation logic
   (global.requestAnimationFrame || global.setTimeout)(_.bind(function () {
+    var isError = false;
     var result, err;
 
     try {
@@ -27,10 +28,11 @@ Sandbox.prototype.execute = function (code, context, cb) {
       /* jshint evil: true */
       result = this.window.eval(code);
     } catch (error) {
-      err = error;
+      err     = error;
+      isError = true;
     } finally {
       delete this.window.console._notebookAPI;
-      cb(err, result);
+      cb(isError ? err : result, isError);
     }
   }, this), 0);
 };

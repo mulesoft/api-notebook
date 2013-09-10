@@ -1,28 +1,8 @@
-var css = require('css-component');
+var css  = require('css-component');
+var each = require('foreach');
 
 // Set the location to load the notebook from
 var NOTEBOOK_URL = process.env.NOTEBOOK_URL;
-
-/**
- * Simple function to loop over properties in an object or array.
- *
- * @param  {Object}   obj
- * @param  {Function} fn
- * @param  {*}        [context]
- */
-var each = function (obj, fn, context) {
-  if (Object.prototype.toString.call(obj) === '[object Array]') {
-    for (var i = 0, l = obj.length; i < l; i++) {
-      fn.call(context, obj[i], i, obj);
-    }
-  } else if (obj === Object(obj)) {
-    for (var p in obj) {
-      if (obj.hasOwnProperty(p)) {
-        fn.call(context, obj[p], p, obj);
-      }
-    }
-  }
-};
 
 /**
  * Extend any object with the properties from other objects, overriding of left
@@ -81,7 +61,8 @@ var getDataAttributes = function (el) {
 var defaults = {
   id:      null, // Initial id to pull content from
   content: null, // Fallback content in case of no id
-  style:   {}    // Set styles on the iframe
+  style:   {},   // Set styles on the iframe
+  alias:   {}    // Alias objects into the frame once available
 };
 
 /**
@@ -127,25 +108,23 @@ Notebook.prototype.makeFrame = function (el) {
   var src  = NOTEBOOK_URL;
 
   if (this.options.id) {
-    src += ('/' === src[src.length - 1] ? '' : '/') + '#' + this.options.id;
+    src += ('/' === src[src.length - 1] ? '' : '/') + this.options.id;
   }
 
   var frame = this.frame = document.createElement('iframe');
   frame.src = src;
 
-  if (typeof el.appendChild === 'function') {
-    el.appendChild(frame);
-  } else {
-    el(frame);
-  }
-
   // When the app is ready to receive events, send relevant info
-  this.on('ready', function () {
+  this.once('ready', function () {
     this.trigger('referrer', global.location.href);
 
     if (typeof this.options.content === 'string') {
       this.trigger('content', this.options.content);
     }
+
+    each(that.options.alias, function (value, key) {
+      this.trigger('alias', key, value);
+    }, this);
   });
 
   // When a new height comes through, update the iframe height
@@ -161,6 +140,14 @@ Notebook.prototype.makeFrame = function (el) {
     that.trigger.apply(that, e.data);
   }, false);
 
+  if (typeof el.appendChild === 'function') {
+    el.appendChild(frame);
+  } else {
+    el(frame);
+  }
+
+  this.window = frame.contentWindow;
+
   this.styleFrame(this.options.style);
 
   return this;
@@ -175,6 +162,13 @@ Notebook.prototype.makeFrame = function (el) {
 Notebook.prototype.styleFrame = function (style) {
   css(this.frame, style);
   return this;
+};
+
+Notebook.prototype.getVariable = function (key, done) {
+  this.once('export', function (key, value) {
+    done(value);
+  });
+  this.trigger('export', key);
 };
 
 /**
@@ -215,6 +209,22 @@ Notebook.prototype.on = function (name, fn) {
 };
 
 /**
+ * Listen to an event being triggered by the frame once.
+ *
+ * @param  {String}   name
+ * @param  {Function} fn
+ * @return {Notebook}
+ */
+Notebook.prototype.once = function (name, fn) {
+  var that = this;
+  return this.on(name, function cb () {
+    that.off(name, cb);
+    fn.apply(this, arguments);
+    fn = null;
+  });
+};
+
+/**
  * Remove an event listener from the frame.
  *
  * @param  {String}   name
@@ -230,7 +240,7 @@ Notebook.prototype.off = function (name, fn) {
   }
 
   var events = this._events[name];
-  for (var i = 0; i < events; i++) {
+  for (var i = 0; i < events.length; i++) {
     if (events[i] === fn) {
       events.splice(i, 1);
       i--;
@@ -258,7 +268,9 @@ Notebook.prototype.trigger = function (name /*, ..args */) {
     delete that._frameEvent;
     args = Array.prototype.slice.call(arguments, 1);
     if (this._events && this._events[name]) {
-      each(this._events[name], function (fn) {
+      // Slice a copy of the events since we might be removing an event from
+      // within an event callback. In which case it would break the loop.
+      each(this._events[name].slice(), function (fn) {
         fn.apply(that, args);
       });
     }

@@ -6,7 +6,7 @@ var OPEN_CODE_BLOCK  = '```javascript';
 var CLOSE_CODE_BLOCK = '```';
 
 var Notebook = module.exports = Backbone.Collection.extend({
-  model: require('../models/entry'),
+  model: require('../models/cell'),
   comparator: function (model) {
     if (!model.view || !model.view.el.parentNode) { return this.length; }
     // Sorting the collection based on positions in the DOM

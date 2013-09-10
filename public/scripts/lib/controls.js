@@ -1,5 +1,5 @@
 var _     = require('underscore');
-var isMac = require('../lib/browser').mac;
+var isMac = require('../lib/browser/about').mac;
 
 var codeControls   = exports.code   = [];
 var textControls   = exports.text   = [];

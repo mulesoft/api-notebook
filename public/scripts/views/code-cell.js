@@ -1,14 +1,12 @@
-var _            = require('underscore');
-var Backbone     = require('backbone');
-var EditorCell   = require('./editor');
-var ResultCell   = require('./result');
-var Completion   = require('../../lib/completion');
-var stripInput   = require('../../lib/cm-strip-input');
-var state        = require('../../lib/state');
-var autocomplete = require('../../lib/cm-sandbox-autocomplete');
-var isHidden     = require('../../lib/is-hidden-property');
-var extraKeys    = require('./lib/extra-keys');
-var controls     = require('../../lib/controls').code;
+var _          = require('underscore');
+var Backbone   = require('backbone');
+var EditorCell = require('./editor-cell');
+var ResultCell = require('./result-cell');
+var Completion = require('../lib/completion');
+var stripInput = require('../lib/codemirror/strip-input');
+var state      = require('../state/state');
+var extraKeys  = require('./lib/extra-keys');
+var controls   = require('../lib/controls').code;
 
 var filterCompletion = function () {
   return this._completion.refresh();
@@ -26,7 +24,7 @@ CodeCell.prototype.initialize = function () {
   this.sandbox    = this.options.sandbox;
 };
 
-CodeCell.prototype.EditorModel = require('../../models/code-entry');
+CodeCell.prototype.EditorModel = require('../models/code-cell');
 
 CodeCell.prototype.editorOptions = _.extend(
   {},
@@ -78,19 +76,20 @@ CodeCell.prototype.execute = function (cb) {
   this.model.set('value', this.editor.getValue());
   this.browseToCell(this.model);
 
-  this.sandbox.execute(this.getValue(), context, _.bind(function (err, result) {
-    // Set the error or result to the inspector
-    if (err) {
-      this.result.setError(err, this.sandbox.window);
-    } else {
-      this.result.setResult(result, this.sandbox.window);
-    }
-
-    this.model.set('result', result); // Keep a reference to the result
-    this.trigger('execute', this, err, result);
-
-    if (cb) { cb(err, result); }
-  }, this));
+  this.sandbox.execute(this.getValue(), context,
+    _.bind(function (result, isError) {
+      if (isError) {
+        this.model.unset('result');
+      } else {
+        this.model.set('result', result);
+      }
+      // Trigger `execute` and set the result, each of which need an additional
+      // flag to indicate whether the the
+      this.result.setResult(result, isError, this.sandbox.window);
+      this.trigger('execute', this, result, isError);
+      if (cb) { cb(result, isError); }
+    }, this)
+  );
 
   return this;
 };
@@ -129,21 +128,9 @@ CodeCell.prototype.bindEditor = function () {
   var context = Object.create(this.sandbox.window);
   _.extend(context, this.model.collection.serializeForEval());
 
-  // Set up autocompletion
-  this._completion = new Completion(this.editor, autocomplete, {
-    context: context,
-    filter: function (string) {
-      var token = this.token;
-
-      // Check the token type and allow keywords to be completed
-      if (!state.get('showExtra')) {
-        if (token.type === 'property' && isHidden(this.context, string)) {
-          return false;
-        }
-      }
-
-      return string.substr(0, token.string.length) === token.string;
-    }
+  // Set up the autocompletion widget.
+  this._completion = new Completion(this.editor, {
+    context: context
   });
 
   this.listenTo(state, 'change:showExtra', filterCompletion, this);

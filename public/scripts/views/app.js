@@ -5,48 +5,14 @@ var domify   = require('domify');
 
 var View     = require('./view');
 var Notebook = require('./notebook');
-var state    = require('../lib/state');
-var messages = require('../lib/messages');
 var controls = require('../lib/controls');
+
+var state    = require('../state/state');
+var messages = require('../state/messages');
 
 var App = module.exports = View.extend({
   className: 'application'
 });
-
-App._        = _;
-App.Backbone = Backbone;
-
-// Access a sandbox instance from tests
-App.Sandbox     = require('../lib/sandbox');
-App.PostMessage = require('../lib/post-message');
-
-// Alias all the available views
-App.View = {
-  View:           require('./view'),
-  Notebook:       require('./notebook'),
-  Inspector:      require('./inspector'),
-  ErrorInspector: require('./error-inspector'),
-  Cell:           require('./cells/cell'),
-  CodeCell:       require('./cells/code'),
-  TextCell:       require('./cells/text'),
-  EditorCell:     require('./cells/editor'),
-  ResultCell:     require('./cells/result'),
-  CellControls:   require('./cells/cell-controls'),
-};
-
-// Alias all the available models
-App.Model = {
-  Entry:     require('../models/entry'),
-  CodeEntry: require('../models/code-entry'),
-  TextEntry: require('../models/text-entry'),
-  Gist:      require('../models/gist'),
-  Session:   require('../models/session')
-};
-
-// Alias all the available collections
-App.Collection = {
-  Notebook: require('../collections/notebook')
-};
 
 App.prototype.events = {
   'click .modal-toggle':   'toggleShortcuts',
@@ -180,6 +146,16 @@ App.prototype.setupEmbeddableWidget = function () {
   postMessage.on('content', function (content) {
     this.setDefaultContent(content);
   }, this);
+
+  // Allow passing of variables between the parent window and child frame.
+  postMessage.on('alias', function (key, value) {
+    global[key] = value;
+  });
+
+  // Allow grabbing a variable from the iframe and passing back to the parent.
+  postMessage.on('export', function (key) {
+    postMessage.trigger('export', key, global[key]);
+  });
 
   // Send a message to the parent frame and let it know we are ready to accept
   // messages and data.

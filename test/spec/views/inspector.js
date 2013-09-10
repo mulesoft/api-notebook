@@ -89,12 +89,12 @@ describe('Object Inspector', function () {
         prop:
         for (var prop in properties) {
           for (var i = 0; i < props.length; i++) {
-            if (props[i].prefix === prop) {
+            if (props[i].property === prop) {
               matchPreview(props[i], properties[prop]);
               continue prop;
             }
           }
-          throw new Error('Prototype property not found.');
+          throw new Error('Property not found.');
         }
       };
 
@@ -124,7 +124,7 @@ describe('Object Inspector', function () {
         prop:
         for (var prop in prototype) {
           for (var i = 0; i < proto.children.length; i++) {
-            if (proto.children[i].prefix === prop) {
+            if (proto.children[i].property === prop) {
               matchPreview(proto.children[i], prototype[prop]);
               continue prop;
             }

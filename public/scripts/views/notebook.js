@@ -3,16 +3,16 @@ var trim     = require('trim');
 var View     = require('./view');
 var Backbone = require('backbone');
 
-var CodeView           = require('./cells/code');
-var TextView           = require('./cells/text');
-var EditorView         = require('./cells/editor');
-var EntryModel         = require('../models/entry');
-var CellControls       = require('./cells/cell-controls');
+var CodeView           = require('./code-cell');
+var TextView           = require('./text-cell');
+var EditorView         = require('./editor-cell');
+var CellControls       = require('./cell-controls');
 var GistModel          = require('../models/gist');
+var EntryModel         = require('../models/cell');
 var NotebookCollection = require('../collections/notebook');
 
 var Sandbox     = require('../lib/sandbox');
-var insertAfter = require('../lib/insert-after');
+var insertAfter = require('../lib/browser/insert-after');
 
 var Notebook = module.exports = View.extend({
   className: 'notebook'
