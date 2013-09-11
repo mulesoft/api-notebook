@@ -97,6 +97,11 @@ describe('Completion', function () {
       testAutocomplete('(123).to', 'toFixed')
     );
 
+    it(
+      'should complete as soon as the property period is entered',
+      testAutocomplete('window.', 'window')
+    );
+
     describe('Whitespace', function () {
       it(
         'should ignore whitespace after variable',

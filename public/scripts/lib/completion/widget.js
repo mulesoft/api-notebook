@@ -76,7 +76,7 @@ Widget.prototype.refresh = function (done) {
   // execution. This stops rendering from being out of sync with keypresses.
   this._refreshing = asyncSeries(_.map(this.data.list, function (suggestion) {
     return _.bind(function (next) {
-      return this._filter(suggestion, next);
+      return process.nextTick(_.bind(this._filter, this, suggestion, next));
     }, this);
   }, this), function (err, results) {
     var text      = cm.getRange(this.data.from, this.data.to);

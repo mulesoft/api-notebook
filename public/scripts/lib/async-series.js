@@ -34,16 +34,11 @@ module.exports = function (tasks, done, context) {
       return done.call(context, err, results);
     }
 
-    // Make the stack execution async because when the stack is too large
-    // (around 500 functions on Chrome), it'll throw a hard to catch tail
-    // recursion error.
-    process.nextTick(function () {
-      try {
-        layer(next);
-      } catch (e) {
-        next(e);
-      }
-    });
+    try {
+      layer(next);
+    } catch (e) {
+      next(e);
+    }
   })();
 
   // Return a function that breaks the async series.

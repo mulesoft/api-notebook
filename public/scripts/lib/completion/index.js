@@ -50,12 +50,6 @@ var Completion = module.exports = function (cm, options) {
 
     var token = cm.getTokenAt(data.from);
 
-    // Don't want to be causing autocompletion when we are in the middle of an
-    // writing a varibable or property.
-    if (token.type && token.end !== cm.getCursor().ch) {
-      return that.removeWidget();
-    }
-
     // If the previous token is whitespace, trigger a new autocompletion widget.
     if (/^ *$/.test(token.string)) {
       that.removeWidget();
