@@ -70,12 +70,28 @@ describe('Object Inspector', function () {
       inputOutput(/(passing)?/, '/(passing)?/');
     });
 
-    it('should inspect elements', function () {
+    it('should inspect errors', function () {
+      inputOutput(new Error('Test Error'), 'Error: Test Error');
+    });
+
+    it('should inspect dom elements', function () {
       inputOutput(document.createElement('div'), '<div></div>');
     });
 
-    it('should inspect errors', function () {
-      inputOutput(new Error('Test Error'), 'Error: Test Error');
+    it('should inspect comment nodes', function () {
+      inputOutput(document.createComment(' Test '), '<!-- Test -->');
+    });
+
+    it('should inspect doctype nodes', function () {
+      inputOutput(document.childNodes[0], /!doctype html/i);
+    });
+
+    it('should inspect document nodes', function () {
+      inputOutput(document, /!doctype html/i);
+    });
+
+    it('should inspect attribute nodes', function () {
+      inputOutput(document.createAttribute('test'), /^test/);
     });
 
     describe('rendering properties', function () {

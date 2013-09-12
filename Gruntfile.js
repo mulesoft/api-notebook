@@ -108,6 +108,10 @@ module.exports = function (grunt) {
     },
 
     watch: {
+      html: {
+        files: ['public/**/*.html'],
+        tasks: ['copy']
+      },
       scripts: {
         files: ['public/**/*.{js,hbs}'],
         tasks: ['browserify'],

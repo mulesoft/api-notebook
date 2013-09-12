@@ -3,11 +3,13 @@ var trim     = require('trim');
 var View     = require('./view');
 var Backbone = require('backbone');
 
+var router      = require('../state/router');
+var persistence = require('../state/persistence');
+
 var CodeView           = require('./code-cell');
 var TextView           = require('./text-cell');
 var EditorView         = require('./editor-cell');
 var CellControls       = require('./cell-controls');
-var GistModel          = require('../models/gist');
 var EntryModel         = require('../models/cell');
 var NotebookCollection = require('../collections/notebook');
 
@@ -18,112 +20,80 @@ var Notebook = module.exports = View.extend({
   className: 'notebook'
 });
 
-var saveGist = _.debounce(function () {
-  if (!this.user.id || !this.isOwner()) { return; }
-
-  var gist = this.collection.serializeForGist();
-
-  if (!trim.right(gist)) { return; }
-  this.gist.setNotebook(gist);
-  this.gist.save(null, { patch: true });
-}, 500);
-
 Notebook.prototype.initialize = function (options) {
   this.sandbox    = new Sandbox();
   this.controls   = new CellControls().render();
-  this.collection = this.collection || new NotebookCollection();
   this._uniqueId  = 0;
-  this.user       = options.user;
-  // Every notebook has a unique gist and collection
-  this.gist       = options.gist;
-  this.collection = this.gist.notebook;
-
-  this.listenToOnce(this.gist, 'sync', function (model) {
-    Backbone.history.navigate(model.id);
-  });
+  this.collection = new NotebookCollection();
 
   // If the user changes at any point in the applications state, we may now
   // be granted the ability to edit, fork.. or we may have lost the ability
-  this.listenTo(this.user,       'changeUser',         this.updateUser);
-  this.listenTo(this.collection, 'remove sort change', this.save);
+  this.listenTo(persistence, 'changeUser',    this.updateUser);
+  this.listenTo(persistence, 'resetNotebook', this.render);
 };
 
 Notebook.prototype.remove = function () {
+  persistence.reset();
   this.sandbox.remove();
   return View.prototype.remove.call(this);
 };
 
-Notebook.prototype.fork = function (cb) {
-  return this.gist.fork(cb);
-};
+Notebook.prototype.update = function () {
+  // If we are currently in an update operation, set a flag to remind
+  // ourselves to process the data once we are free.
+  if (this._updating) { return this._updateQueue = true; }
 
-Notebook.prototype.save = function () {
-  if (!this.rendering) { saveGist.call(this); }
-  return this;
-};
-
-Notebook.prototype.isOwner = function () {
-  return this.gist.isOwner();
+  this._updating = true;
+  // Serialize the notebook and set the persistant notebook contents
+  persistence.update(this.collection.toJSON(), _.bind(function (err, notebook) {
+    this._updating = false;
+    if (this._updateQueue) {
+      this._updateQueue = false;
+      this.update();
+    }
+  }, this));
 };
 
 Notebook.prototype.updateUser = function () {
   this.collection.each(function (model) {
     model.view.renderEditor();
   });
-  // If the user has changed, attempt to save the current notebook
-  this.save();
 };
 
-Notebook.prototype.setContent = function (content) {
-  var cells = this.collection.deserializeFromGist(content);
+Notebook.prototype.render = function () {
+  this.stopListening(this.collection);
+  this.collection.each(function (model) {
+    model.view.remove();
+  });
 
-  // Empty all the current content to reset with new contents
-  this.el.innerHTML = '';
-  _.each(cells, function (cell) {
-    var appendView = 'appendCodeView';
-    if (cell.type === 'text') { appendView = 'appendTextView'; }
-    this[appendView](null, cell.value);
-  }, this);
+  View.prototype.render.call(this);
+  this.collection = new NotebookCollection();
+  this.listenTo(this.collection, 'remove sort change', this.update);
 
-  if (!this.el.childNodes.length) { this.appendCodeView(); }
+  persistence.deserialize(_.bind(function (err, cells) {
+    // Empty all the current content to reset with new contents
+    _.each(cells, function (cell) {
+      var appendView = 'appendCodeView';
+      if (cell.type === 'text') { appendView = 'appendTextView'; }
+      this[appendView](null, cell.value);
+    }, this);
 
-  this.collection.last().view.focus();
+    if (!this.collection.length) { this.appendCodeView(); }
+
+    this.collection.last().view.focus();
+  }, this));
 
   return this;
 };
 
-Notebook.prototype.render = function () {
-  // Use a `rendering` flag to avoid resaving, etc. when rendering a gist
-  this.rendering = true;
-  this.el.classList.add('loading');
-  View.prototype.render.call(this);
+Notebook.prototype.appendTo = function () {
+  View.prototype.appendTo.apply(this, arguments);
 
-  var doneRendering = _.bind(function () {
-    this.rendering = false;
-    this.el.classList.remove('loading');
-  }, this);
-
-  // Reset the state
-  if (this.gist.isNew()) {
-    this.updateUser();
-    this.setContent('');
-    doneRendering();
-    Backbone.history.navigate('');
-    return this;
-  }
-
-  this.gist.fetch({
-    success: _.bind(function () {
-      this.updateUser();
-      this.setContent(this.gist.getNotebook());
-      doneRendering();
-    }, this),
-
-    // No gist exists or unauthorized, etc.
-    error: _.bind(function () {
-      doneRendering();
-      Backbone.history.navigate('', { trigger: true });
-    }, this)
+  // Any editor cells will need refreshing to display properly.
+  this.collection.each(function (model) {
+    if (model.view && model.view.editor) {
+      model.view.editor.refresh();
+    }
   });
 
   return this;
@@ -134,9 +104,9 @@ Notebook.prototype.execute = function (cb) {
   this.execution = true;
 
   // This chaining is a little awkward, but it allows the execution to work with
-  // asynchronous callbacks
+  // asynchronous callbacks.
   (function execution (view) {
-    // If no view is passed through, we must have hit the last view
+    // If no view is passed through, we must have hit the last view.
     if (!view) {
       that.execution = false;
       return cb && cb();
@@ -345,7 +315,6 @@ Notebook.prototype.appendView = function (view, before) {
   }
 
   // Some references may be needed
-  view.notebook   = this;
   view.sandbox    = this.sandbox;
   view.model.view = view;
   // Add the model to the collection
@@ -357,21 +326,6 @@ Notebook.prototype.appendView = function (view, before) {
   // Sort the collection every time a node is added in a different position to
   // just being appended at the end
   if (before) { this.collection.sort(); }
-
-  return this;
-};
-
-Notebook.prototype.appendTo = function (el) {
-  View.prototype.appendTo.call(this, el);
-
-  // Any editor cells will need refreshing to display properly
-  this.collection.each(function (model) {
-    if (model.view.editor) { model.view.editor.refresh(); }
-  });
-
-  // Focus the final cell on appending, since focusing before its in the DOM
-  // causes a few issues with phantom cursors.
-  if (this.collection.last()) { this.collection.last().view.focus(); }
 
   return this;
 };

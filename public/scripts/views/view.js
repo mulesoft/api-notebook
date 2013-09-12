@@ -3,6 +3,7 @@ var Backbone = require('backbone');
 var View = module.exports = Backbone.View.extend();
 
 View.prototype.render = function () {
+  this._rendered    = true;
   this.el.innerHTML = '';
   return this;
 };

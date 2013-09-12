@@ -6,9 +6,9 @@ var RETURN_PROP = '@return';
  * @param  {Object}   data
  * @param  {Function} next
  */
-var inspectorFilterPlugin = function (data, next) {
+var inspectorFilterPlugin = function (data, next, done) {
   if (typeof data.parent === 'function' && data.property === RETURN_PROP) {
-    data.filter = false;
+    return done(null, false);
   }
 
   return next();
@@ -42,14 +42,26 @@ var completionContextPlugin = function (data, next, done) {
 };
 
 /**
+ * A { key: function } map of all middleware used in the plugin.
+ *
+ * @type {Object}
+ */
+var plugins = {
+  'inspector:filter':   inspectorFilterPlugin,
+  'completion:context': completionContextPlugin
+};
+
+/**
  * Attach the middleware to the application.
  *
  * @param {Object} middleware
  */
-
 exports.attach = function (middleware) {
-  middleware.use('inspector:filter',   inspectorFilterPlugin);
-  middleware.use('completion:context', completionContextPlugin);
+  for (var key in plugins) {
+    if (plugins.hasOwnProperty(key)) {
+      middleware.use(key, plugins[key]);
+    }
+  }
 };
 
 /**
@@ -58,6 +70,9 @@ exports.attach = function (middleware) {
  * @param {Object} middleware
  */
 exports.detach = function (middleware) {
-  middleware.disuse('inspector:filter',   inspectorFilterPlugin);
-  middleware.disuse('completion:context', completionContextPlugin);
+  for (var key in plugins) {
+    if (plugins.hasOwnProperty(key)) {
+      middleware.disuse(key, plugins[key]);
+    }
+  }
 };

@@ -82,15 +82,16 @@ var isFunctionProperty = function (fn, property) {
  * @param  {Object}   data
  * @param  {Function} next
  */
-var completionFilterPlugin = function (data, next) {
-  if (data.filter) {
-    if (typeof data.context === 'object') {
-      data.filter = !isObjectProperty(data.context, data.string);
-    }
+var completionFilterPlugin = function (data, next, done) {
+  var string  = data.string;
+  var context = data.context;
 
-    if (typeof data.context === 'function') {
-      data.filter = !isFunctionProperty(data.context, data.string);
-    }
+  if (typeof context === 'object' && isObjectProperty(context, string)) {
+    return done(null, false);
+  }
+
+  if (typeof context === 'function' && isFunctionProperty(context, string)) {
+    return done(null, false);
   }
 
   return next();
@@ -102,12 +103,22 @@ var completionFilterPlugin = function (data, next) {
  * @param  {Object}   data
  * @param  {Function} next
  */
-var inspectorFilterPlugin = function (data, next) {
-  if (data.filter && data.internal === '[[Prototype]]') {
-    data.filter = false;
+var inspectorFilterPlugin = function (data, next, done) {
+  if (data.internal === '[[Prototype]]') {
+    return done(null, false);
   }
 
   return next();
+};
+
+/**
+ * A { key: function } map of all middleware used in the plugin.
+ *
+ * @type {Object}
+ */
+var plugins = {
+  'inspector:filter':  inspectorFilterPlugin,
+  'completion:filter': completionFilterPlugin
 };
 
 /**
@@ -116,8 +127,11 @@ var inspectorFilterPlugin = function (data, next) {
  * @param {Object} middleware
  */
 exports.attach = function (middleware) {
-  middleware.use('inspector:filter',  inspectorFilterPlugin);
-  middleware.use('completion:filter', completionFilterPlugin);
+  for (var key in plugins) {
+    if (plugins.hasOwnProperty(key)) {
+      middleware.use(key, plugins[key]);
+    }
+  }
 };
 
 /**
@@ -126,6 +140,9 @@ exports.attach = function (middleware) {
  * @param {Object} middleware
  */
 exports.detach = function (middleware) {
-  middleware.disuse('inspector:filter',  inspectorFilterPlugin);
-  middleware.disuse('completion:filter', completionFilterPlugin);
+  for (var key in plugins) {
+    if (plugins.hasOwnProperty(key)) {
+      middleware.disuse(key, plugins[key]);
+    }
+  }
 };

@@ -1,6 +1,6 @@
 /* global describe, it, afterEach, expect, sinon, App */
 
-describe('middleware', function () {
+describe('Middleware', function () {
   var middleware = App.middleware;
 
   it('should exist', function () {
@@ -150,6 +150,37 @@ describe('middleware', function () {
       expect(stackSpy).to.have.been.calledOnce;
     });
 
+    it('should be able to alter the data passed to the next function', function () {
+      var firstSpy = sinon.spy(function (data, next) {
+        next(null, 'Test');
+      });
+      var secondSpy = sinon.spy(function (data, next) {
+        expect(data).to.equal('Test');
+        next();
+      });
+
+      middleware.use('test', firstSpy);
+      middleware.use('test', secondSpy);
+      middleware.trigger('test', 'Something Else');
+
+      expect(firstSpy).to.have.been.calledOnce;
+      expect(secondSpy).to.have.been.calledOnce;
+    });
+
+    it('should be able to alter the data passed to the done function', function (done) {
+      var spy = sinon.spy(function (data, next, done) {
+        done(null, 'Test');
+      });
+
+      middleware.use('test', spy);
+      middleware.trigger('test', null, function (err, data) {
+        expect(err).to.not.exist;
+        expect(spy).to.have.been.calledOnce;
+        expect(data).to.equal('Test');
+        done();
+      });
+    });
+
     it('should be able to register error handling middleware', function () {
       var errorSpy = sinon.spy(function (err, data, next, done) {
         expect(err.message).to.equal('Test');
@@ -223,6 +254,37 @@ describe('middleware', function () {
       middleware.use('test', errorSpy);
       middleware.use('test', errorSpy);
       middleware.use('test', errorSpy);
+
+      middleware.trigger('test');
+
+      expect(errorSpy).to.have.been.calledThrice;
+    });
+
+    it('should be able to register a special all middleware listener', function () {
+      var spy = sinon.spy(function (name, data, next, done) {
+        expect(name).to.equal('test');
+        expect(data).to.be.an('object');
+        expect(next).to.be.a('function');
+        expect(done).to.be.a('function');
+        next();
+      });
+
+      middleware.use('all', spy);
+      middleware.trigger('test', {});
+
+      expect(spy).to.have.been.calledOnce;
+    });
+
+    it('should be able to register error middleware with the all listener', function () {
+      var errorSpy = sinon.spy(function (name, err, data, next, done) {
+        expect(error.message).to.equal('Test');
+        next(err);
+      });
+
+      middleware.use('all', function () { throw new Error('Test'); });
+      middleware.use('all', errorSpy);
+      middleware.use('all', errorSpy);
+      middleware.use('all', errorSpy);
 
       middleware.trigger('test');
 

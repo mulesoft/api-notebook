@@ -31,7 +31,7 @@ describe('Embeddable Widget', function () {
     notebook.remove();
   });
 
-  it('should be able to pass through custom styles', function () {
+  it('should be able to initialize with custom styles', function () {
     var notebook = new Notebook(fixture, {
       style: {
         border: '1px solid red'

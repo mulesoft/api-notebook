@@ -3,7 +3,7 @@ var Ghost        = require('./ghost');
 var state        = require('../../state/state');
 var correctToken = require('../codemirror/correct-token');
 var middleware   = require('../../state/middleware');
-var asyncSeries  = require('../async-series');
+var asyncFilter  = require('async').filter;
 
 var Widget = module.exports = function (completion, data, done) {
   this.data       = data;
@@ -29,10 +29,7 @@ Widget.prototype.remove = function () {
 };
 
 Widget.prototype.removeHints = function () {
-  // Break rendering refresh execution.
-  if (this._refreshing) { return this._refreshing(); }
-  // No hints have been created yet.
-  if (!this.hints) { return; }
+  if (this._refreshing || !this.hints) { return; }
   // Remove all event listeners associated with the hints.
   this.completion.cm.off('scroll', this.onScroll);
   this.completion.cm.removeKeyMap(this.hintKeyMap);
@@ -50,16 +47,9 @@ Widget.prototype.removeGhost = function () {
 };
 
 Widget.prototype.refresh = function (done) {
-  var that        = this;
-  var cm          = this.completion.cm;
-  var activeHint  = 0;
-  var currentHint = 0;
-
-  // If we have current hints, get the current resultId so we can set it back as
-  // close as possible
-  if (this.hints && this.selectedHint === +this.selectedHint) {
-    currentHint = this.hints.childNodes[this.selectedHint].listId;
-  }
+  var that = this;
+  var cm   = this.completion.cm;
+  var list = this.data.list;
 
   // Removes the previous ghost and hints before we start rendering the new
   // display widgets.
@@ -68,43 +58,27 @@ Widget.prototype.refresh = function (done) {
   delete this.selectedHint;
 
   // Update data attributes with new positions
-  this.data.to    = cm.getCursor();
-  this.data.token = correctToken(cm, this.data.to);
+  this.data.to     = cm.getCursor();
+  this.data.token  = correctToken(cm, this.data.to);
+  this._refreshing = true;
 
-  // Assign the result of calling `asyncSeries` to an internal property. The
-  // returned value should be a function, that when called breaks the series
-  // execution. This stops rendering from being out of sync with keypresses.
-  this._refreshing = asyncSeries(_.map(this.data.list, function (suggestion) {
-    return _.bind(function (next) {
-      return process.nextTick(_.bind(this._filter, this, suggestion, next));
-    }, this);
-  }, this), function (err, results) {
-    var text      = cm.getRange(this.data.from, this.data.to);
-    var hints     = this.hints = document.createElement('ul');
-    var hintId    = 0;
-    var displayed = [];
+  // Run an async filter on the data before we create the nodes
+  asyncFilter(list, _.bind(this._filter, this), _.bind(function (results) {
+    var text  = cm.getRange(this.data.from, this.data.to);
+    var hints = this.hints = document.createElement('ul');
 
     // Loop through each of the results and append an item to the hints list
-    _.each(results, function (data, index) {
-      if (!data.filter) { return; }
-
+    _.each(results, function (result, index) {
       var el = hints.appendChild(document.createElement('li'));
-      el.listId    = index;
-      el.hintId    = hintId++;
+      el.hintId    = index;
       el.className = 'CodeMirror-hint';
 
-      displayed.push(data.string);
-
-      if (index < currentHint) {
-        activeHint = hintId;
-      }
-
       // Do Blink-style bolding of the completed text
-      var indexOf = data.string.indexOf(text);
+      var indexOf = result.indexOf(text);
       if (indexOf > -1) {
-        var prefix = data.string.substr(0, indexOf);
-        var match  = data.string.substr(indexOf, text.length);
-        var suffix = data.string.substr(indexOf + text.length);
+        var prefix = result.substr(0, indexOf);
+        var match  = result.substr(indexOf, text.length);
+        var suffix = result.substr(indexOf + text.length);
 
         var highlight = document.createElement('span');
         highlight.className = 'CodeMirror-hint-match';
@@ -113,9 +87,9 @@ Widget.prototype.refresh = function (done) {
         el.appendChild(highlight);
         el.appendChild(document.createTextNode(suffix));
       } else {
-        el.appendChild(document.createTextNode(data.string));
+        el.appendChild(document.createTextNode(result));
       }
-    }, this);
+    });
 
     // Add the hinting keymap here instead of later or earlier since we need to
     // listen before we remove again, and we can't be listening when we don't
@@ -139,9 +113,9 @@ Widget.prototype.refresh = function (done) {
 
     // Remove the rendering flag now we have finished rendering the widget
     delete this._refreshing;
-    CodeMirror.signal(cm, 'refreshCompletion', cm, displayed);
+    CodeMirror.signal(cm, 'refreshCompletion', cm, results);
 
-    if (displayed.length < 2) {
+    if (results.length < 2) {
       this.setActive(0);
       return this.removeHints();
     }
@@ -150,7 +124,7 @@ Widget.prototype.refresh = function (done) {
     document.body.appendChild(hints);
 
     // Set the active element after render so we can calculate scroll positions
-    this.setActive(activeHint);
+    this.setActive(0);
 
     CodeMirror.on(hints, 'click', function (e) {
       var el = e.target || e.srcElement;
@@ -168,7 +142,7 @@ Widget.prototype.refresh = function (done) {
       'change:window.height change:window.width',
       this.onResize = function () { that.reposition(); }
     );
-  }, this);
+  }, this));
 };
 
 Widget.prototype.reposition = function () {
@@ -249,7 +223,10 @@ Widget.prototype._filter = function (string, done) {
     string:  string,
     filter:  true,
     context: this.data.context
-  }, done);
+  }, function (err, filter) {
+    if (err) { throw err; }
+    return done(filter);
+  });
 };
 
 Widget.prototype.setActive = function (i) {
@@ -281,7 +258,7 @@ Widget.prototype.setActive = function (i) {
   // ghost is appended, trigger a reposition event to align the autocompletion
   // with the text.
   this.removeGhost();
-  this.ghost = new Ghost(this, this.data, this.data.list[node.listId]);
+  this.ghost = new Ghost(this, this.data, node.textContent);
   this.reposition();
 
   if (node.offsetTop < this.hints.scrollTop) {

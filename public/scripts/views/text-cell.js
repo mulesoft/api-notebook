@@ -56,8 +56,8 @@ TextCell.prototype.refresh = function () {
 };
 
 TextCell.prototype.focus = function () {
-  // Don't actually allow focusing on the editor if the user is not authorized
-  if (this.notebook && !this.notebook.isOwner()) { return this; }
+  // Don't allow focusing on the editor if the user is not the owner
+  if (!this.isOwner()) { return this; }
 
   this.hasFocus = true;
   this.renderEditor();

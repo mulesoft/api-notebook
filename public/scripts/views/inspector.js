@@ -181,14 +181,14 @@ InspectorView.prototype.renderPreview = function () {
     property:   this.property,
     internal:   this.internal,
     descriptor: desc
-  }, _.bind(function (err, data) {
+  }, _.bind(function (err, filter) {
     this.el.appendChild(el);
 
     var toggleExtra = _.bind(function (toggle) {
       this.el.classList[toggle ? 'remove' : 'add']('hide');
     }, this);
 
-    if (!data.filter) {
+    if (!filter) {
       // Listen for state changes to show extra properties/information
       toggleExtra(state.get('showExtra'));
       this.listenTo(state, 'change:showExtra', function (_, toggle) {

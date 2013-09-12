@@ -23,26 +23,15 @@ describe('App', function () {
     var view, oldAjax;
 
     beforeEach(function () {
-      // Stop attempting to do ajax requests and open windows
-      oldAjax = Backbone.$.ajax;
-      sinon.spy(window, 'open');
-      Backbone.$.ajax = function () {};
-      // Create an app instance for testing, but stub opening a new window
       view = new App();
     });
 
     afterEach(function () {
       view.remove();
-      Backbone.$.ajax = oldAjax;
-      window.open.restore();
     });
 
     it('should have a class name of `application`', function () {
-      expect(view.el.className).to.equal('application');
-    });
-
-    it('should create a user session', function () {
-      expect(view.user).to.exist;
+      expect(view.el.className).to.contain('application');
     });
 
     describe('#render', function () {

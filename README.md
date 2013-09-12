@@ -34,11 +34,14 @@ More advanced use case allows for programmatic creation of notebooks.
 
 ```javascript
 new Notebook(el, {
-  id: document.getElementById('notebook'),
+  id:      '123',
   content: '# Fallback Markdown Content',
   style: {
     minWidth: '320px',
     minHeight: '200px'
+  },
+  alias: {
+    $: window.jQuery
   }
 })
 ```

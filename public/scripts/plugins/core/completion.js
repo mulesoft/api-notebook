@@ -111,9 +111,8 @@ module.exports = function (middleware) {
    * the global scope and coerces other types detected by CodeMirror (such as
    * strings and numbers) into the correct representation.
    *
-   * @param  {[type]}   data [description]
-   * @param  {Function} next [description]
-   * @return {[type]}        [description]
+   * @param  {Object}   data
+   * @param  {Function} next
    */
   middleware.core('completion:context', function (data, next) {
     var token  = data.token;
@@ -166,12 +165,10 @@ module.exports = function (middleware) {
    * @param  {Object}   data
    * @param  {Function} next
    */
-  middleware.core('completion:filter', function (data, next) {
-    if (data.filter) {
-      var string = data.token.string;
-      data.filter = data.string.length > string.length &&
-                    data.string.substr(0, string.length) === string;
-    }
-    return next();
+  middleware.core('completion:filter', function (data, next, done) {
+    var str    = data.token.string;
+    var longer = data.string.length > str.length;
+
+    return done(null, longer && data.string.substr(0, str.length) === str);
   });
 };

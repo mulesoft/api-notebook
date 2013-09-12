@@ -1,5 +1,6 @@
-var css  = require('css-component');
-var each = require('foreach');
+var css    = require('css-component');
+var each   = require('foreach');
+var Kamino = require('kamino');
 
 // Set the location to load the notebook from
 var NOTEBOOK_URL = process.env.NOTEBOOK_URL;
@@ -15,6 +16,7 @@ var NOTEBOOK_URL = process.env.NOTEBOOK_URL;
  */
 var extend = function (obj /*, ...source */) {
   each(Array.prototype.slice.call(arguments, 1), function (source) {
+    // Stops primitives from going through the loop
     if (source !== Object(source)) { return; }
 
     each(source, function (prop, key) {
@@ -26,7 +28,7 @@ var extend = function (obj /*, ...source */) {
 };
 
 /**
- * Getting all the data atrributes of an element. Works on all browsers.
+ * Getting all the data atrributes of an element. Works cross-browser.
  *
  * @param  {Element} el
  * @return {Object}
@@ -104,27 +106,42 @@ var Notebook = module.exports = function (el, options) {
  * @return {Notebook}
  */
 Notebook.prototype.makeFrame = function (el) {
-  var that = this;
-  var src  = NOTEBOOK_URL;
-
-  if (this.options.id) {
-    src += ('/' === src[src.length - 1] ? '' : '/') + this.options.id;
-  }
+  var that   = this;
+  var src    = NOTEBOOK_URL + '/embed.html';
+  var config = {};
 
   var frame = this.frame = document.createElement('iframe');
   frame.src = src;
 
-  // When the app is ready to receive events, send relevant info
+  // An initial notebook id to load.
+  if (this.options.id) {
+    config.id = this.options.id;
+  }
+
+  // Fallback content when the initial id fails to load or no id is provided.
+  if (typeof this.options.content === 'string') {
+    config.content = this.options.content;
+  }
+
+  // Application variables to alias inside the iframe.
+  if (typeof this.options.alias === 'object') {
+    config.alias = this.options.alias;
+  }
+
+  // Allow injection of scripts directly into the iframe.
+  if (typeof this.options.inject === 'object') {
+    config.inject = this.options.inject;
+  }
+
+  // When the app is ready to receive events, send configuration data and let
+  // the frame know when we are ready to execute.
   this.once('ready', function () {
-    this.trigger('referrer', global.location.href);
+    this.trigger('config', config);
 
-    if (typeof this.options.content === 'string') {
-      this.trigger('content', this.options.content);
-    }
-
-    each(that.options.alias, function (value, key) {
-      this.trigger('alias', key, value);
-    }, this);
+    // Once all the data has been passed through to the frame, let it know it
+    // is ready to render. This would be handy for embedding an inline loading
+    // indicator or similar while the iframe starts to load too.
+    this.trigger('ready');
   });
 
   // When a new height comes through, update the iframe height
@@ -137,7 +154,7 @@ Notebook.prototype.makeFrame = function (el) {
     if (e.source !== frame.contentWindow) { return; }
 
     that._frameEvent = e;
-    that.trigger.apply(that, e.data);
+    that.trigger.apply(that, Kamino.parse(e.data));
   }, false);
 
   if (typeof el.appendChild === 'function') {
@@ -147,7 +164,6 @@ Notebook.prototype.makeFrame = function (el) {
   }
 
   this.window = frame.contentWindow;
-
   this.styleFrame(this.options.style);
 
   return this;
@@ -164,6 +180,12 @@ Notebook.prototype.styleFrame = function (style) {
   return this;
 };
 
+/**
+ * Returns a variable from the embedded page.
+ *
+ * @param  {String}   key
+ * @param  {Function} done
+ */
 Notebook.prototype.getVariable = function (key, done) {
   this.once('export', function (key, value) {
     done(value);
@@ -278,7 +300,7 @@ Notebook.prototype.trigger = function (name /*, ..args */) {
   }
 
   args = Array.prototype.slice.call(arguments, 0);
-  this.frame.contentWindow.postMessage(args, NOTEBOOK_URL);
+  this.frame.contentWindow.postMessage(Kamino.stringify(args), NOTEBOOK_URL);
   return this;
 };
 
@@ -294,7 +316,8 @@ Notebook.prototype.trigger = function (name /*, ..args */) {
 
   for (var i = 0, l = scripts.length; i < l; i++) {
     script = scripts[i];
-    // Allows the script to be loaded asyncronously if we provide this attribute
+    // Allows the script to be loaded asynchronously if we provide this
+    // attribute with the script tag.
     if (typeof script.getAttribute('data-notebook') === 'string') { break; }
   }
 

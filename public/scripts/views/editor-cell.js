@@ -5,6 +5,7 @@ var BtnControls = require('./btn-cell-controls');
 var extraKeys   = require('./lib/extra-keys');
 var controls    = require('../lib/controls').editor;
 var messages    = require('../state/messages');
+var persistence = require('../state/persistence');
 
 var EditorCell = module.exports = Cell.extend();
 
@@ -152,8 +153,8 @@ EditorCell.prototype.renderEditor = function () {
   }, this), _.extend({}, this.editorOptions, {
     // Add the current view to the editor options
     view:     this,
-    // Set to readonly if there is a notebook and we aren't the notebook owner
-    readOnly: !this.notebook || this.notebook.isOwner() ? false : 'nocursor'
+    // Set to readonly if we aren't the notebooks owner
+    readOnly: this.isOwner() ? false : 'nocursor'
   }));
   // Move the state of the editor
   if (doc) { this.editor.swapDoc(doc); }
@@ -222,4 +223,14 @@ EditorCell.prototype.appendTo = function (el) {
     setTimeout(function () { messages.trigger('resize'); }, 0);
   }
   return this;
+};
+
+/**
+ * Checks whether the current user is the current owner of the cell and able to
+ * edit it.
+ *
+ * @return {Boolean}
+ */
+EditorCell.prototype.isOwner = function () {
+  return persistence.isOwner();
 };

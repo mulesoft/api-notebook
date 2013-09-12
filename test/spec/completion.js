@@ -24,9 +24,9 @@ describe('Completion', function () {
     };
   };
 
-  it('should complete variables', testAutocomplete('doc', 'document'));
-
   it('should complete keywords', testAutocomplete('sw', 'switch'));
+
+  it('should complete variables', testAutocomplete('doc', 'document'));
 
   it(
     'should complete using static analysis',

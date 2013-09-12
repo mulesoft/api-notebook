@@ -1,7 +1,7 @@
 {
   "name": "JSNotebook",
   "version": "0.0.1",
-  "description": "JSNotebook API proxy",
+  "description": "JSNotebook",
   "private": true,
   "dependencies": {
     "underscore": "~1.5.1",
@@ -11,15 +11,15 @@
     "trim": "0.0.1",
     "express": "~3.3",
     "jshint": "~2.1",
-    "passport": "~0.1",
-    "passport-github": "~0.1",
     "request": "~2.26.0",
     "marked": "~0.2.9",
     "brfs": "0.0.7",
     "stacktrace-js": "~0.5.0",
     "domify": "~1.0.0",
     "css-component": "0.0.2",
-    "foreach": "~2.0.4"
+    "foreach": "~2.0.4",
+    "kamino": "git://github.com/tildeio/kamino.js",
+    "async": "~0.2.9"
   },
   "devDependencies": {
     "grunt-contrib-copy": "~0.4.1",
@@ -46,8 +46,7 @@
   },
   "scripts": {
     "build": "./node_modules/.bin/grunt build",
-    "test": "npm run build && ./node_modules/.bin/grunt check",
-    "predeploy": "npm run build",
+    "test": "npm run-script build && ./node_modules/.bin/grunt check",
     "start": "node app.js"
   },
   "repository": {
