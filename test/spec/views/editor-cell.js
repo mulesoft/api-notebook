@@ -80,49 +80,49 @@ describe('Editor Cell', function () {
           var spy = sinon.spy();
           view.on('navigateUp', spy);
           fakeKey(editor, UP, { altKey: true });
-          expect(spy.calledOnce).to.be.ok;
+          expect(spy).to.have.been.calledOnce;
         });
 
         it('Navigate Down (`Alt-Down`)', function () {
           var spy = sinon.spy();
           view.on('navigateDown', spy);
           fakeKey(editor, DOWN, { altKey: true });
-          expect(spy.calledOnce).to.be.ok;
+          expect(spy).to.have.been.calledOnce;
         });
 
         it('Move Cell Up (`Cmd-Alt-Up`)', function () {
           var spy = sinon.spy();
           view.on('moveUp', spy);
           fakeKey(editor, UP, { altKey: true, metaKey: true });
-          expect(spy.calledOnce).to.be.ok;
+          expect(spy).to.have.been.calledOnce;
         });
 
         it('Move Cell Down (`Cmd-Alt-Down`)', function () {
           var spy = sinon.spy();
           view.on('moveDown', spy);
           fakeKey(editor, DOWN, { altKey: true, metaKey: true });
-          expect(spy.calledOnce).to.be.ok;
+          expect(spy).to.have.been.calledOnce;
         });
 
         it('Clone Cell (`Ctrl-Alt-C`)', function () {
           var spy = sinon.spy();
           view.on('clone', spy);
           fakeKey(editor, 'C', { altKey: true, ctrlKey: true });
-          expect(spy.calledOnce).to.be.ok;
+          expect(spy).to.have.been.calledOnce;
         });
 
         it('Delete Cell (`Cmd-Delete`)', function () {
           var spy = sinon.spy();
           view.on('remove', spy);
           fakeKey(editor, DELETE, { metaKey: true });
-          expect(spy.calledOnce).to.be.ok;
+          expect(spy).to.have.been.calledOnce;
         });
 
         it('Switch Cell (`Cmd-Alt-B`)', function () {
           var spy = sinon.spy();
           view.on('switch', spy);
           fakeKey(editor, 'B', { metaKey: true, altKey: true });
-          expect(spy.calledOnce).to.be.ok;
+          expect(spy).to.have.been.calledOnce;
         });
       });
 

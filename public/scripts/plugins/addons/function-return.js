@@ -57,11 +57,7 @@ var plugins = {
  * @param {Object} middleware
  */
 exports.attach = function (middleware) {
-  for (var key in plugins) {
-    if (plugins.hasOwnProperty(key)) {
-      middleware.use(key, plugins[key]);
-    }
-  }
+  middleware.use(plugins);
 };
 
 /**
@@ -70,9 +66,5 @@ exports.attach = function (middleware) {
  * @param {Object} middleware
  */
 exports.detach = function (middleware) {
-  for (var key in plugins) {
-    if (plugins.hasOwnProperty(key)) {
-      middleware.disuse(key, plugins[key]);
-    }
-  }
+  middleware.disuse(plugins);
 };

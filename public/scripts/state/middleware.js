@@ -24,9 +24,30 @@
  * `ajax`                - Submit an asynchonous ajax request that will be
  *                         responded with the ajax object.
  * `authenticate:oauth2` - Trigger the oauth2 authentication flow.
+ * `sandbox:context`     - Provide additional context variables to the sandbox.
  */
 var _        = require('underscore');
 var Backbone = require('backbone');
+
+/**
+ * Return a function that transforms a function into accept a single object
+ * with the key as the first function parameter and the value as the second
+ * function parameter.
+ *
+ * @param  {Function} fn
+ * @return {Function}
+ */
+var acceptObject = function (fn) {
+  return function (object) {
+    if (typeof object === 'object') {
+      return _.each(object, function (value, key) {
+        return fn.call(this, key, value);
+      }, this);
+    }
+
+    return fn.apply(this, arguments);
+  };
+};
 
 /**
  * An event based implementation of a namespaced middleware system. Provides a
@@ -63,11 +84,11 @@ middleware._core = {};
  * @param  {Function} fn
  * @return {this}
  */
-middleware.use = function (name, fn) {
+middleware.use = acceptObject(function (name, fn) {
   var stack = this._stack[name] || (this._stack[name] = []);
   stack.push(fn);
   return this;
-};
+});
 
 /**
  * Register a core middleware plugin. Core middleware plugins function
@@ -90,7 +111,7 @@ middleware.core = function (name, fn) {
  * @param  {Function} fn
  * @return {this}
  */
-middleware.disuse = function (name, fn) {
+middleware.disuse = acceptObject(function (name, fn) {
   if (!fn || !this._stack[name]) {
     delete this._stack[name];
     return this;
@@ -107,7 +128,7 @@ middleware.disuse = function (name, fn) {
   if (!stack.length) { delete this._stack[name]; }
 
   return this;
-};
+});
 
 /**
  * Listens to any events triggered on the middleware system and runs through the

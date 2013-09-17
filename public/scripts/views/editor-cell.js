@@ -71,11 +71,15 @@ EditorCell.prototype.appendNew = function () {
 
 EditorCell.prototype.focus = function () {
   // Set a hidden focus flag so we can use it to check in tests
-  this._focus = true;
+  this._hasFocus = true;
   // Make focusing the editor async since it triggers other events such as
   // scrolling into view which interferes with iframe resizing events.
   process.nextTick(_.bind(this.editor.focus, this.editor));
   return this;
+};
+
+EditorCell.prototype.hasFocus = function () {
+  return this._hasFocus || (!!this.editor && this.editor.hasFocus());
 };
 
 EditorCell.prototype.save = function () {
@@ -92,7 +96,7 @@ EditorCell.prototype.refresh = function () {
 EditorCell.prototype.bindEditor = function () {
   this.listenTo(this.editor, 'focus', _.bind(function () {
     this.el.classList.add('active');
-    delete this._focus;
+    delete this._hasFocus;
     this.trigger('focus', this);
   }, this));
 

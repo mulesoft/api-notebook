@@ -13,7 +13,7 @@ var TextCell = module.exports = EditorCell.extend({
 
 TextCell.prototype.events = _.extend({}, EditorCell.prototype.events, {
   'click': function () {
-    if (!this.hasFocus) {
+    if (!this._hasFocus) {
       this.focus();
     }
   }
@@ -41,7 +41,7 @@ TextCell.prototype.bindEditor = function () {
   }, this));
 
   this.listenTo(this.editor, 'blur', _.bind(function (cm) {
-    this.hasFocus = false;
+    this._hasFocus = false;
     this.renderEditor();
   }, this));
 
@@ -59,7 +59,7 @@ TextCell.prototype.focus = function () {
   // Don't allow focusing on the editor if the user is not the owner
   if (!this.isOwner()) { return this; }
 
-  this.hasFocus = true;
+  this._hasFocus = true;
   this.renderEditor();
   return EditorCell.prototype.focus.call(this);
 };
@@ -122,7 +122,7 @@ TextCell.prototype.removeMarkdown = function () {
 };
 
 TextCell.prototype.renderEditor = function () {
-  if (this.hasFocus) {
+  if (this._hasFocus) {
     this.removeMarkdown();
     EditorCell.prototype.renderEditor.call(this);
   } else {

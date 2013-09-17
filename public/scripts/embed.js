@@ -181,16 +181,27 @@ Notebook.prototype.styleFrame = function (style) {
 };
 
 /**
+ * Evaluate text in the context of the notebook frame.
+ *
+ * @param {String} evil
+ */
+Notebook.prototype.exec = function (evil, done) {
+  this.once('exec', function (result) {
+    return done(result);
+  });
+  this.trigger('exec', evil);
+};
+
+/**
  * Returns a variable from the embedded page.
  *
- * @param  {String}   key
- * @param  {Function} done
+ * @param {String}   key
+ * @param {Function} done
  */
 Notebook.prototype.getVariable = function (key, done) {
-  this.once('export', function (key, value) {
-    done(value);
+  this.exec(key, function (result) {
+    return done(result);
   });
-  this.trigger('export', key);
 };
 
 /**

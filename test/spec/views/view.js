@@ -20,10 +20,9 @@ describe('View', function () {
         var spy = sinon.spy();
 
         view.on('remove', spy);
-
         view.remove();
 
-        expect(spy.calledOnce).to.be.ok;
+        expect(spy).to.have.been.calledOnce;
       });
     });
 

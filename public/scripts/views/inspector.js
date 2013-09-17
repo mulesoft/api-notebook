@@ -102,7 +102,7 @@ InspectorView.prototype._renderChildrenEl = function () {
 };
 
 InspectorView.prototype._renderChildren = function () {
-  _.each(Object.getOwnPropertyNames(this.inspect), function (prop) {
+  _.each(Object.getOwnPropertyNames(this.inspect).sort(), function (prop) {
     var descriptor = Object.getOwnPropertyDescriptor(this.inspect, prop);
 
     if (_.isFunction(descriptor.get) || _.isFunction(descriptor.set)) {

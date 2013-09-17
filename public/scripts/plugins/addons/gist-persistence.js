@@ -133,11 +133,7 @@ var plugins = {
 exports.attach = function (attach) {
   middleware = attach;
 
-  for (var key in plugins) {
-    if (plugins.hasOwnProperty(key)) {
-      attach.use(key, plugins[key]);
-    }
-  }
+  attach.use(plugins);
 };
 
 /**
@@ -148,9 +144,5 @@ exports.attach = function (attach) {
 exports.detach = function (detach) {
   middleware = undefined;
 
-  for (var key in plugins) {
-    if (plugins.hasOwnProperty(key)) {
-      detach.disuse(key, plugins[key]);
-    }
-  }
+  detach.disuse(plugins);
 };

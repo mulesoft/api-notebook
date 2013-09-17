@@ -28,6 +28,8 @@ describe('Completion', function () {
 
   it('should complete variables', testAutocomplete('doc', 'document'));
 
+  it('should complete exact matches', testAutocomplete('window', 'window'));
+
   it(
     'should complete using static analysis',
     testAutocomplete('var testing = "test";\ntes', 'testing')

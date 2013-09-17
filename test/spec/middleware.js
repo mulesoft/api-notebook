@@ -290,5 +290,30 @@ describe('Middleware', function () {
 
       expect(errorSpy).to.have.been.calledThrice;
     });
+
+    it('should accept an object of { name => function } pairs to use', function () {
+      var spy = sinon.spy();
+
+      middleware.use({
+        test: spy
+      });
+
+      middleware.trigger('test');
+
+      expect(spy).to.have.been.calledOnce;
+    });
+
+    it('should accept an object of { name => function } pairs to disuse', function () {
+      var spy = sinon.spy();
+
+      middleware.use('test', spy);
+      middleware.disuse({
+        test: spy
+      });
+
+      middleware.trigger('test');
+
+      expect(spy).to.not.have.been.called;
+    });
   });
 });

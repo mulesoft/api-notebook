@@ -1,5 +1,4 @@
 .inspector > .preview
-  white-space: pre-wrap
   > .property
     color: #7a3694
     font-weight: bold
@@ -8,12 +7,6 @@
 
 .inspector > .preview
   height: 1.4em
-  overflow: hidden
-  text-overflow: ellipsis
-
-.inspector > .preview.array,
-.inspector > .preview.object
-// Any children inspectors should also hide the full source output
   overflow: hidden
   white-space: nowrap
   text-overflow: ellipsis

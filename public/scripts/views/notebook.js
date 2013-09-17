@@ -23,7 +23,6 @@ var Notebook = module.exports = View.extend({
 Notebook.prototype.initialize = function (options) {
   this.sandbox    = new Sandbox();
   this.controls   = new CellControls().render();
-  this._uniqueId  = 0;
   this.collection = new NotebookCollection();
 
   // If the user changes at any point in the applications state, we may now
@@ -99,7 +98,7 @@ Notebook.prototype.appendTo = function () {
   return this;
 };
 
-Notebook.prototype.execute = function (cb) {
+Notebook.prototype.execute = function (done) {
   var that = this;
   this.execution = true;
 
@@ -109,13 +108,13 @@ Notebook.prototype.execute = function (cb) {
     // If no view is passed through, we must have hit the last view.
     if (!view) {
       that.execution = false;
-      return cb && cb();
+      return done && done();
     }
 
     view.focus().moveCursorToEnd();
 
     if (view.model.get('type') === 'code') {
-      view.execute(function (err, result) {
+      view.execute(function (err, data) {
         execution(that.getNextView(view));
       });
     } else {
@@ -307,11 +306,6 @@ Notebook.prototype.appendView = function (view, before) {
     });
 
     this.listenTo(view, 'linesChanged', this.refreshFromView);
-  }
-
-  if (view.model.get('type') === 'code') {
-    // Assign a unique index to every model for referencing upon execution
-    view.model._uniqueCellId = this._uniqueId++;
   }
 
   // Some references may be needed

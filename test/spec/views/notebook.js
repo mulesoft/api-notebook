@@ -129,7 +129,7 @@ describe('Notebook', function () {
         textCells[0].setValue('multi\nline\ncursor\ntest');
         codeCells[1].trigger('navigateUp', codeCells[1]);
 
-        expect(textCells[0]._focus).to.be.ok;
+        expect(textCells[0].hasFocus()).to.be.ok;
         expect(textCells[0].editor.getCursor().ch).to.equal(4);
         expect(textCells[0].editor.getCursor().line).to.equal(3);
       });
@@ -138,7 +138,7 @@ describe('Notebook', function () {
         textCells[0].setValue('multi\nline\ncursor\ntest');
         codeCells[0].trigger('navigateDown', codeCells[0]);
 
-        expect(textCells[0]._focus).to.be.ok;
+        expect(textCells[0].hasFocus()).to.be.ok;
         expect(textCells[0].editor.getCursor().ch).to.equal(5);
         expect(textCells[0].editor.getCursor().line).to.equal(0);
       });
@@ -146,7 +146,7 @@ describe('Notebook', function () {
       it('should be able to move cells up', function () {
         codeCells[1].trigger('moveUp', codeCells[1]);
 
-        expect(codeCells[1]._focus).to.be.ok;
+        expect(codeCells[1].hasFocus()).to.be.ok;
         expect(codeCells[1].el.nextSibling).to.equal(textCells[0].el);
         expect(codeCells[0].el.nextSibling).to.equal(codeCells[1].el);
         expect(textCells[0].el.nextSibling).to.not.exist;
@@ -155,7 +155,7 @@ describe('Notebook', function () {
       it('should be able to move cells down', function () {
         codeCells[0].trigger('moveDown', codeCells[0]);
 
-        expect(codeCells[0]._focus).to.be.ok;
+        expect(codeCells[0].hasFocus()).to.be.ok;
         expect(codeCells[0].el.nextSibling).to.equal(codeCells[1].el);
         expect(textCells[0].el.nextSibling).to.equal(codeCells[0].el);
       });
@@ -170,7 +170,7 @@ describe('Notebook', function () {
         expect(view.collection.at(3)).to.be.an.instanceof(App.Model.TextEntry);
         expect(view.collection.at(3).view.el.nextSibling).to.be.equal(codeCells[1].el);
         expect(view.collection.at(3).view.el.previousSibling).to.be.equal(textCells[0].el);
-        expect(view.collection.at(3).view._focus).to.be.ok;
+        expect(view.collection.at(3).view.hasFocus()).to.be.ok;
         expect(view.collection.at(3).view.editor.getCursor().ch).to.equal(3);
       });
 
@@ -182,7 +182,7 @@ describe('Notebook', function () {
 
         expect(view.collection.length).to.equal(3);
         expect(codeCells[0].el.nextSibling).to.equal(codeCells[1].el);
-        expect(codeCells[1]._focus).to.be.ok;
+        expect(codeCells[1].hasFocus()).to.be.ok;
         expect(codeCells[1].editor.getCursor().ch).to.equal(4);
         expect(codeCells[1].editor.getCursor().line).to.equal(1);
       });
@@ -199,22 +199,22 @@ describe('Notebook', function () {
         expect(textCells[0].el.parentNode).to.not.exist;
         expect(codeCells[0].el.nextSibling).to.equal(view.collection.at(2).view.el);
         expect(codeCells[1].el.previousSibling).to.equal(view.collection.at(2).view.el);
-        expect(view.collection.at(2).view._focus).to.be.ok;
+        expect(view.collection.at(2).view.hasFocus()).to.be.ok;
         expect(view.collection.at(2).view.editor.getCursor().ch).to.equal(5);
         expect(view.collection.at(2).view.editor.getCursor().line).to.equal(0);
       });
 
       it('should be able to reference previous results', function (done) {
-        codeCells[0].on('execute', function (view, result, isError) {
-          codeCells[1].on('execute', function (view, result, isError) {
-            expect(result).to.equal(99);
-            expect(isError).to.equal(false);
+        codeCells[0].on('execute', function (view, data) {
+          codeCells[1].on('execute', function (view, data) {
+            expect(data.result).to.equal(99);
+            expect(data.isError).to.be.false;
             expect(codeCells[1].model.get('result')).to.equal(99);
             done();
           });
 
-          expect(result).to.equal(99);
-          expect(isError).to.equal(false);
+          expect(data.result).to.equal(99);
+          expect(data.isError).to.be.false;
           expect(codeCells[0].model.get('result')).to.equal(99);
 
           codeCells[1].setValue('$1');
@@ -246,7 +246,7 @@ describe('Notebook', function () {
           expect(textCells[0].el.parentNode).to.not.exist;
           expect(codeCells[0].el.nextSibling.className).to.contain('cell-code');
           expect(codeCells[0].el.nextSibling).to.equal(codeCells[1].el);
-          expect(codeCells[1]._focus).to.be.ok;
+          expect(codeCells[1].hasFocus()).to.be.ok;
         });
 
         it('shouldn\'t remove itself when it has content', function () {
@@ -257,14 +257,14 @@ describe('Notebook', function () {
 
           expect(view.collection.length).to.equal(4);
           expect(textCells[0].el.nextSibling).to.equal(codeCells[1].el);
-          expect(codeCells[1]._focus).to.be.ok;
+          expect(codeCells[1].hasFocus()).to.be.ok;
         });
 
         it('should initialize the new cell with content when available', function () {
           textCells[0].trigger('code', textCells[0], 'testing');
 
           expect(view.collection.at(2).view.getValue()).to.equal('testing');
-          expect(view.collection.at(2).view._focus).to.be.ok;
+          expect(view.collection.at(2).view.hasFocus()).to.be.ok;
           expect(view.collection.at(2).view.editor.getCursor().ch).to.equal(7);
         });
 
@@ -299,7 +299,7 @@ describe('Notebook', function () {
           expect(textCells[0].el.previousSibling.className).to.contain('cell-text');
           expect(view.collection.at(1)).to.be.an.instanceof(App.Model.TextEntry);
           expect(view.collection.at(1).view.el.nextSibling).to.equal(textCells[0].el);
-          expect(view.collection.at(1).view._focus).to.be.ok;
+          expect(view.collection.at(1).view.hasFocus()).to.be.ok;
         });
 
         it('shouldn\'t replace itself when it has content', function () {
@@ -312,14 +312,14 @@ describe('Notebook', function () {
           expect(codeCells[0].el.nextSibling.className).to.contain('cell-text');
           expect(view.collection.at(2)).to.be.an.instanceof(App.Model.TextEntry);
           expect(view.collection.at(2).view.el.nextSibling).to.equal(textCells[0].el);
-          expect(view.collection.at(2).view._focus).to.be.ok;
+          expect(view.collection.at(2).view.hasFocus()).to.be.ok;
         });
 
         it('should initialize the new cell with content when available', function () {
           codeCells[0].trigger('text', codeCells[0], 'testing');
 
           expect(view.collection.at(1).view.getValue()).to.equal('testing');
-          expect(view.collection.at(1).view._focus).to.be.ok;
+          expect(view.collection.at(1).view.hasFocus()).to.be.ok;
           expect(view.collection.at(1).view.editor.getCursor().ch).to.equal(7);
         });
 
@@ -330,7 +330,7 @@ describe('Notebook', function () {
 
           expect(view.collection.length).to.equal(5);
           expect(codeCells[1].el.nextSibling).to.equal(view.collection.at(4).view.el);
-          expect(view.collection.at(4).view._focus).to.be.ok;
+          expect(view.collection.at(4).view.hasFocus()).to.be.ok;
         });
 
         it('shouldn\'t create a new view if it\'s not the final cell', function () {
@@ -339,13 +339,13 @@ describe('Notebook', function () {
           codeCells[0].trigger('execute', codeCells[0]);
 
           expect(view.collection.length).to.equal(4);
-          expect(textCells[0]._focus).to.be.ok;
+          expect(textCells[0].hasFocus()).to.be.ok;
         });
 
         it('should be able to browse to the cell above', function () {
           codeCells.push(view.appendCodeView());
           codeCells[2].focus();
-          expect(codeCells[2]._focus).to.be.ok;
+          expect(codeCells[2].hasFocus()).to.be.ok;
 
           codeCells[0].setValue('one');
           codeCells[1].setValue('two');
@@ -353,19 +353,19 @@ describe('Notebook', function () {
 
           codeCells[2].browseUp();
           expect(codeCells[2].editor.getValue()).to.equal('two');
-          expect(codeCells[2]._focus).to.be.ok;
+          expect(codeCells[2].hasFocus()).to.be.ok;
           expect(codeCells[2].editor.getCursor().ch).to.equal(3);
 
           codeCells[2].browseUp();
           expect(codeCells[2].editor.getValue()).to.equal('one');
-          expect(codeCells[2]._focus).to.be.ok;
+          expect(codeCells[2].hasFocus()).to.be.ok;
           expect(codeCells[2].editor.getCursor().ch).to.equal(3);
         });
 
         it('should be able to browse to the cell below', function () {
           codeCells.push(view.appendCodeView());
           codeCells[0].focus();
-          expect(codeCells[0]._focus).to.be.ok;
+          expect(codeCells[0].hasFocus()).to.be.ok;
 
           codeCells[0].setValue('one');
           codeCells[1].setValue('two');
@@ -373,18 +373,18 @@ describe('Notebook', function () {
 
           codeCells[0].browseDown();
           expect(codeCells[0].editor.getValue()).to.equal('two');
-          expect(codeCells[0]._focus).to.be.ok;
+          expect(codeCells[0].hasFocus()).to.be.ok;
           expect(codeCells[0].editor.getCursor().ch).to.equal(3);
 
           codeCells[0].browseDown();
           expect(codeCells[0].editor.getValue()).to.equal('three');
-          expect(codeCells[0]._focus).to.be.ok;
+          expect(codeCells[0].hasFocus()).to.be.ok;
           expect(codeCells[0].editor.getCursor().ch).to.equal(5);
         });
 
         it('should keep its value when browsing cells', function () {
           codeCells[1].focus();
-          expect(codeCells[1]._focus).to.be.ok;
+          expect(codeCells[1].hasFocus()).to.be.ok;
 
           codeCells[0].setValue('one');
           codeCells[1].setValue('two');
@@ -401,7 +401,7 @@ describe('Notebook', function () {
           codeCells[1].setValue('even\nmore\nlines\nhere');
           codeCells[1].focus();
 
-          expect(codeCells[1]._focus).to.be.ok;
+          expect(codeCells[1].hasFocus()).to.be.ok;
           expect(codeCells[1].editor.getCursor().ch).to.equal(0);
           expect(codeCells[1].editor.getCursor().line).to.equal(0);
 

@@ -43,7 +43,7 @@ describe('Text Cell', function () {
           });
           view.on('code', spy);
           editor.setValue('abc */ testing');
-          expect(spy.calledOnce).to.be.ok;
+          expect(spy).to.have.been.calledOnce;
           expect(editor.getValue()).to.equal('abc');
           expect(view.model.get('value')).to.equal('abc');
         });

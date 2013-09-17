@@ -1,5 +1,6 @@
-var _        = require('underscore');
-var Backbone = require('backbone');
+var _          = require('underscore');
+var Backbone   = require('backbone');
+var middleware = require('../state/middleware');
 
 var Notebook = module.exports = Backbone.Collection.extend({
   model: require('../models/cell'),
@@ -9,6 +10,19 @@ var Notebook = module.exports = Backbone.Collection.extend({
     return _.indexOf(model.view.el.parentNode.childNodes, model.view.el);
   }
 });
+
+Notebook.prototype.initialize = function () {
+  // Augments sandbox context collection result lookups
+  middleware.use('sandbox:context', _.bind(function (data, next) {
+    this.each(function (model, index) {
+      if (model.get('type') === 'code') {
+        data['$' + index] = model.get('result');
+      }
+    });
+
+    return next();
+  }, this));
+};
 
 Notebook.prototype.getNext = function (model) {
   var index = this.indexOf(model);
@@ -34,20 +48,4 @@ Notebook.prototype.getPrevCode = function (model) {
       return model;
     }
   }
-};
-
-/**
- * This method is used only for serializing the notebook for evaluation with the
- * eval function in the iframe context. It allows us to easier lookup any
- * previous results using a specific syntax
- *
- * @return {Object}
- */
-Notebook.prototype.serializeForEval = function () {
-  var object = {};
-  this.each(function (model) {
-    if (_.isUndefined(model._uniqueCellId)) { return; }
-    object['$' + model._uniqueCellId] = model.get('result');
-  });
-  return object;
 };

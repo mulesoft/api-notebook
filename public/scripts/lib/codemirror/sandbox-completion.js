@@ -173,23 +173,23 @@ var getPropertyObject = function (cm, token, context, done) {
     global:  context,
     context: context
   }, function again (err, data) {
-    if (!err) {
-      // Do some post processing work to correct primitive types
-      if (typeof data.context === 'string') {
-        data.context = String.prototype;
-      } else if (typeof data.context === 'number') {
-        data.context = Number.prototype;
-      } else if (typeof data.context === 'boolean') {
-        data.context = Boolean.prototype;
-      }
+    if (err) { return done(err, data.context); }
 
-      if (data.context && tokens.length) {
-        data.token = tokens.pop();
-        return middleware.trigger('completion:context', data, again);
-      }
+    // Do some post processing work to correct primitive types
+    if (typeof data.context === 'string') {
+      data.context = String.prototype;
+    } else if (typeof data.context === 'number') {
+      data.context = Number.prototype;
+    } else if (typeof data.context === 'boolean') {
+      data.context = Boolean.prototype;
     }
 
-    return done(err, data.context);
+    if (_.isObject(data.context) && tokens.length) {
+      data.token = tokens.pop();
+      return middleware.trigger('completion:context', data, again);
+    }
+
+    return done(null, data.context);
   });
 };
 

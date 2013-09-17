@@ -7,6 +7,7 @@ var stripInput = require('../lib/codemirror/strip-input');
 var state      = require('../state/state');
 var extraKeys  = require('./lib/extra-keys');
 var controls   = require('../lib/controls').code;
+var middleware = require('../state/middleware');
 
 var filterCompletion = function () {
   return this._completion.refresh();
@@ -49,11 +50,11 @@ CodeCell.prototype.save = function () {
 };
 
 CodeCell.prototype.refresh = function () {
-  // Set the start and last line variables
   var prevCodeView = this.getPrevCodeView();
   this.startLine = _.result(prevCodeView, 'lastLine') + 1 || 1;
   this.lastLine  = this.startLine + this.editor.lastLine();
-  // Call refresh on the editor
+
+  this.resultCell.refresh();
   EditorCell.prototype.refresh.call(this);
 };
 
@@ -69,27 +70,33 @@ CodeCell.prototype.getPrevCodeView = function () {
   }
 };
 
-CodeCell.prototype.execute = function (cb) {
-  var context = this.model.collection.serializeForEval();
-
+CodeCell.prototype.execute = function (done) {
   // Set the value as our own model for executing
   this.model.set('value', this.editor.getValue());
-  this.browseToCell(this.model);
+  // Make sure we have focus on the currently executing cell.
+  if (!this.hasFocus()) {
+    this.browseToCell(this.model);
+    this.moveCursorToEnd();
+  }
 
-  this.sandbox.execute(this.getValue(), context,
-    _.bind(function (result, isError) {
-      if (isError) {
-        this.model.unset('result');
-      } else {
-        this.model.set('result', result);
-      }
-      // Trigger `execute` and set the result, each of which need an additional
-      // flag to indicate whether the the
-      this.result.setResult(result, isError, this.sandbox.window);
-      this.trigger('execute', this, result, isError);
-      if (cb) { cb(result, isError); }
-    }, this)
-  );
+  // Trigger an event before execution
+  this.trigger('beforeExecute', this);
+
+  this.sandbox.execute(this.getValue(), _.bind(function (err, data) {
+    if (err) { throw err; }
+
+    if (data.isError) {
+      this.model.unset('result');
+    } else {
+      this.model.set('result', data.result);
+    }
+
+    // Trigger `execute` and set the result, each of which need an additional
+    // flag to indicate whether the the
+    this.resultCell.setResult(data, this.sandbox.window);
+    this.trigger('execute', this, data);
+    return done && done(null, data);
+  }, this));
 
   return this;
 };
@@ -126,12 +133,13 @@ CodeCell.prototype.bindEditor = function () {
   // using `Object.create` since you can't extend an object with every property
   // of the global object.
   var context = Object.create(this.sandbox.window);
-  _.extend(context, this.model.collection.serializeForEval());
 
-  // Set up the autocompletion widget.
-  this._completion = new Completion(this.editor, {
-    context: context
-  });
+  middleware.trigger('sandbox:context', context, _.bind(function (err, data) {
+    // Set up the autocompletion widget.
+    this._completion = new Completion(this.editor, {
+      context: data
+    });
+  }, this));
 
   this.listenTo(state, 'change:showExtra', filterCompletion, this);
 
@@ -162,8 +170,8 @@ CodeCell.prototype.render = function () {
   EditorCell.prototype.render.call(this);
 
   // Every code cell has an associated result
-  this.result = new ResultCell({ model: this.model });
-  this.result.render().appendTo(this.el);
+  this.resultCell = new ResultCell({ model: this.model });
+  this.resultCell.render().appendTo(this.el);
 
   return this;
 };

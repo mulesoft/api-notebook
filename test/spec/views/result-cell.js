@@ -1,4 +1,4 @@
-/* global describe, it */
+/* global describe, it, beforeEach */
 
 describe('Result Cell', function () {
   var Result    = App.View.ResultCell;
@@ -23,7 +23,10 @@ describe('Result Cell', function () {
 
     describe('#setResult', function () {
       it('should set the result', function (done) {
-        view.setResult('Testing', false, window, function (err) {
+        view.setResult({
+          result:  'Testing',
+          isError: false
+        }, window, function (err) {
           expect(err).to.not.exist;
           expect(view.el.className).to.not.contain('result-error');
           expect(view.el.className).to.not.contain('result-pending');
@@ -34,7 +37,10 @@ describe('Result Cell', function () {
       });
 
       it('should set an error', function (done) {
-        view.setResult(new Error('Testing'), true, window, function (err) {
+        view.setResult({
+          result:  new Error('Testing'),
+          isError: true
+        }, window, function (err) {
           expect(err).to.not.exist;
           expect(view.el.className).to.contain('result-error');
           expect(view.el.className).to.not.contain('result-pending');
@@ -54,7 +60,10 @@ describe('Result Cell', function () {
 
         App.middleware.use('result:render', spy);
 
-        view.setResult(null, false, window, function () {
+        view.setResult({
+          result:  null,
+          isError: false
+        }, window, function () {
           expect(spy).to.have.been.calledOnce;
           expect(view.el.textContent).to.equal('some testing here');
           done();
@@ -69,7 +78,10 @@ describe('Result Cell', function () {
 
         App.middleware.use('result:empty', spy);
 
-        view.setResult(null, true, window, function () {
+        view.setResult({
+          result: null,
+          isError: true
+        }, window, function () {
           expect(spy).to.have.been.calledOnce;
           done();
         });
