@@ -13,10 +13,12 @@ var middleware = require('./middleware');
  */
 var Persistence = Backbone.Model.extend({
   defaults: {
-    id:       null, // Holds the notebook unique id.
-    userId:   null, // Holds the persistence session user id.
-    ownerId:  null, // Holds the notebook owners user id.
-    notebook: ''    // Holds the notebook content in serialized format.
+    id:         null,
+    title:      'New Notebook',
+    userId:     null,
+    ownerId:    null,
+    originalId: null,
+    notebook:   []
   }
 });
 
@@ -39,32 +41,21 @@ Persistence.prototype.isAuthenticated = function () {
 };
 
 /**
- * Simple wrapper around the serialize method that also sets the notebook.
- *
- * @param {Array}    cells
- * @param {Function} done
- */
-Persistence.prototype.update = function (cells, done) {
-  this.serialize(cells, _.bind(function (err, notebook) {
-    this.set('notebook', notebook);
-    return done && done(err, notebook);
-  }, this));
-};
-
-/**
  * Pass an array of cells that represent the notebook for serialization.
  *
  * @param {Array}    cells
  * @param {Function} done
  */
-Persistence.prototype.serialize = function (cells, done) {
+Persistence.prototype.serialize = function (done) {
   middleware.trigger(
     'persistence:serialize',
     _.extend(this.getMiddlewareData(), {
-      notebook: cells
+      contents: null
     }),
     _.bind(function (err, data) {
-      return done && done(err, data.notebook);
+      this.set('contents', data.contents);
+
+      return done && done(err);
     }, this)
   );
 };
@@ -77,9 +68,16 @@ Persistence.prototype.serialize = function (cells, done) {
 Persistence.prototype.deserialize = function (done) {
   middleware.trigger(
     'persistence:deserialize',
-    this.getMiddlewareData(),
+    _.extend(this.getMiddlewareData(), {
+      title:    null,
+      ownerId:  null,
+      notebook: null
+    }),
     _.bind(function (err, data) {
-      return done && done(err, data.notebook);
+      this.set('title',    data.title || this.defaults.title);
+      this.set('notebook', data.notebook);
+
+      return done && done(err);
     }, this)
   );
 };
@@ -94,10 +92,10 @@ Persistence.prototype.save = function (done) {
     'persistence:save',
     this.getMiddlewareData(),
     _.bind(function (err, data) {
-      this.set('id',       data.id);
-      this.set('ownerId',  data.ownerId);
+      this.set('id',      data.id);
+      this.set('ownerId', data.ownerId);
 
-      return done && done(err, data.notebook);
+      return done && done(err);
     }, this)
   );
 };
@@ -113,7 +111,8 @@ Persistence.prototype.authenticate = function (done) {
     this.getMiddlewareData(),
     _.bind(function (err, data) {
       this.set('userId', data.userId);
-      return done && done(err, data.userId);
+
+      return done && done(err);
     }, this)
   );
 };
@@ -126,7 +125,6 @@ Persistence.prototype.authenticate = function (done) {
 Persistence.prototype.getMiddlewareData = function () {
   return _.extend(this.toJSON(), {
     save:            _.bind(this.save, this),
-    update:          _.bind(this.update, this),
     isOwner:         _.bind(this.isOwner, this),
     isAuthenticated: _.bind(this.isAuthenticated, this)
   });
@@ -143,17 +141,19 @@ Persistence.prototype.load = function (done) {
     'persistence:load',
     _.extend(this.getMiddlewareData(), {
       ownerId:  null,
+      contents: null,
       notebook: null
     }),
     _.bind(function (err, data) {
       this.set('id',       data.id);
       this.set('userId',   data.userId);
       this.set('ownerId',  data.ownerId);
-      this.set('notebook', data.notebook, { silent: true });
-      // Triggers a custom reset notebook event to tell the notebook we can
-      // cleanly rerender all notebook content.
-      this.trigger('resetNotebook', this);
-      return done && done(err, data.notebook);
+      this.set('contents', data.contents, { silent: true });
+
+      this.deserialize(_.bind(function () {
+        this.trigger('changeNotebook', this);
+        return done && done(err);
+      }, this));
     }, this)
   );
 };
@@ -162,7 +162,9 @@ Persistence.prototype.load = function (done) {
  * Resets the persistence model state.
  */
 Persistence.prototype.reset = function () {
-  return this.set(this.defaults, { silent: true });
+  return this.set(_.extend(this.defaults, {
+    notebook: []
+  }), { silent: true });
 };
 
 /**
@@ -184,7 +186,48 @@ Persistence.prototype.fork = function () {
  *
  * @type {Object}
  */
-var persistence = module.exports = new Persistence();
+var persistence = module.exports = window.persistence = new Persistence();
+
+/**
+ * Simple function used as a safeguard to block any accidental recursion with
+ * syncing data between persistence fields.
+ *
+ * @param  {Function} fn
+ * @return {Function}
+ */
+var syncProtection = function (fn) {
+  return function () {
+    // Break execution when we are already syncing.
+    if (persistence._syncing) { return; }
+
+    persistence._syncing = true;
+    fn.apply(this, arguments);
+  };
+};
+
+/**
+ * Keeps the serialized notebook in sync with the deserialized version.
+ */
+persistence.listenTo(
+  persistence, 'change:notebook change:title', syncProtection(function () {
+    // Serialize the notebook contents and remove sync protection.
+    persistence.serialize(function () {
+      persistence._syncing = false;
+    });
+  })
+);
+
+/**
+ * Keeps the deserialized notebook contents in sync with the serialized content.
+ */
+persistence.listenTo(
+  persistence, 'change:contents', syncProtection(function () {
+    // Deserialize the contents and remove sync protection.
+    persistence.deserialize(function () {
+      persistence._syncing = false;
+    });
+  })
+);
 
 /**
  * Listens to any changes to the user id and emits a custom `changeUser` event
@@ -199,7 +242,7 @@ persistence.listenTo(persistence, 'change:userId change:ownerId', function () {
  * Any time the notebook changes, trigger the `persistence:change` middleware
  * handler.
  */
-persistence.listenTo(persistence, 'change:notebook', (function () {
+persistence.listenTo(persistence, 'change:contents', (function () {
   var changing    = false;
   var changeQueue = false;
 

@@ -20,7 +20,7 @@ describe('App', function () {
   });
 
   describe('App instance', function () {
-    var view, oldAjax;
+    var view;
 
     beforeEach(function () {
       view = new App();
@@ -41,6 +41,19 @@ describe('App', function () {
 
       it('should render the template', function () {
         expect(view.el.children).to.have.length.above(1);
+      });
+    });
+
+    describe('Generated App', function () {
+      beforeEach(function () {
+        view.render().appendTo(fixture);
+      });
+
+      it('should be able to set the notebook title', function () {
+        var titleEl = view.el.querySelector('.notebook-title');
+        titleEl.textContent = 'Test Notebook';
+        simulateEvent(titleEl, 'focusout');
+        expect(App.persistence.get('title')).to.equal('Test Notebook');
       });
     });
   });

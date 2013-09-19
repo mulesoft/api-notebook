@@ -33,10 +33,10 @@ Notebook.prototype.initialize = function (options) {
   this.controls   = new CellControls().render();
   this.collection = new NotebookCollection();
 
-  // If the user changes at any point in the applications state, we may now
-  // be granted the ability to edit, fork.. or we may have lost the ability
-  this.listenTo(persistence, 'changeUser',    this.updateUser);
-  this.listenTo(persistence, 'resetNotebook', this.render);
+  // When the user changes, we may have been given permission to do things like
+  // edit the notebook. Hence, we need to rerender certain aspects of the app.
+  this.listenTo(persistence, 'changeUser',     this.updateUser);
+  this.listenTo(persistence, 'changeNotebook', this.render);
 };
 
 /**
@@ -55,22 +55,8 @@ Notebook.prototype.remove = function () {
  *
  * @param {Function} done
  */
-Notebook.prototype.update = function (done) {
-  // If we are currently in an update operation, set a flag to remind
-  // ourselves to process the data once we are free.
-  if (this._updating) { return this._updateQueue = true; }
-
-  this._updating = true;
-  // Serialize the notebook and set the persistant notebook contents
-  persistence.update(this.collection.toJSON(), _.bind(function (err, notebook) {
-    this._updating = false;
-    if (this._updateQueue) {
-      this._updateQueue = false;
-      this.update();
-    }
-
-    return done && done(err, notebook);
-  }, this));
+Notebook.prototype.update = function () {
+  persistence.set('notebook', this.collection.toJSON());
 };
 
 /**
@@ -102,18 +88,16 @@ Notebook.prototype.render = function () {
   this.collection = new NotebookCollection();
   this.listenTo(this.collection, 'remove sort change', this.update);
 
-  persistence.deserialize(_.bind(function (err, cells) {
-    // Empty all the current content to reset with new contents
-    _.each(cells, function (cell) {
-      var appendView = 'appendCodeView';
-      if (cell.type === 'text') { appendView = 'appendTextView'; }
-      this[appendView](null, cell.value);
-    }, this);
+  // Empty all the current content to reset with new contents
+  _.each(persistence.get('notebook'), function (cell) {
+    var appendView = 'appendCodeView';
+    if (cell.type === 'text') { appendView = 'appendTextView'; }
+    this[appendView](null, cell.value);
+  }, this);
 
-    if (!this.collection.length) { this.appendCodeView(); }
+  if (!this.collection.length) { this.appendCodeView(); }
 
-    this.collection.last().view.focus();
-  }, this));
+  this.collection.last().view.focus();
 
   return this;
 };

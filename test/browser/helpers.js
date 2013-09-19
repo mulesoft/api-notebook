@@ -75,7 +75,7 @@ var testCompletion = function (editor, text, done) {
  */
 var simulateEvent = (function () {
   var eventMatchers = {
-    'HTMLEvents': /^(?:load|unload|abort|error|select|change|submit|reset|focus|blur|resize|scroll)$/,
+    'HTMLEvents': /^(?:load|unload|abort|error|select|change|submit|reset|focus|blur|resize|scroll|focusin|focusout)$/,
     'MouseEvents': /^(?:click|dblclick|mouse(?:down|up|over|move|out))$/
   };
 
@@ -114,7 +114,7 @@ var simulateEvent = (function () {
     if (document.createEvent) {
       oEvent = document.createEvent(eventType);
 
-      if (eventType == 'HTMLEvents') {
+      if (eventType === 'HTMLEvents') {
         oEvent.initEvent(eventName, options.bubbles, options.cancelable);
       } else {
         oEvent.initMouseEvent(

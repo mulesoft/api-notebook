@@ -51,13 +51,13 @@ var changePlugin = function (data, next, done) {
 var savePlugin = function (data, next, done) {
   process.nextTick(function () {
     if (!data.id) { data.id = generateId(); }
-    localStorage.setItem(localStorageKey(data.id), data.notebook || '');
+    localStorage.setItem(localStorageKey(data.id), data.contents);
     return done();
   });
 };
 
 /**
- * Load the notebook from localStorage.
+ * Load the notebook contents from localStorage.
  *
  * @param  {Object}   data
  * @param  {Function} next
@@ -70,7 +70,7 @@ var loadPlugin = function (data, next, done) {
     if (!localStorage.getItem(key)) { return next(); }
 
     data.ownerId  = USER_ID;
-    data.notebook = localStorage.getItem(localStorageKey(data.id));
+    data.contents = localStorage.getItem(localStorageKey(data.id));
     return done();
   });
 };

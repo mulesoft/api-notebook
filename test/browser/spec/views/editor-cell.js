@@ -127,6 +127,7 @@ describe('Editor Cell', function () {
       });
 
       it('#focus', function (done) {
+        // Forces the editor to lose focus by creating a new element to focus.
         var el = document.createElement('input');
         fixture.appendChild(el);
         el.focus();

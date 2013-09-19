@@ -78,7 +78,7 @@ var loadPlugin = function (data, next, done) {
 
     data.id       = content.id;
     data.ownerId  = content.user && content.user.id;
-    data.notebook = content.files['notebook.md'].content;
+    data.contents = content.files['notebook.md'].content;
     return done();
   });
 };
@@ -100,7 +100,7 @@ var savePlugin = function (data, next, done) {
     data: JSON.stringify({
       files: {
         'notebook.md': {
-          content: data.notebook
+          content: data.contents
         }
       }
     }),

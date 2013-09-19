@@ -5,7 +5,7 @@ describe('Gist Persistence Plugin', function () {
 
   var id       = 'c5172f5b2ce786b86314';
   var userId   = 1088987;
-  var notebook = '```javascript\nvar test = true\n```';
+  var notebook = '---\ntitle: Test Notebook\n---\n\n```javascript\nvar test = true\n```';
 
   var clientId    = '0ca6a0a865144bbf595c';
   var tokenType   = 'bearer';
@@ -44,39 +44,43 @@ describe('Gist Persistence Plugin', function () {
     server.respondWith(
       'GET',
       'https://api.github.com/applications/' + clientId + '/tokens/' + accessToken,
-      [200,
-      {
-        'Content-Type': 'application/json'
-      },
-      authorisationResponse]
+      [
+        200,
+        {
+          'Content-Type': 'application/json'
+        },
+        authorisationResponse
+      ]
     );
 
-    App.persistence.authenticate(function (err, authUserId) {
+    App.persistence.authenticate(function (err) {
       expect(err).to.not.exist;
-      expect(authUserId).to.equal(userId);
+      expect(App.persistence.get('userId')).to.equal(userId);
       return done();
     });
   });
 
   it('should save to github ', function (done) {
     App.persistence.set('userId',   userId);
-    App.persistence.set('notebook', notebook);
+    App.persistence.set('contents', notebook);
 
     server.respondWith(
       'POST',
       'https://api.github.com/gists?access_token=' + accessToken,
-      [200,
-      {
-        'Content-Type': 'application/json'
-      },
-      gistResponse]
+      [
+        200,
+        {
+          'Content-Type': 'application/json'
+        },
+        gistResponse
+      ]
     );
 
-    App.persistence.save(function (err, content) {
-      expect(content).to.equal(notebook);
+    App.persistence.save(function (err, notebookId) {
       expect(App.persistence.get('id')).to.equal(id);
       expect(App.persistence.get('userId')).to.equal(userId);
       expect(App.persistence.get('ownerId')).to.equal(userId);
+      expect(App.persistence.get('contents')).to.equal(notebook);
 
       return done();
     });
@@ -90,15 +94,17 @@ describe('Gist Persistence Plugin', function () {
     server.respondWith(
       'GET',
       'https://api.github.com/gists/' + id,
-      [200,
-      {
-        'Content-Type': 'application/json'
-      },
-      gistResponse]
+      [
+        200,
+        {
+          'Content-Type': 'application/json'
+        },
+        gistResponse
+      ]
     );
 
-    App.persistence.load(function (err, notebook) {
-      expect(notebook).to.equal(notebook);
+    App.persistence.load(function (err) {
+      expect(App.persistence.get('contents')).to.equal(notebook);
 
       return done();
     });

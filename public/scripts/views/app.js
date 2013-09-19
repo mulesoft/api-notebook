@@ -2,13 +2,14 @@ var _        = require('underscore');
 var domify   = require('domify');
 var Backbone = require('backbone');
 
-var View     = require('./view');
-var Notebook = require('./notebook');
-var controls = require('../lib/controls');
-
+var View        = require('./view');
+var Notebook    = require('./notebook');
+var controls    = require('../lib/controls');
 var state       = require('../state/state');
 var messages    = require('../state/messages');
 var persistence = require('../state/persistence');
+
+var ENTER_KEY = 13;
 
 /**
  * Create a central application view.
@@ -29,7 +30,18 @@ App.prototype.events = {
   'click .modal-backdrop': 'hideShortcuts',
   'click .notebook-exec':  'runNotebook',
   'click .notebook-fork':  'forkNotebook',
-  'click .notebook-auth':  'authNotebook'
+  'click .notebook-auth':  'authNotebook',
+  // Listen for `Enter` presses and blur the input instead.
+  'keydown .notebook-title': function (e) {
+    if (e.which !== ENTER_KEY) { return; }
+
+    e.preventDefault();
+    e.srcElement.blur();
+  },
+  // Updates the notebook title on `blur`.
+  'focusout .notebook-title': function (e) {
+    persistence.set('title', e.srcElement.textContent);
+  }
 };
 
 /**
@@ -45,10 +57,13 @@ App.prototype.initialize = function () {
     pushState: false
   });
 
-  this.updateUser();
+  // Listens to different application state changes and updates accordingly.
   this.listenTo(persistence, 'changeUser',      this.updateUser,      this);
+  this.listenTo(persistence, 'change:title',    this.updateTitle,     this);
   this.listenTo(messages,    'keydown:Esc',     this.hideShortcuts,   this);
   this.listenTo(messages,    'keydown:Shift-/', this.toggleShortcuts, this);
+
+  this.updateUser();
 };
 
 /**
@@ -80,6 +95,14 @@ App.prototype.updateUser = function () {
   messages.trigger('resize');
 
   return this;
+};
+
+/**
+ * Updates the application title when the notebook title changes.
+ */
+App.prototype.updateTitle = function () {
+  var title = persistence.get('title');
+  this.el.querySelector('.notebook-title').textContent = title;
 };
 
 /**
@@ -118,10 +141,6 @@ App.prototype.render = function () {
 
   this.el.appendChild(domify(
     '<header class="notebook-header clearfix">' +
-      '<div class="notebook-header-primary">' +
-        '<h1>JSNotebook</h1>' +
-      '</div>' +
-
       '<div class="notebook-header-secondary">' +
         '<button class="btn-text notebook-fork">Make my own copy</button>' +
         '<button class="btn-text notebook-auth">' +
@@ -129,6 +148,12 @@ App.prototype.render = function () {
         '</button>' +
         '<button class="notebook-exec">Run All</button>' +
         '<button class="ir modal-toggle">Keyboard Shortcuts</button>' +
+      '</div>' +
+
+      '<div class="notebook-header-primary">' +
+        '<h1 class="notebook-title" contenteditable>' +
+          persistence.get('title') +
+        '</h1>' +
       '</div>' +
     '</header>' +
 
