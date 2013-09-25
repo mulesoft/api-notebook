@@ -32,15 +32,21 @@ describe('Error Inspector', function () {
   });
 
   it('should be expandable', function () {
-    expect(new Inspector({}).render().el.className).to.contain('can-expand');
+    expect(new Inspector({
+      inspect: new Error('Test')
+    }).render().el.className).to.contain('can-expand');
   });
 
   it('should start non-exapanded', function () {
-    expect(new Inspector({}).render().el.className).to.not.contain('open');
+    expect(new Inspector({
+      inspect: new Error('Test')
+    }).render().el.className).to.not.contain('open');
   });
 
   it('should open on click', function () {
-    var view = new Inspector({}).render();
+    var view = new Inspector({
+      inspect: new Error('Test')
+    }).render();
 
     expect(view.el.className).to.not.contain('open');
     view.open();

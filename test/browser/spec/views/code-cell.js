@@ -13,10 +13,9 @@ describe('Code Cell', function () {
 
     beforeEach(function () {
       view = new Code();
-      view.model.view = view;
-      view.sandbox    = new App.Sandbox();
+      view.sandbox = new App.Sandbox();
       view.model.collection = {
-        indexOf:     sinon.stub().returns(0),
+        codeIndexOf: sinon.stub().returns(0),
         getNextCode: sinon.stub().returns(undefined),
         getPrevCode: sinon.stub().returns(undefined)
       };
@@ -118,7 +117,7 @@ describe('Code Cell', function () {
             done();
           });
 
-          editor.setValue(code);
+          view.setValue(code);
           view.execute();
         });
 
@@ -135,7 +134,7 @@ describe('Code Cell', function () {
             done();
           });
 
-          editor.setValue(code);
+          view.setValue(code);
           view.execute();
         });
 
@@ -157,7 +156,7 @@ describe('Code Cell', function () {
             done();
           });
 
-          editor.setValue(code);
+          view.setValue(code);
           view.execute();
         });
 
@@ -179,7 +178,7 @@ describe('Code Cell', function () {
             done();
           });
 
-          editor.setValue(code);
+          view.setValue(code);
           view.execute();
         });
 
@@ -195,7 +194,7 @@ describe('Code Cell', function () {
             done();
           });
 
-          editor.setValue(code);
+          view.setValue(code);
           view.execute();
 
           App.nextTick(function () {
@@ -205,7 +204,7 @@ describe('Code Cell', function () {
 
         it('should be able to change the timeout on the failover system', function (done) {
           var spy   = sinon.spy(view.resultCell, 'setResult');
-          var code  = 'timeout = 5000;\nvar done = async();';
+          var code  = 'timeout(5000);\nvar done = async();';
           var clock = sinon.useFakeTimers();
 
           view.on('execute', function (view, data) {
@@ -215,14 +214,29 @@ describe('Code Cell', function () {
             done();
           });
 
-          editor.setValue(code);
+          view.setValue(code);
           view.execute();
 
           App.nextTick(function () {
-            clock.tick(2000);
+            clock.tick(2500);
             expect(spy).to.not.have.been.called;
-            clock.tick(3500);
+            clock.tick(3000);
           });
+        });
+
+        it('should have a built in script loader', function (done) {
+          // Load our fake testing file since I don't think there is a stub
+          // this test correctly.
+          var code   = 'load("' + NOTEBOOK_URL + '/test/fixtures/test.js");';
+
+          view.on('execute', function () {
+            expect(view.sandbox.window.test).to.be.true;
+
+            return done();
+          });
+
+          view.setValue(code);
+          view.execute();
         });
       });
 

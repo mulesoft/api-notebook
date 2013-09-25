@@ -8,26 +8,36 @@ var loadScript = require('./lib/browser/load-script');
  */
 var App = global.App = require('./views/app');
 
-App._        = require('underscore');
-App.async    = require('async');
-App.Backbone = require('backbone');
+// Exposes internally used libraries globally to avoid unneeded requests in
+// third-party middleware and plugins.
+App.Library = {
+  url:         require('url'),
+  path:        require('path'),
+  querystring: require('querystring'),
+  async:       require('async'),
+  Backbone:    require('backbone')
+};
+
+App._        = App.Library._ = require('underscore');
 App.nextTick = process.nextTick;
 
+// Exposes configuration details globally
 App.state       = require('./state/state');
 App.config      = require('./state/config');
 App.router      = require('./state/router');
 App.messages    = require('./state/messages');
 App.middleware  = require('./state/middleware');
 App.persistence = require('./state/persistence');
-
 App.Sandbox     = require('./lib/sandbox');
 App.PostMessage = require('./lib/post-message');
 
+// Exposes CodeMirror to the world with our custom mods.
 App.CodeMirror = {
   Editor:     CodeMirror, // Programatically create an editor in tests
   Completion: require('./lib/completion')
 };
 
+// Expose all application views
 App.View = {
   View:           require('./views/view'),
   Notebook:       require('./views/notebook'),
@@ -41,12 +51,14 @@ App.View = {
   CellControls:   require('./views/cell-controls'),
 };
 
+// Expose application models.
 App.Model = {
   Entry:     require('./models/cell'),
   CodeEntry: require('./models/code-cell'),
   TextEntry: require('./models/text-cell')
 };
 
+// Expose application collections.
 App.Collection = {
   Notebook: require('./collections/notebook')
 };
@@ -113,7 +125,7 @@ App.start = function (el /*, config */, done) {
 
   return prepareState(config, function (err, config, postMessage) {
     // Load all the injected scripts before starting the app.
-    App.async.each(config.inject || [], function (script, cb) {
+    App.Library.async.each(config.inject || [], function (script, cb) {
       return loadScript(script, cb);
     }, function (err) {
       var app = new App().render().appendTo(el);
@@ -132,4 +144,5 @@ App.start = function (el /*, config */, done) {
   });
 };
 
+// Extend the application with core middleware functionality.
 require('./plugins/core')(App.middleware);

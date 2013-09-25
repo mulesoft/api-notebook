@@ -77,7 +77,7 @@ var defineEditorShortcut = function (options) {
  */
 
 var defineCodeShortcut = function (options) {
-  editorControls.push(define(options));
+  codeControls.push(define(options));
 };
 
 /**
@@ -87,7 +87,7 @@ var defineCodeShortcut = function (options) {
  */
 
 var defineTextShortcut = function (options) {
-  editorControls.push(define(options));
+  textControls.push(define(options));
 };
 
 defineEditorShortcut({

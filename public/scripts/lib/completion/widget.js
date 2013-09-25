@@ -17,14 +17,13 @@ var Widget = module.exports = function (completion, data, done) {
   this.data       = data;
   this.completion = completion;
 
-  if (!data.list.length) { return this.remove(); }
+  CodeMirror.signal(completion.cm, 'startCompletion', completion.cm);
 
   completion.cm.addKeyMap(this.keyMap = {
     'Esc': _.bind(function () { this.remove(); }, this)
   });
 
   this.refresh(done);
-  CodeMirror.signal(completion.cm, 'startCompletion', completion.cm);
 };
 
 /**
@@ -172,7 +171,7 @@ Widget.prototype.refresh = function (done) {
     });
 
     CodeMirror.on(hints, 'mousedown', function () {
-      setTimeout(function () { cm.focus(); }, 20);
+      window.setTimeout(function () { cm.focus(); }, 20);
     });
 
     state.on(

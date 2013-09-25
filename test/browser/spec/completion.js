@@ -15,10 +15,17 @@ describe('Completion', function () {
     document.body.removeChild(editor.getWrapperElement());
   });
 
-  var testAutocomplete = function (text, expected) {
+  var testAutocomplete = function (text, expected, unexpected) {
     return function (done) {
       testCompletion(editor, text, function (results) {
-        expect(results).to.contain(expected);
+        if (expected) {
+          expect(results).to.contain(expected);
+        }
+
+        if (unexpected) {
+          expect(results).to.not.contain(unexpected);
+        }
+
         done();
       });
     };
@@ -98,6 +105,18 @@ describe('Completion', function () {
       'should work with parens around the value',
       testAutocomplete('(123).to', 'toFixed')
     );
+
+    it(
+      'should work with arbitrary prefixed characters for the completion',
+      testAutocomplete('(wind', 'window')
+    );
+
+    it('should not complete plain functions', function (done) {
+      window.test = function () {};
+      window.test.prop = 'test';
+
+      testAutocomplete('test().', null, 'prop')(done);
+    });
 
     it(
       'should complete as soon as the property period is entered',

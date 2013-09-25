@@ -85,3 +85,15 @@ Notebook.prototype.getPrevCode = function (model) {
     }
   }
 };
+
+/**
+ * Get the index of the model iterating over only code cells.
+ *
+ * @param  {Object} model
+ * @return {Number}
+ */
+Notebook.prototype.codeIndexOf = function (model) {
+  return _.indexOf(this.filter(function (model) {
+    return model.get('type') === 'code';
+  }), model);
+};

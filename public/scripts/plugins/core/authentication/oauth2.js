@@ -60,7 +60,7 @@ module.exports = function (middleware) {
           'client_id':     data.clientId,
           'client_secret': data.clientSecret
         }),
-        type: 'POST'
+        method: 'POST'
       }, function (err, xhr) {
         if (err) { return next(err); }
 

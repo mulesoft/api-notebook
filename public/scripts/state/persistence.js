@@ -88,6 +88,10 @@ Persistence.prototype.deserialize = function (done) {
  * @param {Function} done
  */
 Persistence.prototype.save = function (done) {
+  if (!this.isOwner()) {
+    return done(new Error('Not the current owner.'));
+  }
+
   middleware.trigger(
     'persistence:save',
     this.getMiddlewareData(),
@@ -111,6 +115,13 @@ Persistence.prototype.authenticate = function (done) {
     this.getMiddlewareData(),
     _.bind(function (err, data) {
       this.set('userId', data.userId);
+
+      // When we authenticate, the owner id will be out of sync here. If we
+      // don't currently have an `id` and `ownerId`, we'll set the user to be
+      // the notebook owner.
+      if (!this.get('id') && !this.get('ownerId')) {
+        this.set('ownerId', data.userId);
+      }
 
       return done && done(err);
     }, this)
@@ -146,7 +157,6 @@ Persistence.prototype.load = function (done) {
     }),
     _.bind(function (err, data) {
       this.set('id',       data.id);
-      this.set('userId',   data.userId);
       this.set('ownerId',  data.ownerId);
       this.set('contents', data.contents, { silent: true });
 
@@ -281,7 +291,10 @@ persistence.listenTo(messages, 'ready', function () {
       userId: null
     }), _.bind(function (err, data) {
       this.set('userId',  data.userId);
-      this.set('ownerId', data.userId);
+
+      if (!this.get('id') && !this.get('ownerId')) {
+        this.set('ownerId', data.userId);
+      }
     }, this)
   );
 });
@@ -291,7 +304,7 @@ persistence.listenTo(messages, 'ready', function () {
  */
 persistence.listenTo(persistence, 'change:id', function (model, id) {
   process.nextTick(function () {
-    Backbone.history.navigate(_.isEmpty(id) ? '' : id.toString());
+    Backbone.history.navigate(id == null ? '' : id.toString());
   });
 });
 

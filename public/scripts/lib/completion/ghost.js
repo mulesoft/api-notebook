@@ -26,6 +26,7 @@ var Ghost = module.exports = function (widget, data, text) {
 
   if (!suffix.length) { return this.remove(); }
 
+  // Creates the ghost element to be styled.
   var ghostHint = document.createElement('span');
   ghostHint.className = 'CodeMirror-hint-ghost';
   ghostHint.appendChild(document.createTextNode(suffix));
@@ -36,8 +37,6 @@ var Ghost = module.exports = function (widget, data, text) {
     widget:     ghostHint,
     insertLeft: true
   });
-
-  this.cm.setCursor(this.data.to);
 };
 
 /**

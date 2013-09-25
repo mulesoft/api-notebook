@@ -1,7 +1,14 @@
 var _       = require('underscore');
-var http    = require('http');
 var url     = require('url');
+var express = require('express');
+var app     = module.exports = express();
 var request = require('request');
+
+// Remove `X-Powered-By: Express` header. Disable wasn't working.
+app.use(function (req, res, next) {
+  res.removeHeader('X-Powered-By');
+  return next();
+});
 
 /**
  * Uses a simple object representation of urls to merge additional data with
@@ -22,7 +29,7 @@ var mergeData = {
  * @param {Object} req
  * @param {Object} res
  */
-module.exports = http.createServer(function (req, res) {
+app.all('*', function (req, res) {
   var data = {};
 
   var qs  = data.qs  = req.query;

@@ -48,7 +48,7 @@ describe('Inspector', function () {
     });
 
     it('should inspect objects', function () {
-      inputOutput({ testing: true }, '{ "testing": true }');
+      inputOutput({ testing: true }, 'Object {"testing": true}');
     });
 
     it('should inspect functions', function () {
@@ -122,8 +122,23 @@ describe('Inspector', function () {
 
       it('should render the `window`', function () {
         inputOutputChildren(window, {
-          'window': /\{.*\}/,
-          'document': /!doctype html/i
+          'window': /^(?:Window|DOMWindow)$/,
+          'document': 'HTMLDocument',
+          'Infinity': 'Infinity',
+          'innerHeight': /^\d+$/
+        });
+      });
+
+      it('should inspect known list lengths', function () {
+        inputOutputChildren({
+          array: [],
+          nodes: document.getElementsByTagName('*'),
+          collection: document.forms
+        }, {
+          'array': 'Array[0]',
+          'nodes': /^NodeList\[\d+\]$/,
+          // Can't detect a `HTMLCollection` under PhantomJS.
+          'collection': /^(HTMLCollection\[\d+\]|Object)$/
         });
       });
 

@@ -64,7 +64,7 @@ ResultCell.prototype.setResult = function (data, context, done) {
  */
 ResultCell.prototype.refresh = function () {
   if (this._resultLabel) {
-    var index = this.model.collection.indexOf(this.model);
+    var index = this.model.collection.codeIndexOf(this.model);
     this._resultLabel.textContent = '$' + index + '=';
   }
 

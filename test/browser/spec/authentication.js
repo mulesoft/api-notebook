@@ -35,16 +35,16 @@ describe('Authentication', function () {
       );
 
       // Emulates waiting for the round-trip to the authentication server.
-      setTimeout(function () {
+      App.nextTick(function () {
         expect(window.open.lastCall.args[0]).to.contain(authorizationUrl);
         // Cheat and grab the state we passed through to the authentication server.
         var state = window.open.lastCall.args[0].match(/state=(\w+)/)[1];
         window.authenticateOauth2('http://localhost:3000/?code=123&state=' + state);
         // Respond to the request for the token
-        setTimeout(function () {
+        App.nextTick(function () {
           server.respond();
-        }, 50);
-      }, 50);
+        });
+      });
     });
   });
 });

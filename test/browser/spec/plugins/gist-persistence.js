@@ -29,15 +29,17 @@ describe('Gist Persistence Plugin', function () {
   it('should authenticate with github', function (done) {
     App.middleware.use('authenticate:oauth2', function auth (data, next, done) {
       // Emulate jumping through the oauth hoops, in reality this would take
-      // much longer.
-      setTimeout(function () {
+      // much longer than a single tick.
+      App.nextTick(function () {
         data.tokenType   = tokenType;
         data.accessToken = accessToken;
+
+        App.nextTick(function () {
+          server.respond();
+        });
+
         return done();
-      }, 100);
-      setTimeout(function () {
-        server.respond();
-      }, 150);
+      });
       App.middleware.disuse(auth);
     });
 
@@ -62,6 +64,7 @@ describe('Gist Persistence Plugin', function () {
 
   it('should save to github ', function (done) {
     App.persistence.set('userId',   userId);
+    App.persistence.set('ownerId',  userId);
     App.persistence.set('contents', notebook);
 
     server.respondWith(

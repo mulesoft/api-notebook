@@ -26,7 +26,7 @@ Sandbox.prototype.execute = function (code, done) {
     // Provides additional context under the `console` object. This works in the
     // same fashion as how Chrome's console is implemented, and has the benefit
     // of any context variables not wiping out `window` variables (they will
-    // just be shadowed with `with`).
+    // just be shadowed using `with`).
     global.console = global.console || {};
     global.console._notebookApi = context;
 

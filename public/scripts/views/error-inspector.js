@@ -1,8 +1,8 @@
-var _          = require('underscore');
-var trim       = require('trim');
-var domify     = require('domify');
-var Inspector  = require('./inspector');
-var stackTrace = require('stacktrace-js');
+var _         = require('underscore');
+var trim      = require('trim');
+var domify    = require('domify');
+var type      = require('../lib/type');
+var Inspector = require('./inspector');
 
 /**
  * Create an instance of the inspector suited for rendering errors.
@@ -17,11 +17,14 @@ var ErrorInspector = module.exports = Inspector.extend();
 ErrorInspector.prototype.initialize = function () {
   Inspector.prototype.initialize.apply(this, arguments);
 
-  this.stackTrace = _.map(stackTrace({ e: this.inspect }), trim.left);
-  this._preview   = this.stackTrace.shift();
-  // May as well delete the reference to the error, avoiding any potential
-  // memory leaks. Once rendered, we shouldn't need to use it again anyway.
-  delete this.inspect;
+  if (type(this.inspect) === 'error' && 'stack' in this.inspect) {
+    this._stackTrace = _.map(this.inspect.stack.split('\n'), trim.left);
+    this._preview    = this._stackTrace.shift();
+
+    // May as well delete the reference to the error, avoiding any potential
+    // memory leaks. Once rendered, we shouldn't need to use it again anyway.
+    delete this.inspect;
+  }
 };
 
 /**
@@ -30,7 +33,11 @@ ErrorInspector.prototype.initialize = function () {
  * @return {Boolean}
  */
 ErrorInspector.prototype.isExpandable = function () {
-  return !!this.stackTrace.length;
+  if (this._stackTrace) {
+    return !!this._stackTrace.length;
+  }
+
+  return Inspector.prototype.isExpandable.call(this);
 };
 
 /**
@@ -39,7 +46,11 @@ ErrorInspector.prototype.isExpandable = function () {
  * @return {String}
  */
 ErrorInspector.prototype.stringifyPreview = function () {
-  return this._preview;
+  if (this._stackTrace) {
+    return this._preview;
+  }
+
+  return Inspector.prototype.stringifyPreview.call(this);
 };
 
 /**
@@ -48,17 +59,24 @@ ErrorInspector.prototype.stringifyPreview = function () {
  * @return {ErrorInspector}
  */
 ErrorInspector.prototype.renderChildren = function () {
-  if (!this.isExpandable()) { return this; }
+  if (!this.isExpandable()) {
+    return this;
+  }
 
-  this._renderChildrenEl();
+  // Stack trace rendering support.
+  if (this._stackTrace) {
+    this._renderChildrenEl();
 
-  this.el.classList.add('can-expand');
+    this.el.classList.add('can-expand');
 
-  _.each(this.stackTrace, function (trace) {
     this.childrenEl.appendChild(
-      domify('<div class="trace">' + _.escape(trace) + '</div>')
+      domify(_.map(this._stackTrace, function (trace) {
+        return '<div class="trace">' + _.escape(trace) + '</div>';
+      }).join('\n'))
     );
-  }, this);
 
-  return this;
+    return this;
+  }
+
+  return Inspector.prototype.renderChildren.call(this);
 };

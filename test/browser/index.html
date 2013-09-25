@@ -13,12 +13,8 @@
   <script src="../../bower_components/chai/chai.js"></script>
   <script src="../../bower_components/sinon-chai/lib/sinon-chai.js"></script>
   <script src="../../bower_components/sinon/index.js"></script>
-  <script>
-    mocha.setup('bdd');
-    mocha.reporter('html');
-    expect = chai.expect;
-  </script>
 
+  <script src="../../build/test/browser/common.js"></script>
   <script src="helpers.js"></script>
 
   <!-- Include the stylesheet because it was the only way to pass some of the tests -->
@@ -28,6 +24,7 @@
   <script src="../../build/plugins/function-return.js"></script>
   <script src="../../build/plugins/filter-properties.js"></script>
   <script src="../../build/plugins/gist-persistence.js"></script>
+  <script src="../../build/plugins/raml-client-generator.js"></script>
   <script src="../../build/plugins/local-storage-persistence.js"></script>
 
   <script src="spec/views/app.js"></script>
@@ -52,6 +49,7 @@
   <script src="spec/plugins/function-return.js"></script>
   <script src="spec/plugins/filter-properties.js"></script>
   <script src="spec/plugins/gist-persistence.js"></script>
+  <script src="spec/plugins/raml-client-generator.js"></script>
   <script src="spec/plugins/local-storage-persistence.js"></script>
 
   <script>

@@ -94,4 +94,11 @@ Included middleware hooks include:
 
 ## Deployment
 
-To deploy to Heroku, just run the deploy script in the Makefile. You will probably have to set your the environment variables on Heroku, as well as update the git endpoint in the Makefile.
+To deploy to Heroku, you will need to add some environment variables:
+
+```
+export DEPLOY_GITHUB_CLIENT_ID=""
+export DEPLOY_GITHUB_CLIENT_SECRET=""
+```
+
+You will need to set your environment variables on your Heroku instance. Run `grunt deploy` to deploy the application to Heroku.

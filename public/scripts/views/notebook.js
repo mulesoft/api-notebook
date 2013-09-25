@@ -297,6 +297,7 @@ Notebook.prototype.appendView = function (view, before) {
    */
   this.listenTo(view, 'appendNew', function (view) {
     this.appendCodeView(view.el).focus();
+    this.refreshFromView(view);
   });
 
   /**
@@ -373,15 +374,14 @@ Notebook.prototype.appendView = function (view, before) {
     this.listenTo(view, 'linesChanged', this.refreshFromView);
   }
 
-  // Some references may be needed
-  view.sandbox    = this.sandbox;
-  view.model.view = view;
-  // Add the model to the collection
+  view.sandbox = this.sandbox;
   this.collection.push(view.model);
+
   // Append the view to the end of the console
   view.render().appendTo(_.bind(function (el) {
     return before ? insertAfter(el, before) : this.el.appendChild(el);
   }, this));
+
   // Sort the collection every time a node is added in a different position to
   // just being appended at the end
   if (before) { this.collection.sort(); }

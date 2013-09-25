@@ -124,10 +124,13 @@ module.exports = function (middleware) {
       // Lookup the property on the current context
       data.context = context[string];
       // If the variable/property is a constructor function, we can provide
-      // some additional context by looking at the `prototype` property.
-      if (token.isFunction && token.isConstructor) {
-        if (typeof data.context === 'function') {
+      // some additional context by looking at the `prototype` property. Normal
+      // functions have no built in way of inferring the return value.
+      if (token.isFunction) {
+        if (token.isConstructor && typeof data.context === 'function') {
           data.context = data.context.prototype;
+        } else {
+          data.context = null;
         }
       }
       return next();

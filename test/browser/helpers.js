@@ -49,8 +49,8 @@ var fakeKey = function (cm, code, props) {
  */
 var testCompletion = function (editor, text, done) {
   // Listens to an event triggered by the widget
-  editor.on('refreshCompletion', function finish (cm, results) {
-    editor.off('refreshCompletion', finish);
+  editor.on('refreshCompletion', function refresh (cm, results) {
+    editor.off('refreshCompletion', refresh);
     return done(results);
   });
 
@@ -59,11 +59,15 @@ var testCompletion = function (editor, text, done) {
   editor.setValue(text);
   editor.setCursor(editor.lastLine(), Infinity);
 
+  var cursor = editor.getCursor();
+
   // Trigger a fake change event to cause autocompletion to occur
   CodeMirror.signal(editor, 'change', editor, {
     origin: '+input',
-    to:     editor.getCursor(),
-    from:   editor.getCursor(),
+    to:     extend({}, cursor),
+    from:   extend({}, cursor, {
+      ch: cursor.ch - 1
+    }),
     text:   [text.slice(-1)]
   });
 };

@@ -318,8 +318,7 @@ Notebook.prototype.trigger = function (name /*, ..args */) {
  * Attempts to automatically create the initial notebook by scanning for the
  * correct script tag and using the data from it to generate the notebook.
  *
- * @param  {Array} scripts [description]
- * @return {[type]}         [description]
+ * @param {NodeList} scripts
  */
 (function (scripts) {
   var script;

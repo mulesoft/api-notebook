@@ -71,7 +71,7 @@ describe('Editor Cell', function () {
       });
 
       // Keyboard shortcuts need to be tested across browser
-      describe('keyboard shortcuts', function () {
+      describe('Keyboard Shortcuts', function () {
         var UP     = 38;
         var DOWN   = 40;
         var DELETE = 8;

@@ -2,6 +2,38 @@ var _      = require('underscore');
 var typeOf = require('./type');
 
 /**
+ * Gets internal object name. Works like the Chrome console and grabs the
+ * contructor name to render with the preview.
+ *
+ * @param  {Object} object
+ * @return {String}
+ */
+var getInternalName = (function () {
+  var getName;
+
+  // No need to use a regex if the `name` property is supported.
+  if ('name' in Function.prototype) {
+    getName = function (fn) {
+      return fn.name;
+    };
+  } else {
+    getName = function (fn) {
+      // Run a quick regular expression to get the function name and return.
+      return (/function\s+(.{1,})\s*\(/).exec(fn)[1];
+    };
+  }
+
+  return function (object) {
+    // PhantomJS constructor are objects instead of functions.
+    if (typeof object.constructor === 'object') {
+      return Object.prototype.toString.call(object).slice(8, -1);
+    }
+    // Caters for `Object.create(null)`.
+    return object.constructor ? getName(object.constructor) : 'Object';
+  };
+})();
+
+/**
  * Stringify a string.
  *
  * @param  {String} string
@@ -49,17 +81,33 @@ var cloneNode = function (node) {
 };
 
 /**
- * Used in nested stringifications such as the array and object, it will check
- * the object type and stringify accordingly. Always render primitives, while
- * objects will be stringified to their type output.
+ * Stringify a child object, Chrome-style. This stringifies non-primitives to
+ * their base name and keep primitives the visibly the same.
  *
- * @param  {*} object
+ * @param  {*}      object
  * @return {String}
  */
-var stringifyByExpansion = function (object) {
-  // If the object should be expanded to be viewed, just show the type
-  if (_.isString(object)) { return stringifyString(object); }
-  if (_.isObject(object)) { return Object.prototype.toString.call(object); }
+var stringifyChild = function (object) {
+  // Objects are renders as their object types. However, some types are known
+  // lists so we can add the length to the preview.
+  if (_.isObject(object)) {
+    var internalName = getInternalName(object);
+    var isList       = _.contains(
+      [
+        'Array',
+        'NodeList',
+        'HTMLCollection'
+      ],
+      internalName
+    );
+
+    return internalName + (isList ? '[' + object.length + ']' : '');
+  }
+
+  if (_.isString(object)) {
+    return stringifyString(object);
+  }
+
   return '' + object;
 };
 
@@ -71,7 +119,7 @@ var stringifyByExpansion = function (object) {
  */
 var stringifyArray = function (array) {
   return '[' + _.map(array, function (value) {
-    return stringifyByExpansion(value);
+    return stringifyChild(value);
   }, this).join(', ') + ']';
 };
 
@@ -88,10 +136,10 @@ var stringifyObject = function (object) {
   // indexes like an array because of the `length` property.
   var objectString = _.map(_.keys(object), function (key) {
     var value = object[key];
-    return stringifyString(key) + ': ' + stringifyByExpansion(value);
+    return stringifyString(key) + ': ' + stringifyChild(value);
   }, this).join(', ');
 
-  return '{' + (objectString ? ' ' + objectString + ' ' : '') + '}';
+  return getInternalName(object) + ' {' + objectString + '}';
 };
 
 /**
@@ -101,7 +149,7 @@ var stringifyObject = function (object) {
  * @return {String}
  */
 var stringifyError = function (error) {
-  // TIL DOMExceptions don't allow calling `toString` or string type coersion
+  // TIL DOMExceptions don't allow calling `toString`.
   return Error.prototype.toString.call(error);
 };
 
@@ -132,7 +180,7 @@ var stringifyElement = function (element) {
  * @param  {*} object
  * @return {String}
  */
-module.exports = function (object) {
+var stringify = module.exports = function (object) {
   switch (typeOf(object)) {
   case 'error':
     return stringifyError(object);
@@ -149,3 +197,14 @@ module.exports = function (object) {
   // Every other type can safely be typecasted to the expected output
   return '' + object;
 };
+
+// Alias useful stringify functionality.
+stringify.error   = stringifyError;
+stringify.array   = stringifyArray;
+stringify.object  = stringifyObject;
+stringify.string  = stringifyString;
+stringify.element = stringifyElement;
+
+// Additional internal helpers.
+stringify.stringifyChild  = stringifyChild;
+stringify.getInternalName = getInternalName;
