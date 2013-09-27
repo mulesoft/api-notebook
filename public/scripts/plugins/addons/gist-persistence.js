@@ -1,6 +1,9 @@
+/* global App */
 var OAUTH_KEY = 'github-oauth';
 var CLIENT_ID = process.env.GITHUB_CLIENT_ID;
-var middleware, accessToken;
+var AUTH_URL  = 'https://github.com/login/oauth/authorize';
+var TOKEN_URL = 'https://github.com/login/oauth/access_token';
+var VALID_URL = 'https://api.github.com/user';
 
 /**
  * Any time a change occurs, we'll sync the change with our Github gist.
@@ -14,24 +17,20 @@ var changePlugin = function (data, next, done) {
 };
 
 /**
- * Check the access token to make sure we are authenticated.
+ * Get the authenticated user id.
  *
- * @param {String}   accessToken
  * @param {Function} done
  */
-var checkToken = function (accessToken, done) {
-  if (accessToken == null) {
-    return done(new Error('No access token provided.'));
-  }
-
-  middleware.trigger('ajax', {
-    url: 'https://api.github.com/applications/' + CLIENT_ID + '/tokens/' +
-          accessToken
-  }, function (err, xhr) {
-    if (xhr.status !== 200) {
-      return done(new Error('Access Token failed to validate'));
+var authenticatedUserId = function (done) {
+  App.middleware.trigger('authenticate:oauth2:validate', {
+    validateUrl:      VALID_URL,
+    authorizationUrl: AUTH_URL
+  }, function (err, auth) {
+    if (err || !auth) {
+      return done(err);
     }
-    return done(null, JSON.parse(xhr.responseText).user.id);
+
+    return done(null, JSON.parse(auth.xhr.responseText).id);
   });
 };
 
@@ -45,20 +44,20 @@ var checkToken = function (accessToken, done) {
  * @param {Function} done
  */
 var authenticatePlugin = function (data, next, done) {
-  middleware.trigger('authenticate:oauth2', {
+  App.middleware.trigger('authenticate:oauth2', {
     scope:            ['gist'],
+    scopeSeparator:   ',',
     clientId:         CLIENT_ID,
-    tokenUrl:         'https://github.com/login/oauth/access_token',
-    authorizationUrl: 'https://github.com/login/oauth/authorize'
+    tokenUrl:         TOKEN_URL,
+    validateUrl:      VALID_URL,
+    authorizationUrl: AUTH_URL
   }, function (err, auth) {
-    if (err) { return next(err); }
-    // Set a global access token variable we can use when we save and update.
-    checkToken(auth.accessToken, function (err, userId) {
-      if (!err) {
-        data.userId = userId;
-        accessToken = auth.accessToken;
-        localStorage.setItem(OAUTH_KEY, auth.accessToken);
-      }
+    if (err) {
+      return done(err);
+    }
+
+    authenticatedUserId(function (err, userId) {
+      data.userId = userId;
       return done(err);
     });
   });
@@ -72,14 +71,9 @@ var authenticatePlugin = function (data, next, done) {
  * @param {Function} done
  */
 var authenticatedPlugin = function (data, next, done) {
-  checkToken(localStorage.getItem(OAUTH_KEY), function (err, userId) {
-    if (err) {
-      localStorage.removeItem(OAUTH_KEY);
-    } else {
-      data.userId = userId;
-      accessToken = localStorage.getItem(OAUTH_KEY);
-    }
-    return done();
+  authenticatedUserId(function (err, userId) {
+    data.userId = userId;
+    return done(err);
   });
 };
 
@@ -91,9 +85,11 @@ var authenticatedPlugin = function (data, next, done) {
  * @param {Function} done
  */
 var loadPlugin = function (data, next, done) {
-  if (!data.id) { return next(); }
+  if (!data.id) {
+    return next();
+  }
 
-  middleware.trigger('ajax', {
+  App.middleware.trigger('ajax', {
     url: 'https://api.github.com/gists/' + data.id,
     method: 'GET'
   }, function (err, xhr) {
@@ -118,11 +114,8 @@ var loadPlugin = function (data, next, done) {
  * @param {Function} done
  */
 var savePlugin = function (data, next, done) {
-  if (!accessToken) { return next(new Error('No access token.')); }
-
-  middleware.trigger('ajax', {
-    url: 'https://api.github.com/gists' + (data.id ? '/' + data.id : '') + '?' +
-          'access_token=' + accessToken,
+  App.middleware.trigger('ajax:oauth2', {
+    url: 'https://api.github.com/gists' + (data.id ? '/' + data.id : ''),
     method: data.id ? 'PATCH' : 'POST',
     data: JSON.stringify({
       files: {
@@ -130,8 +123,13 @@ var savePlugin = function (data, next, done) {
           content: data.contents
         }
       }
-    })
+    }),
+    authorizationUrl: AUTH_URL
   }, function (err, xhr) {
+    if (err) {
+      return done(err);
+    }
+
     var content = JSON.parse(xhr.responseText);
     data.id      = content.id;
     data.ownerId = content.user && content.user.id;
@@ -157,10 +155,8 @@ var plugins = {
  *
  * @param {Object} middleware
  */
-exports.attach = function (attach) {
-  middleware = attach;
-
-  attach.use(plugins);
+exports.attach = function (middleware) {
+  middleware.use(plugins);
 };
 
 /**
@@ -168,8 +164,6 @@ exports.attach = function (attach) {
  *
  * @param {Object} middleware
  */
-exports.detach = function (detach) {
-  middleware = undefined;
-
-  detach.disuse(plugins);
+exports.detach = function (middleware) {
+  middleware.disuse(plugins);
 };

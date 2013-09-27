@@ -5,9 +5,7 @@ var messages   = require('./messages');
 var middleware = require('./middleware');
 
 /**
- * Persistence is a static model that holds all persistence based data. Only
- * two flags should ever be set - `userId` and `notebook` - but more could be
- * set external to the module.
+ * Persistence is a static model that holds all persistent notebook data.
  *
  * @type {Function}
  */
@@ -28,6 +26,10 @@ var Persistence = Backbone.Model.extend({
  * @return {Boolean}
  */
 Persistence.prototype.isOwner = function () {
+  if (!this.isReady || (!this.has('ownerId') && !this.has('userId'))) {
+    return true;
+  }
+
   return this.get('ownerId') === this.get('userId');
 };
 
@@ -37,7 +39,7 @@ Persistence.prototype.isOwner = function () {
  * @return {Boolean}
  */
 Persistence.prototype.isAuthenticated = function () {
-  return !!this.get('userId');
+  return !this.isReady || this.has('userId');
 };
 
 /**
@@ -156,11 +158,14 @@ Persistence.prototype.load = function (done) {
       notebook: null
     }),
     _.bind(function (err, data) {
+      this._loading = true;
+
       this.set('id',       data.id);
       this.set('ownerId',  data.ownerId);
-      this.set('contents', data.contents, { silent: true });
+      this.set('contents', data.contents);
 
       this.deserialize(_.bind(function () {
+        this._loading = false;
         this.trigger('changeNotebook', this);
         return done && done(err);
       }, this));
@@ -192,7 +197,7 @@ Persistence.prototype.fork = function () {
 };
 
 /**
- * Exports a static instance of persistence.
+ * Export a static instance of the persistence model.
  *
  * @type {Object}
  */
@@ -257,6 +262,11 @@ persistence.listenTo(persistence, 'change:contents', (function () {
   var changeQueue = false;
 
   return function change () {
+    // Block updates when the notebook contents haven't changed.
+    if (this._loading || this.get('contents') === this.previous('contents')) {
+      return;
+    }
+
     // If we are already changing the data, but it has not yet been resolved,
     // set a change queue flag to `true` to let ourselves know we have changes
     // queued to sync once we finish the current operation.
@@ -295,6 +305,10 @@ persistence.listenTo(messages, 'ready', function () {
       if (!this.get('id') && !this.get('ownerId')) {
         this.set('ownerId', data.userId);
       }
+
+      // Set an `isReady` flag on the persistence model. This is used to check
+      // if the user is authenticated and if the user is the owner.
+      this.isReady = true;
     }, this)
   );
 });

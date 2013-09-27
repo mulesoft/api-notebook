@@ -123,7 +123,11 @@ var executePlugin = function (data, next, done) {
       exec.result  = error;
       exec.isError = true;
     } finally {
-      return !async && complete(null, exec);
+      // If the execution is not asynchronous or an error has been thrown,
+      // trigger completion of the cell execution.
+      if (!async || exec.isError) {
+        return complete(null, exec);
+      }
     }
   });
 };

@@ -42,7 +42,8 @@ describe('Persistence', function () {
   });
 
   it('should deserialize on loading a notebook', function (done) {
-    var testContent = '---\ntitle: Test Notebook\n---\n\n# Simple Test';
+    var testContent  = '---\ntitle: Test Notebook\n---\n\n# Simple Test';
+    var contentMatch = false;
 
     App.middleware.use('persistence:load', function loadNotebook (data, next, done) {
       data.contents = testContent;
@@ -50,18 +51,20 @@ describe('Persistence', function () {
       return done();
     });
 
-    App.middleware.use('persistence:deserialize', function deserializeNotebook (data, next) {
+    App.middleware.use('persistence:deserialize', function deserializeNotebook (data, next, done) {
       // Since the first notebook load would be deserializing an empty notebook,
       // we need to remove and pass the test on the correct callback.
       if (data.contents === testContent) {
+        contentMatch = true;
         App.middleware.disuse('persistence:deserialize', deserializeNotebook);
-        return done();
       }
-      return next();
+      return done();
     });
 
     App.start(fixture, function (err, app) {
-      return app.remove();
+      expect(contentMatch).to.be.true;
+      app.remove();
+      return done();
     });
   });
 
@@ -139,8 +142,8 @@ describe('Persistence', function () {
 
     it('should render a new notebook with a single code cell', function (done) {
       App.persistence.load(function (err) {
-        expect(App.persistence.get('contents')).to.equal(
-          '---\ntitle: New Notebook\n---\n\n```javascript\n\n```'
+        expect(App.persistence.get('contents')).to.match(
+          /```javascript\n\n```$/
         );
         return done();
       });

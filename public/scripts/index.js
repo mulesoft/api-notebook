@@ -23,6 +23,7 @@ App.nextTick = process.nextTick;
 
 // Exposes configuration details globally
 App.state       = require('./state/state');
+App.store       = require('./state/store');
 App.config      = require('./state/config');
 App.router      = require('./state/router');
 App.messages    = require('./state/messages');

@@ -12,7 +12,7 @@ describe('Result Cell', function () {
     var view;
 
     beforeEach(function () {
-      view = new Result();
+      view = new Result().render();
     });
 
     it('should have a class', function () {
@@ -30,7 +30,7 @@ describe('Result Cell', function () {
           expect(err).to.not.exist;
           expect(view.el.className).to.not.contain('result-error');
           expect(view.el.className).to.not.contain('result-pending');
-          done();
+          return done();
         });
       });
 
@@ -42,7 +42,7 @@ describe('Result Cell', function () {
           expect(err).to.not.exist;
           expect(view.el.className).to.contain('result-error');
           expect(view.el.className).to.not.contain('result-pending');
-          done();
+          return done();
         });
       });
     });
@@ -51,7 +51,7 @@ describe('Result Cell', function () {
       it('should be able to hook onto the render', function (done) {
         var spy = sinon.spy(function (data, next, done) {
           data.el.appendChild(document.createTextNode('some testing here'));
-          done();
+          return done();
         });
 
         App.middleware.use('result:render', spy);
@@ -62,7 +62,7 @@ describe('Result Cell', function () {
         }, window, function () {
           expect(spy).to.have.been.calledOnce;
           expect(view.el.textContent).to.equal('some testing here');
-          done();
+          return done();
         });
       });
 
@@ -79,7 +79,7 @@ describe('Result Cell', function () {
           isError: true
         }, window, function () {
           expect(spy).to.have.been.calledOnce;
-          done();
+          return done();
         });
       });
     });

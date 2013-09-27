@@ -86,7 +86,6 @@ Notebook.prototype.render = function () {
 
   View.prototype.render.call(this);
   this.collection = new NotebookCollection();
-  this.listenTo(this.collection, 'remove sort change', this.update);
 
   // Empty all the current content to reset with new contents
   _.each(persistence.get('notebook'), function (cell) {
@@ -95,9 +94,13 @@ Notebook.prototype.render = function () {
     this[appendView](null, cell.value);
   }, this);
 
-  if (!this.collection.length) { this.appendCodeView(); }
+  if (!this.collection.length) {
+    this.appendCodeView();
+  }
 
+  // Focus the last cell and set the persistence layer to start updating again.
   this.collection.last().view.focus();
+  this.listenTo(this.collection, 'remove sort change', this.update);
 
   return this;
 };

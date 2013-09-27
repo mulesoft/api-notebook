@@ -21,6 +21,7 @@ ResultCell.prototype._reset = function (done) {
   middleware.trigger('result:empty', this._view, _.bind(function (err) {
     delete this._view;
 
+    this._resultContent.innerHTML = '';
     this.el.classList.add('result-pending');
     this.el.classList.remove('result-error');
 
@@ -40,7 +41,7 @@ ResultCell.prototype.setResult = function (data, context, done) {
     if (err) { return done && done(err); }
 
     middleware.trigger('result:render', {
-      el:      this.el,
+      el:      this._resultContent,
       context: context,
       inspect: data.result,
       isError: data.isError
@@ -83,6 +84,11 @@ ResultCell.prototype.render = function () {
   // Prepends a container for the result reference label.
   this.el.appendChild(this._resultLabel = domify(
     '<div class="result-label"></div>'
+  ));
+
+  // Appends a container for holding rendered result views.
+  this.el.appendChild(this._resultContent = domify(
+    '<div class="result-content"></div>'
   ));
 
   return this;

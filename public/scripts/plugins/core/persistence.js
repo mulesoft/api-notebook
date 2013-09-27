@@ -17,6 +17,8 @@ module.exports = function (middleware) {
    * @param  {Function} next
    */
   middleware.core('persistence:serialize', function (data, next) {
+    var hasContent = false;
+
     // Prepend the front matter.
     data.contents = [
       META_DATA_DELIMITER,
@@ -28,11 +30,22 @@ module.exports = function (middleware) {
     data.contents += '\n\n';
 
     // Appends the notebook contents as Markdown.
-    data.contents += _.map(data.notebook, function (cell) {
-      if (cell.type === 'text') { return cell.value; }
-      // Wrap code cells as a JavaScript code block for Markdown
-      return [OPEN_CODE_BLOCK, cell.value, CLOSE_CODE_BLOCK].join('\n');
-    }).join('\n\n');
+    data.contents += _.chain(data.notebook)
+      // Remove empty cells from the end of the notebook.
+      .reduceRight(function (notebook, cell) {
+        if (hasContent || !/^\s+$/.test(cell.value)) {
+          hasContent = true;
+          notebook.push(cell);
+        }
+
+        return notebook;
+      }, [])
+      .reverse()
+      .map(function (cell) {
+        if (cell.type === 'text') { return cell.value; }
+        // Wrap code cells as a JavaScript code block for Markdown
+        return [OPEN_CODE_BLOCK, cell.value, CLOSE_CODE_BLOCK].join('\n');
+      }).value().join('\n\n');
 
     return next();
   });

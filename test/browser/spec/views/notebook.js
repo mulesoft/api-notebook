@@ -508,10 +508,12 @@ describe('Notebook', function () {
         expect(cell.editor.options.readOnly).to.be.false;
 
         // Set different user and gist owners
+        App.persistence.isReady = true;
         App.persistence.set('userId', 'test');
         expect(cell.editor.options.readOnly).to.equal('nocursor');
 
         view.remove();
+        App.persistence.isReady = false;
       });
     });
   });
