@@ -12,24 +12,27 @@
 
 .notebook-header
   padding: 1em 2em
+  color: #fff
+  background: #333
   border: 1px solid #000
   border-top: 0
   border-radius: 5px 5px 0 0
-  background: #333
-  color: #fff
 
-  h1
-    display: inline-block
-    margin: 0 10px 0 0
-    vertical-align: middle
+.notebook-title
+  display: inline-block
+  width: 100%
+  margin: 0
+  color: #fff
+  font-size: 2em
+  font-weight: bold
+  border: 0
+  background-color: transparent
+  &:focus
+    outline: 0
 
 .notebook-header-primary
   overflow: hidden
-  padding-right: 20px
-  > h1
-    width: 100%
-  > h1:focus
-    outline: 0
+  padding-right: 40px
 
 .notebook-header-secondary
   float: right

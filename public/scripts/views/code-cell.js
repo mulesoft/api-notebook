@@ -127,9 +127,6 @@ CodeCell.prototype.execute = function (done) {
     this.moveCursorToEnd();
   }
 
-  // Trigger an event before execution
-  this.trigger('beforeExecute', this);
-
   this.sandbox.execute(this.getValue(), _.bind(function (err, data) {
     // Log any sandbox execution errors for the user to inspect.
     if (err && console) {

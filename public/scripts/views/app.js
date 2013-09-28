@@ -38,9 +38,15 @@ App.prototype.events = {
     e.preventDefault();
     e.srcElement.blur();
   },
-  // Updates the notebook title on `blur`.
+  // Update the notebook title when leaving the input.
   'focusout .notebook-title': function (e) {
-    persistence.set('title', e.srcElement.textContent);
+    persistence.set('title', e.srcElement.value);
+  },
+  // Pre-select the notebook title before input.
+  'click .notebook-title': function (e) {
+    if (persistence.isOwner()) {
+      e.srcElement.select();
+    }
   }
 };
 
@@ -83,6 +89,7 @@ App.prototype.remove = function () {
  * @return {App}
  */
 App.prototype.updateUser = function () {
+  var title   = this.el.querySelector('.notebook-title');
   var isAuth  = persistence.isAuthenticated();
   var isOwner = persistence.isOwner();
 
@@ -90,6 +97,11 @@ App.prototype.updateUser = function () {
   this.el.classList[!isOwner ? 'add' : 'remove']('user-not-owner');
   this.el.classList[isAuth   ? 'add' : 'remove']('user-is-authenticated');
   this.el.classList[!isAuth  ? 'add' : 'remove']('user-not-authenticated');
+
+  // Allow/disallow editing of the title.
+  if (title) {
+    title.readOnly = !isOwner;
+  }
 
   // Adding and removing some of these classes cause the container to resize.
   messages.trigger('resize');
@@ -102,7 +114,7 @@ App.prototype.updateUser = function () {
  */
 App.prototype.updateTitle = function () {
   var title = persistence.get('title');
-  this.el.querySelector('.notebook-title').textContent = title;
+  this.el.querySelector('.notebook-title').value = title;
 };
 
 /**
@@ -151,9 +163,9 @@ App.prototype.render = function () {
       '</div>' +
 
       '<div class="notebook-header-primary">' +
-        '<h1 class="notebook-title" contenteditable>' +
+        '<input class="notebook-title" value="' +
           persistence.get('title') +
-        '</h1>' +
+        '"' + (persistence.isOwner() ? '' : ' readonly') + '>' +
       '</div>' +
     '</header>' +
 
