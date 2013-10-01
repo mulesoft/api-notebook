@@ -32,9 +32,8 @@ var mergeData = {
 app.all('*', function (req, res) {
   var data = {};
 
-  var qs      = data.qs      = req.query;
-  var uri     = data.uri     = url.parse(req.path.substr(1));
-  var headers = data.headers = {};
+  var qs  = data.qs  = req.query;
+  var uri = data.uri = url.parse(req.path.substr(1));
 
   // Extends the query string with additonal url data
   _.extend(qs, mergeData[uri.host + uri.pathname]);
@@ -42,12 +41,13 @@ app.all('*', function (req, res) {
   // Remove any non-proxy specific headers.
   _.each(req.headers, function (value, key) {
     if (key.substr(0, 8) === 'x-proxy-') {
-      headers[key.substr(8)] = value;
-    } else if (!headers[key]) {
-      headers[key] = value;
+      req.headers[key.substr(8)] = value;
+      return delete req.headers[key];
     }
 
-    delete req.headers[key];
+    if (key.substr(0, 12) === 'x-forwarded-') {
+      return delete req.headers[key];
+    }
   });
 
   // Pipe the request data directly into the proxy request and back to the
