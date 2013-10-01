@@ -30,6 +30,7 @@ App.prototype.events = {
   'click .modal-backdrop': 'hideShortcuts',
   'click .notebook-exec':  'runNotebook',
   'click .notebook-fork':  'forkNotebook',
+  'click .notebook-clone': 'forkNotebook',
   'click .notebook-auth':  'authNotebook',
   // Listen for `Enter` presses and blur the input instead.
   'keydown .notebook-title': function (e) {
@@ -65,6 +66,7 @@ App.prototype.initialize = function () {
 
   // Listens to different application state changes and updates accordingly.
   this.listenTo(persistence, 'changeUser',      this.updateUser,      this);
+  this.listenTo(persistence, 'change:id',       this.updateId,        this);
   this.listenTo(persistence, 'change:title',    this.updateTitle,     this);
   this.listenTo(messages,    'keydown:Esc',     this.hideShortcuts,   this);
   this.listenTo(messages,    'keydown:Shift-/', this.toggleShortcuts, this);
@@ -105,6 +107,20 @@ App.prototype.updateUser = function () {
 
   // Adding and removing some of these classes cause the container to resize.
   messages.trigger('resize');
+
+  return this;
+};
+
+/**
+ * Updates the template when the persistence id changes.
+ *
+ * @return {App}
+ */
+App.prototype.updateId = function () {
+  var isSaved = persistence.has('id');
+
+  this.el.classList[isSaved  ? 'add' : 'remove']('user-is-saved');
+  this.el.classList[!isSaved ? 'add' : 'remove']('user-not-saved');
 
   return this;
 };
@@ -155,6 +171,7 @@ App.prototype.render = function () {
     '<header class="notebook-header clearfix">' +
       '<div class="notebook-header-secondary">' +
         '<button class="btn-text notebook-fork">Make my own copy</button>' +
+        '<button class="btn-text notebook-clone">Make another copy</button>' +
         '<button class="btn-text notebook-auth">' +
           'Authenticate' +
         '</button>' +
