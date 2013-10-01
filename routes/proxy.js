@@ -43,6 +43,8 @@ app.all('*', function (req, res) {
   _.each(req.headers, function (value, key) {
     if (key.substr(0, 8) === 'x-proxy-') {
       headers[key.substr(8)] = value;
+    } else if (!headers[key]) {
+      headers[key] = value;
     }
 
     delete req.headers[key];
