@@ -1,3 +1,5 @@
+/* global App */
+var _         = App._;
 var PROXY_URL = '/proxy';
 
 /**
@@ -8,6 +10,12 @@ var PROXY_URL = '/proxy';
  * @param  {Function} next
  */
 var ajaxPlugin = function (data, next) {
+  // Copy all the keys to be proxied.
+  _.each(data.headers, function (value, key) {
+    delete data.headers[key];
+    data.headers['X-Proxy-' + key] = value;
+  });
+
   data.url = PROXY_URL + '/' + data.url;
   return next();
 };
