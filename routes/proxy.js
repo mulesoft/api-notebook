@@ -32,27 +32,20 @@ var mergeData = {
 app.all('*', function (req, res) {
   var data = {};
 
-  var qs  = data.qs  = req.query;
-  var uri = data.uri = url.parse(req.path.substr(1));
+  var qs      = data.qs      = req.query;
+  var uri     = data.uri     = url.parse(req.path.substr(1));
+  var headers = data.headers = {};
 
   // Extends the query string with additonal url data
   _.extend(qs, mergeData[uri.host + uri.pathname]);
 
-  // Github requires we pass basic auth when checking authorizations
-  if ((uri.host + uri.pathname).indexOf('api.github.com/applications') === 0) {
-    data.auth = {
-      user: process.env.GITHUB_CLIENT_ID,
-      pass: process.env.GITHUB_CLIENT_SECRET
-    };
-  }
-
-  // Remove any `x-forwarded-*` headers set by the upstream proxy (E.g. Heroku).
-  // Keeping these headers may cause APIs to do unexpected things, such as
-  // Github which redirects requests when `x-forwarded-proto` === `http`.
-  _.each(req.headers, function (_, key) {
-    if (key.substr(0, 11) === 'x-forwarded') {
-      delete req.headers[key];
+  // Remove any non-proxy specific headers.
+  _.each(req.headers, function (value, key) {
+    if (key.substr(0, 8) === 'x-proxy-') {
+      headers[key.substr(8)] = value;
     }
+
+    delete req.headers[key];
   });
 
   // Pipe the request data directly into the proxy request and back to the
