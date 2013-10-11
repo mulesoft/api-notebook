@@ -26,6 +26,7 @@ module.exports = function (grunt) {
       src:  PLUGIN_DIR + '/' + filename,
       dest: 'build/plugins/' + filename,
       options: {
+        debug:      DEV,
         transform:  browserifyTransform,
         standalone: baseName + 'Plugin'
       }
@@ -111,11 +112,7 @@ module.exports = function (grunt) {
       },
       'build-heroku': {
         command: [
-          'HEROKU_ENDPOINT=`git config --get remote.heroku.url`',
-          'HEROKU_APP=`echo $HEROKU_ENDPOINT | ' +
-            'sed -E "s/^git@heroku.com:(.+).git/\\1/"`',
-          'HEROKU_URL="http://$HEROKU_APP.herokuapp.com"',
-          'NODE_ENV="production" NOTEBOOK_URL=$HEROKU_URL ' +
+          'NODE_ENV="production" NOTEBOOK_URL=$DEPLOY_NOTEBOOK_URL ' +
             'GITHUB_CLIENT_ID=$DEPLOY_GITHUB_CLIENT_ID grunt build'
         ].join('; '),
         options: {
@@ -154,6 +151,7 @@ module.exports = function (grunt) {
         src: 'public/scripts/embed.js',
         dest: 'build/scripts/embed.js',
         options: {
+          debug:      DEV,
           transform:  browserifyTransform,
           standalone: 'Notebook'
         }
@@ -162,6 +160,7 @@ module.exports = function (grunt) {
         src: 'test/browser/common.js',
         dest: TESTS_DIR + '/browser/common.js',
         options: {
+          debug:     DEV,
           transform: browserifyTransform
         }
       }

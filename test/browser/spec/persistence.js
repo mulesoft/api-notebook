@@ -102,7 +102,7 @@ describe('Persistence', function () {
 
       // Check the application titles match.
       expect(App.persistence.get('title')).to.equal('Test Notebook');
-      expect(app.el.querySelector('.notebook-title').textContent).to.equal('Test Notebook');
+      expect(app.el.querySelector('.notebook-title').value).to.equal('Test Notebook');
 
       app.remove();
       return done();
@@ -142,9 +142,9 @@ describe('Persistence', function () {
 
     it('should render a new notebook with a single code cell', function (done) {
       App.persistence.load(function (err) {
-        expect(App.persistence.get('contents')).to.match(
-          /```javascript\n\n```$/
-        );
+        expect(App.persistence.get('notebook').length).to.equal(1);
+        expect(App.persistence.get('notebook')[0].type).to.equal('code');
+        expect(App.persistence.get('notebook')[0].value).to.equal('');
         return done();
       });
     });

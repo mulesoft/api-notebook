@@ -16,7 +16,7 @@ describe('Gist Persistence Plugin', function () {
 
   beforeEach(function () {
     App.persistence.reset();
-    sinon.stub(window, 'open');
+    sinon.stub(window, 'open').returns({});
     App.store._.oauth2.clear();
     server = sinon.fakeServer.create();
     gistPersistencePlugin.attach(App.middleware);

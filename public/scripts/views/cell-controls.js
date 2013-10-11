@@ -1,8 +1,9 @@
-var _        = require('underscore');
-var domify   = require('domify');
-var Backbone = require('backbone');
-var View     = require('./view');
-var controls = require('../lib/controls').editor;
+var _           = require('underscore');
+var domify      = require('domify');
+var Backbone    = require('backbone');
+var View        = require('./view');
+var controls    = require('../lib/controls').editor;
+var persistence = require('../state/persistence');
 
 /**
  * Displays the cell controls overlay menu.
@@ -16,6 +17,13 @@ var ControlsView = module.exports = View.extend({
     'click .action': 'onClick'
   }
 });
+
+/**
+ * Initialize the cell controls overlay menu.
+ */
+ControlsView.prototype.initialize = function () {
+  this.listenTo(persistence, 'changeUser', this.render);
+};
 
 /**
  * Toggles the control to be appended or removed from a view. If the control
@@ -53,14 +61,33 @@ ControlsView.prototype.detach = function () {
  * @return {ControlsView}
  */
 ControlsView.prototype.render = function () {
-  var only = ['moveUp', 'moveDown', 'switch', 'clone', 'remove', 'appendNew'];
+  View.prototype.render.call(this);
+
+  var only = [];
+
+  // Add more options if we are the owner of the document.
+  if (persistence.isOwner()) {
+    only.push('moveUp', 'moveDown', 'switch', 'clone', 'remove', 'appendNew');
+  }
+
+  if (!only.length) {
+    return this;
+  }
 
   var html = _.map(controls, function (action) {
     // Some items are currently being hidden from the controls menu
     if (!_.contains(only, action.command)) { return ''; }
 
     var button = '<button class="action" data-action="' + action.command + '">';
-    button += action.label + '<span>' + action.keyCode + '</span></button>';
+    button += action.label;
+
+    // Add the keyboard codes if the user can edit the document and use the key
+    // codes.
+    if (persistence.isOwner()) {
+      button += '<span>' + action.keyCode + '</span>';
+    }
+
+    button += '</button>';
     return button;
   }).join('\n');
   this.el.appendChild(domify(html));

@@ -9,11 +9,19 @@ describe('Code Cell', function () {
   });
 
   describe('Code Cell instance', function () {
-    var view;
+    var view, sandbox;
 
     beforeEach(function () {
-      view = new Code();
-      view.sandbox = new App.Sandbox();
+      view    = new Code();
+      sandbox = new App.Sandbox();
+
+      view.notebook = {
+        sandbox: sandbox,
+        completionOptions: {
+          context: sandbox.window
+        }
+      };
+
       view.model.collection = {
         codeIndexOf: sinon.stub().returns(0),
         getNextCode: sinon.stub().returns(undefined),
@@ -230,7 +238,7 @@ describe('Code Cell', function () {
           var code   = 'load("' + NOTEBOOK_URL + '/test/fixtures/test.js");';
 
           view.on('execute', function () {
-            expect(view.sandbox.window.test).to.be.true;
+            expect(view.notebook.sandbox.window.test).to.be.true;
 
             return done();
           });
@@ -259,10 +267,10 @@ describe('Code Cell', function () {
 
       describe('Completion', function () {
         it('should complete from the sandbox', function (done) {
-          view.sandbox.execute('var testing = "test";', function () {
+          view.notebook.sandbox.execute('var testing = "test";', function () {
             testCompletion(view.editor, 'test', function (results) {
               expect(results).to.contain('testing');
-              done();
+              return done();
             });
           });
         });

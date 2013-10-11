@@ -12,7 +12,28 @@ var NotebookCollection = require('../collections/notebook');
 
 var Sandbox     = require('../lib/sandbox');
 var insertAfter = require('../lib/browser/insert-after');
+var middleware  = require('../state/middleware');
 var persistence = require('../state/persistence');
+
+/**
+ * Generates a generic function for appending new view instances.
+ *
+ * @param  {Backbone.View} View
+ * @return {Function}
+ */
+var appendNewView = function (View) {
+  return function (el, value) {
+    var view = new View();
+    this.appendView(view, el);
+    view.setValue(value || '').moveCursorToEnd();
+    // Remove the history of the editor, stops the user from accidently undoing
+    // the initially loaded content and ending up with an empty cell.
+    if (view.editor) {
+      view.editor.doc.clearHistory();
+    }
+    return view;
+  };
+};
 
 /**
  * Create a new notebook instance.
@@ -32,6 +53,10 @@ Notebook.prototype.initialize = function (options) {
   this.sandbox    = new Sandbox();
   this.controls   = new CellControls().render();
   this.collection = new NotebookCollection();
+
+  // Set up autocompletion environment.
+  this.completionOptions = {};
+  this.updateCompletion();
 
   // When the user changes, we may have been given permission to do things like
   // edit the notebook. Hence, we need to rerender certain aspects of the app.
@@ -74,6 +99,25 @@ Notebook.prototype.updateUser = function () {
 };
 
 /**
+ * Refresh the completion context object, used by the completion helper in code
+ * cells to get completion results.
+ *
+ * @return {Notebook}
+ */
+Notebook.prototype.updateCompletion = function () {
+  // Extends the context with additional inline completion results. Requires
+  // using `Object.create` since you can't extend an object with every property
+  // of the global object.
+  var context = Object.create(this.sandbox.window);
+
+  middleware.trigger('sandbox:context', context, _.bind(function (err, data) {
+    this.completionOptions.context = data;
+  }, this));
+
+  return this;
+};
+
+/**
  * Render the notebook view.
  *
  * @return {Notebook}
@@ -98,8 +142,8 @@ Notebook.prototype.render = function () {
     this.appendCodeView();
   }
 
-  // Focus the last cell and set the persistence layer to start updating again.
-  this.collection.last().view.focus();
+  // Start listening for changes again.
+  this.listenTo(this.collection, 'remove sort',        this.updateCompletion);
   this.listenTo(this.collection, 'remove sort change', this.update);
 
   return this;
@@ -130,20 +174,21 @@ Notebook.prototype.appendTo = function () {
  */
 Notebook.prototype.execute = function (done) {
   var that = this;
-  this.execution = true;
+  this._execution = true;
 
   // This chaining is a little awkward, but it allows the execution to work with
   // asynchronous callbacks.
   (function execution (view) {
     // If no view is passed through, we must have hit the last view.
     if (!view) {
-      that.execution = false;
+      that._execution = false;
       return done && done();
     }
 
-    view.focus().moveCursorToEnd();
-
+    // Only execute code cells, skips other cell types.
     if (view.model.get('type') === 'code') {
+      view.focus().moveCursorToEnd();
+
       view.execute(function (err, data) {
         execution(that.getNextView(view));
       });
@@ -191,31 +236,13 @@ Notebook.prototype.refreshFromView = function (view) {
 
 /**
  * Append a new code cell view instance.
- *
- * @param  {Node}     el
- * @param  {String}   value
- * @return {CodeView}
  */
-Notebook.prototype.appendCodeView = function (el, value) {
-  var view = new CodeView();
-  this.appendView(view, el);
-  view.setValue(value).moveCursorToEnd();
-  return view;
-};
+Notebook.prototype.appendCodeView = appendNewView(CodeView);
 
 /**
  * Append a new text cell view instance.
- *
- * @param  {Node}     el
- * @param  {String}   value
- * @return {TextView}
  */
-Notebook.prototype.appendTextView = function (el, value) {
-  var view = new TextView();
-  this.appendView(view, el);
-  view.setValue(value).moveCursorToEnd();
-  return view;
-};
+Notebook.prototype.appendTextView = appendNewView(TextView);
 
 /**
  * Append any view to the notebook. Sets up a few listeners on every view
@@ -337,16 +364,19 @@ Notebook.prototype.appendView = function (view, before) {
   // Listening to another set of events for `code` cells
   if (view instanceof CodeView) {
     // Listen to execution events from the child views, which may or may not
-    // require new working cells to be appended to the console
+    // require new working cells to be appended to the notebook.
     this.listenTo(view, 'execute', function (view) {
-      // Need a flag here so we don't cause an infinite loop when running the
-      // notebook
-      if (this.execution) { return; }
+      // Refresh all completion data when a cell is executed.
+      this.updateCompletion();
+
+      // Need a flag here so we don't cause an infinite loop when executing the
+      // notebook contents. (E.g. Hitting the last cell and adding a new cell).
+      if (this._execution) { return; }
 
       if (this.el.lastChild === view.el) {
         this.appendCodeView().focus();
       } else {
-        this.getNextView(view).moveCursorToEnd(0).focus();
+        this.getNextView(view).moveCursorToEnd().focus();
       }
     });
 
@@ -377,7 +407,7 @@ Notebook.prototype.appendView = function (view, before) {
     this.listenTo(view, 'linesChanged', this.refreshFromView);
   }
 
-  view.sandbox = this.sandbox;
+  view.notebook = this;
   this.collection.push(view.model);
 
   // Append the view to the end of the console

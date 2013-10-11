@@ -24,7 +24,9 @@ var Notebook = module.exports = Backbone.Collection.extend({
 Notebook.prototype.initialize = function () {
   // Augments sandbox context collection result lookups
   middleware.use('sandbox:context', _.bind(function (context, next) {
-    this.each(function (model, index) {
+    _.each(this.filter(function (model) {
+      return model.get('type') === 'code';
+    }), function (model, index) {
       if (model.get('type') === 'code') {
         context['$' + index] = model.get('result');
       }

@@ -180,7 +180,7 @@ App.prototype.render = function () {
       '</div>' +
 
       '<div class="notebook-header-primary">' +
-        '<input class="notebook-title" value="' +
+        '<input class="notebook-title" autocomplete="off" value="' +
           persistence.get('title') +
         '"' + (persistence.isOwner() ? '' : ' readonly') + '>' +
       '</div>' +

@@ -100,7 +100,7 @@ describe('RAML Client Generator Plugin', function () {
           }
         )(function (err, exec) {
           App._.each(headers, function (value, header) {
-            expect(exec.result.getHeader(header)).to.equal(value);
+            expect(exec.result.headers[header]).to.equal(value);
           });
           return done(err);
         });
@@ -720,6 +720,13 @@ describe('RAML Client Generator Plugin', function () {
         view = new App.View.CodeCell({
           sandbox: sandbox
         });
+
+        view.notebook = {
+          sandbox: sandbox,
+          completionOptions: {
+            context: sandbox.window
+          }
+        };
 
         view.model.collection = {
           codeIndexOf: sinon.stub().returns(0),

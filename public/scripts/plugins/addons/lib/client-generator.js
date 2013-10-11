@@ -1,14 +1,19 @@
 /* global App */
-var _      = App._;
-var qs     = App.Library.querystring;
-var trim   = require('trim');
-var escape = require('escape-regexp');
-var parser = require('uri-template');
+var _        = App._;
+var qs       = App.Library.querystring;
+var trim     = require('trim');
+var cases    = require('change-case');
+var escape   = require('escape-regexp');
+var parser   = require('uri-template');
+var fromPath = require('../../../lib/from-path');
 
 var toString         = Object.prototype.toString;
 var HTTP_METHODS     = ['get', 'head', 'put', 'post', 'patch', 'delete'];
 var RETURN_PROPERTY  = '@return';
 var RESERVED_METHODS = _.object(HTTP_METHODS.concat('headers', 'query'), true);
+
+// List of supported OAuth2 grant types in order of preference.
+var supportedOAuth2Grants = ['code'];
 
 /**
  * Runs validation logic against uri parameters from the RAML spec. Throws an
@@ -159,6 +164,10 @@ var template = function (string, params, context) {
  * @return {Object}
  */
 var sanitizeAST = function (ast) {
+  if (!_.isString(ast.baseUri)) {
+    throw new Error('A baseUri is required');
+  }
+
   // Merge an array of objects into a single object using `_.extend` and
   // `apply` (since `_.extend` accepts unlimited number of arguments).
   ast.traits          = _.extend.apply(_, ast.traits);
@@ -169,7 +178,7 @@ var sanitizeAST = function (ast) {
   ast.resources = (function flattenResources (resources) {
     var map = {};
 
-    // Resources are provided as an object, we'll move them to be key based.
+    // Resources are provided as an array, we'll move them to be an object.
     _.each(resources, function (resource) {
       // Methods are implemented as arrays of objects too, but not recursively.
       if (resource.methods) {
@@ -182,8 +191,20 @@ var sanitizeAST = function (ast) {
         resource.resources = flattenResources(resource.resources);
       }
 
-      // Remove the prefixed `/` from the relativeUri.
-      map[resource.relativeUri.substr(1)] = resource;
+      var resourcePath = [];
+
+      _.each(resource.relativeUri.substr(1).split('/'), function (node, index) {
+        // Prepend `resources` to each path node after the first one. This is
+        // required because of the way the AST is structured.
+        if (index > 0) {
+          resourcePath.push('resources');
+        }
+
+        resourcePath.push(node);
+      });
+
+      // Attach the resource map at the correct endpoint on the map.
+      fromPath(map, resourcePath, resource);
     });
 
     return map;
@@ -321,10 +342,9 @@ var sanitizeXHR = function (xhr) {
   }
 
   return {
-    body:      body,
-    status:    xhr.status,
-    headers:   headers,
-    getHeader: _.bind(getHeader, null, getReponseHeaders(xhr, true))
+    body:    body,
+    status:  xhr.status,
+    headers: headers
   };
 };
 
@@ -340,7 +360,8 @@ var httpRequest = function (nodes, method) {
     var query   = nodes.query   || {};
     var headers = nodes.headers || {};
     var mime    = getMime(getHeader(headers, 'Content-Type'));
-    var fullUrl = nodes.baseUri + '/' + nodes.join('/');
+    var request = 'ajax';
+    var fullUrl = nodes.config.baseUri + '/' + nodes.join('/');
 
     // No need to pass data through with `GET` or `HEAD` requests.
     if (method.method === 'get' || method.method === 'head') {
@@ -400,13 +421,42 @@ var httpRequest = function (nodes, method) {
       headers: headers
     };
 
-    if (async && !_.isFunction(done)) {
-      done = App._executeContext.async();
+    // Iterate through `securedBy` methods and accept the first one we are
+    // already authenticated for.
+    _.some(method.securedBy || nodes.config.securedBy, function (secured) {
+      // Skip unauthorized requests since we'll be doing that anyway if the
+      // rest of the secure methods fail to exist.
+      if (secured == null) {
+        return false;
+      }
+
+      var scheme        = nodes.config.securitySchemes[secured];
+      var authenticated = nodes.config.authentication[scheme.type];
+
+      if (authenticated) {
+        if (scheme.type === 'OAuth 2.0') {
+          request        = 'ajax:oauth2';
+          options.oauth2 = nodes.config.securitySchemes[secured].settings;
+        }
+
+        return true;
+      }
+
+      return false;
+    });
+
+    // If the request is async, set the relevant function callbacks.
+    if (async) {
+      App._executeContext.timeout(Infinity);
+
+      if (!_.isFunction(done)) {
+        done = App._executeContext.async();
+      }
     }
 
     // Trigger the ajax middleware so plugins can hook onto the requests. If the
     // function is async we need to register a callback for the middleware.
-    App.middleware.trigger('ajax', options, async && function (err, xhr) {
+    App.middleware.trigger(request, options, async && function (err, xhr) {
       return done(err, sanitizeXHR(xhr));
     });
 
@@ -585,14 +635,81 @@ var attachResources = function attachResources (nodes, context, resources) {
 };
 
 /**
+ * Returns a function that can be used to authenticate with the API.
+ *
+ * @param  {Array}    nodes
+ * @param  {Object}   scheme
+ * @return {Function}
+ */
+var authenticateOAuth2 = function (nodes, scheme) {
+  return function (data, done) {
+    if (!_.isFunction(done)) {
+      done = App._executeContext.async();
+    }
+
+    // Generate the options using user data. We'll require at least the
+    // `clientId` and `clientSecret` be passed in with the data object.
+    var options = _.extend({}, scheme.settings, data);
+
+    // Timeout after 10 minutes.
+    App._executeContext.timeout(10 * 60 * 1000);
+
+    App.middleware.trigger(
+      'authenticate:oauth2',
+      options,
+      function (err, auth) {
+        // Set the nodes authentication details. This will be used by in the
+        // final http request.
+        nodes.config.authentication = nodes.config.authentication || {};
+        nodes.config.authentication[scheme.type] = true;
+        return done(err, auth);
+      }
+    );
+  };
+};
+
+/**
+ * Attaches all available security schemes to the context.
+ *
+ * @param  {Array}  nodes
+ * @param  {Object} context
+ * @param  {Object} schemes
+ * @return {Object}
+ */
+var attachSecuritySchemes = function (nodes, context, schemes) {
+  // Loop through the available schemes and attach the available schemes.
+  _.each(schemes, function (scheme, title) {
+    var methodName = 'authenticate' + cases.pascal(title);
+
+    if (scheme.type === 'OAuth 2.0') {
+      var acceptedGrants = scheme.settings.authorizationGrants;
+
+      if (_.intersection(acceptedGrants, supportedOAuth2Grants).length) {
+        context[methodName] = authenticateOAuth2(nodes, scheme);
+      }
+    }
+  });
+
+  return context;
+};
+
+/**
  * Generate the client object from a sanitized AST object.
  *
  * @param  {Object} ast Passed through `sanitizeAST`
  * @return {Object}
  */
 var generateClient = function (ast) {
+  // Generate the root node array. Set properties directly on this array to be
+  // copied to the next execution part. In some cases we may need something to
+  // be automatically set on *all* instances, so we use `config` since objects
+  // are passed by reference.
   var nodes = _.extend([], {
-    baseUri: ast.baseUri.replace(/\/+$/, '')
+    config: {
+      baseUri:         ast.baseUri.replace(/\/+$/, ''),
+      securedBy:       ast.securedBy,
+      securitySchemes: ast.securitySchemes
+    }
   });
 
   /**
@@ -617,6 +734,9 @@ var generateClient = function (ast) {
 
   // Attach all the resources to the returned client function.
   attachResources(nodes, client, ast.resources);
+
+  // Attach security scheme authentication to the root node.
+  attachSecuritySchemes(nodes, client, ast.securitySchemes);
 
   return client;
 };

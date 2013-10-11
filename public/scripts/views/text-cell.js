@@ -1,11 +1,12 @@
-var _           = require('underscore');
-var marked      = require('marked');
-var domify      = require('domify');
-var Backbone    = require('backbone');
-var EditorCell  = require('./editor-cell');
-var messages    = require('../state/messages');
-var stripInput  = require('../lib/codemirror/strip-input');
-var insertAfter = require('../lib/browser/insert-after');
+var _            = require('underscore');
+var marked       = require('marked');
+var domify       = require('domify');
+var Backbone     = require('backbone');
+var EditorCell   = require('./editor-cell');
+var messages     = require('../state/messages');
+var stripInput   = require('../lib/codemirror/strip-input');
+var insertAfter  = require('../lib/browser/insert-after');
+var ownerProtect = require('./lib/owner-protect');
 
 /**
  * Create a new text cell instance.
@@ -23,7 +24,7 @@ var TextCell = module.exports = EditorCell.extend({
  */
 TextCell.prototype.events = _.extend({}, EditorCell.prototype.events, {
   'click': function () {
-    if (!this._hasFocus) {
+    if (!this.hasFocus()) {
       this.focus();
     }
   }
@@ -58,15 +59,16 @@ TextCell.prototype.editorOptions = _.extend(
 TextCell.prototype.bindEditor = function () {
   EditorCell.prototype.bindEditor.call(this);
 
-  this.listenTo(this.editor, 'change', _.bind(function (cm, data) {
-    var endCommentBlock = stripInput('*/', cm, data);
+  this.listenTo(this, 'change', _.bind(function (view, data) {
+    var endCommentBlock = stripInput('*/', view.editor, data);
     if (endCommentBlock !== false) {
       return this.trigger('code', this, endCommentBlock);
     }
   }, this));
 
-  this.listenTo(this.editor, 'blur', _.bind(function (cm) {
-    this._hasFocus = false;
+  // Listen to itself since editor cells have a built in protection here.
+  this.listenTo(this, 'blur', _.bind(function () {
+    delete this._hasFocus;
     this.renderEditor();
   }, this));
 
@@ -92,14 +94,11 @@ TextCell.prototype.refresh = function () {
  *
  * @return {TextCell}
  */
-TextCell.prototype.focus = function () {
-  // Don't allow focusing on the editor if the user is not the owner
-  if (!this.isOwner()) { return this; }
-
+TextCell.prototype.focus = ownerProtect(function () {
   this._hasFocus = true;
   this.renderEditor();
   return EditorCell.prototype.focus.call(this);
-};
+});
 
 /**
  * Set the value of the text cell. Switches between updating the CodeMirror view

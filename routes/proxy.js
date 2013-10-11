@@ -24,13 +24,33 @@ var mergeData = {
 };
 
 /**
+ * Allow headers to be proxied through *if* the proxy header version is not set.
+ *
+ * @type {Array}
+ */
+var allowedHeaders = {
+  'accept':          true,
+  'accept-encoding': true,
+  'accept-language': true,
+  'cache-control':   true,
+  'connection':      true,
+  'content-length':  true,
+  'content-type':    true,
+  'host':            true,
+  'origin':          true,
+  'pragma':          true,
+  'user-agent':      true
+};
+
+/**
  * Exports a simple http proxy to be used with API requests.
  *
  * @param {Object} req
  * @param {Object} res
  */
 app.all('*', function (req, res) {
-  var data = {};
+  var data    = {};
+  var proxied = {};
 
   var qs  = data.qs  = req.query;
   var uri = data.uri = url.parse(req.path.substr(1));
@@ -38,25 +58,28 @@ app.all('*', function (req, res) {
   // Extends the query string with additonal url data
   _.extend(qs, mergeData[uri.host + uri.pathname]);
 
-  // Github requires we pass basic auth when checking authorizations
-  if ((uri.host + uri.pathname).indexOf('api.github.com/applications') === 0) {
-    data.auth = {
-      user: process.env.GITHUB_CLIENT_ID,
-      pass: process.env.GITHUB_CLIENT_SECRET
-    };
-  }
-
-  // Remove any `x-forwarded-*` headers set by the upstream proxy (E.g. Heroku).
-  // Keeping these headers may cause APIs to do unexpected things, such as
-  // Github which redirects requests when `x-forwarded-proto` === `http`.
-  _.each(req.headers, function (_, key) {
-    if (key.substr(0, 11) === 'x-forwarded') {
-      delete req.headers[key];
+  // Remove any non-proxy specific headers.
+  _.each(req.headers, function (value, key) {
+    if (key.substr(0, 8) === 'x-proxy-') {
+      proxied[key.substr(8)]     = true;
+      req.headers[key.substr(8)] = value;
+      return delete req.headers[key];
     }
+
+    if (!proxied[key] && !allowedHeaders[key]) {
+      return delete req.headers[key];
+    }
+  });
+
+  var proxy = request(data);
+
+  // Send the proxy error to the client.
+  proxy.on('error', function (err) {
+    res.send(500, err.message);
   });
 
   // Pipe the request data directly into the proxy request and back to the
   // response object. This avoids having to buffer content bodies in cases where
-  // they could be exepectedly large and unneeded.
-  req.pipe(request(data)).pipe(res);
+  // they could be unexepectedly large or slow.
+  req.pipe(proxy).pipe(res);
 });

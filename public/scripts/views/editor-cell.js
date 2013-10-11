@@ -1,11 +1,12 @@
-var _           = require('underscore');
-var trim        = require('trim');
-var Cell        = require('./cell');
-var BtnControls = require('./btn-cell-controls');
-var extraKeys   = require('./lib/extra-keys');
-var controls    = require('../lib/controls').editor;
-var messages    = require('../state/messages');
-var persistence = require('../state/persistence');
+var _            = require('underscore');
+var trim         = require('trim');
+var Cell         = require('./cell');
+var BtnControls  = require('./btn-cell-controls');
+var extraKeys    = require('./lib/extra-keys');
+var controls     = require('../lib/controls').editor;
+var messages     = require('../state/messages');
+var persistence  = require('../state/persistence');
+var ownerProtect = require('./lib/owner-protect');
 
 /**
  * Create a generic editor cell instance view.
@@ -49,67 +50,67 @@ EditorCell.prototype.editorOptions = {
  *
  * @return {EditorCell}
  */
-EditorCell.prototype.remove = function () {
+EditorCell.prototype.remove = ownerProtect(function () {
   Cell.prototype.remove.call(this);
   messages.trigger('resize');
 
   return this;
-};
+});
 
 /**
  * Moves the cells position in the notebook up by one cell.
  */
-EditorCell.prototype.moveUp = function () {
+EditorCell.prototype.moveUp = ownerProtect(function () {
   this.trigger('moveUp', this);
-};
+});
 
 /**
  * Moves the cells position in the notebook down by one cell.
  */
-EditorCell.prototype.moveDown = function () {
+EditorCell.prototype.moveDown = ownerProtect(function () {
   this.trigger('moveDown', this);
-};
+});
 
 /**
  * Navigate up to the previous cell with the cursor.
  */
-EditorCell.prototype.navigateUp = function () {
+EditorCell.prototype.navigateUp = ownerProtect(function () {
   this.trigger('navigateUp', this);
-};
+});
 
 /**
  * Navigate down to the next cell with the cursor.
  */
-EditorCell.prototype.navigateDown = function () {
+EditorCell.prototype.navigateDown = ownerProtect(function () {
   this.trigger('navigateDown', this);
-};
+});
 
 /**
  * Clones the editor cell and triggers a clone event with the cloned view.
  *
  * @return {EditorCell} Cloned view.
  */
-EditorCell.prototype.clone = function () {
+EditorCell.prototype.clone = ownerProtect(function () {
   var clone = new this.constructor(_.extend({}, this.options, {
     model: this.model.clone()
   }));
   this.trigger('clone', this, clone);
   return clone;
-};
+});
 
 /**
  * Triggers a `switch` event to switch the cell mode.
  */
-EditorCell.prototype.switch = function () {
+EditorCell.prototype.switch = ownerProtect(function () {
   this.trigger('switch', this);
-};
+});
 
 /**
  * Append a new editor cell directly below the current cell.
  */
-EditorCell.prototype.appendNew = function () {
+EditorCell.prototype.appendNew = ownerProtect(function () {
   this.trigger('appendNew', this);
-};
+});
 
 /**
  * Focus the editor cell.
@@ -143,6 +144,7 @@ EditorCell.prototype.save = function () {
   if (this.editor) {
     this.model.set('value', this.editor.getValue());
   }
+
   return this;
 };
 
@@ -164,14 +166,22 @@ EditorCell.prototype.refresh = function () {
  */
 EditorCell.prototype.bindEditor = function () {
   this.listenTo(this.editor, 'focus', _.bind(function () {
-    this.el.classList.add('active');
     delete this._hasFocus;
+
+    if (this._triggerBlur) {
+      window.clearTimeout(this._triggerBlur);
+      return this._triggerBlur = null;
+    }
+
     this.trigger('focus', this);
+    this.el.classList.add('active');
   }, this));
 
   this.listenTo(this.editor, 'blur', _.bind(function () {
-    this.el.classList.remove('active');
-    this.trigger('blur', this);
+    this._triggerBlur = window.setTimeout(_.bind(function () {
+      this.el.classList.remove('active');
+      this.trigger('blur', this);
+    }, this), 20);
   }, this));
 
   // Save the value of the model every time a change happens
@@ -184,6 +194,8 @@ EditorCell.prototype.bindEditor = function () {
       messages.trigger('resize');
       this.trigger('linesChanged', this);
     }
+
+    this.trigger('change', this, data);
   }, this));
 
   return this;
@@ -196,6 +208,8 @@ EditorCell.prototype.bindEditor = function () {
  */
 EditorCell.prototype.unbindEditor = function () {
   this.stopListening(this.editor);
+  window.clearTimeout(this._triggerBlur);
+  this._triggerBlur = null;
   return this;
 };
 
@@ -212,7 +226,11 @@ EditorCell.prototype.removeEditor = function (copyDoc) {
   if (editor) {
     this.unbindEditor();
     delete this.editor;
-    if (copyDoc) { doc = editor.doc.copy(true); }
+
+    if (copyDoc) {
+      doc = editor.doc.copy(true);
+    }
+
     // Remove the old CodeMirror instance from the DOM
     var editorEl = editor.getWrapperElement();
     if (editorEl && editorEl.parentNode) {
@@ -235,21 +253,25 @@ EditorCell.prototype.renderEditor = function () {
     hasFocus = this.editor.hasFocus();
     doc      = this.removeEditor(true);
   }
+
   // If an editor already exists, rerender the editor keeping the same options
   // Initialize the codemirror editor
   this.editor = new CodeMirror(_.bind(function (el) {
     this.el.insertBefore(el, this.el.firstChild);
   }, this), _.extend({}, this.editorOptions, {
-    // Add the current view to the editor options
     view:     this,
-    // Set to readonly if we aren't the notebooks owner
-    readOnly: this.isOwner() ? false : 'nocursor'
+    readOnly: !this.isOwner()
   }));
+
   // Move the state of the editor
-  if (doc) { this.editor.swapDoc(doc); }
+  if (doc) {
+    this.editor.swapDoc(doc);
+  }
+
   // Alias the current view to the editor, since keyMaps are shared between
   // all instances of CodeMirror
   this.editor.view = this;
+
   // Set the editor value if it already exists
   if (this.getValue()) {
     this.editor.setValue(this.getValue());
@@ -258,9 +280,11 @@ EditorCell.prototype.renderEditor = function () {
 
   // If it was previously focused, let's focus the editor again
   if (hasFocus) { this.focus(); }
+
   // Bind the editor events at the end in case of any focus issues when
   // changing docs, etc.
   this.bindEditor();
+
   return this;
 };
 
@@ -340,7 +364,9 @@ EditorCell.prototype.appendTo = function (el) {
     this.refresh();
     // Since the CodeMirror refresh appears to be async, push the resize event
     // into the following event loop.
-    process.nextTick(function () { messages.trigger('resize'); }, 0);
+    process.nextTick(function () {
+      messages.trigger('resize');
+    });
   }
 
   return this;

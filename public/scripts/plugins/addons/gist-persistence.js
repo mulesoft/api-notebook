@@ -45,11 +45,11 @@ var authenticatedUserId = function (done) {
  */
 var authenticatePlugin = function (data, next, done) {
   App.middleware.trigger('authenticate:oauth2', {
-    scope:            ['gist'],
-    scopeSeparator:   ',',
+    scopes:           ['gist'],
     clientId:         CLIENT_ID,
-    tokenUrl:         TOKEN_URL,
+    clientSecret:     '', // Replaced by proxy
     validateUrl:      VALID_URL,
+    accessTokenUrl:   TOKEN_URL,
     authorizationUrl: AUTH_URL
   }, function (err, auth) {
     if (err) {
@@ -114,6 +114,10 @@ var loadPlugin = function (data, next, done) {
  * @param {Function} done
  */
 var savePlugin = function (data, next, done) {
+  if (!data.isAuthenticated()) {
+    return next();
+  }
+
   App.middleware.trigger('ajax:oauth2', {
     url: 'https://api.github.com/gists' + (data.id ? '/' + data.id : ''),
     method: data.id ? 'PATCH' : 'POST',
@@ -124,7 +128,9 @@ var savePlugin = function (data, next, done) {
         }
       }
     }),
-    authorizationUrl: AUTH_URL
+    oauth2: {
+      authorizationUrl: AUTH_URL
+    }
   }, function (err, xhr) {
     if (err) {
       return done(err);

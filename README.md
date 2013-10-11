@@ -27,8 +27,18 @@ export GITHUB_CLIENT_SECRET=""
 To deploy to Heroku, you will need to add some environment variables:
 
 ```
+export DEPLOY_NOTEBOOK_URL=""
 export DEPLOY_GITHUB_CLIENT_ID=""
 export DEPLOY_GITHUB_CLIENT_SECRET=""
 ```
 
 You will need to set your environment variables on your Heroku instance. Run `grunt deploy` to deploy the application to Heroku.
+
+## Basic Authentication
+
+Enabling basic authentication to access the notebook requires adding some environment varibables to your configuration.
+
+```bash
+export AUTH_USERNAME="test"
+export AUTH_PASSWORD="test"
+```

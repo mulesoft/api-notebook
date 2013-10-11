@@ -31,15 +31,15 @@ module.exports = function (middleware) {
 
     // Appends the notebook contents as Markdown.
     data.contents += _.chain(data.notebook)
-      // Remove empty cells from the end of the notebook.
-      .reduceRight(function (notebook, cell) {
-        if (hasContent || !/^\s+$/.test(cell.value)) {
+      .slice()
+      .reverse()
+      .filter(function (cell) {
+        if (!hasContent && !/^\s*$/.test(cell.value)) {
           hasContent = true;
-          notebook.push(cell);
         }
 
-        return notebook;
-      }, [])
+        return hasContent;
+      })
       .reverse()
       .map(function (cell) {
         if (cell.type === 'text') { return cell.value; }
@@ -110,10 +110,13 @@ module.exports = function (middleware) {
     }, [{
       type:  'text',
       value: ''
-    }]).filter(function (cell) {
-      // Remove the suffixed new line from all cells.
+    }]).filter(function (cell, index, notebook) {
       cell.value = cell.value.slice(
-        cell.type === 'text' && cell.value.charAt(0) === '\n' ? 1 : 0, -1
+        // Text cells will start with a new line.
+        cell.type === 'text' && cell.value.charAt(0) === '\n' ? 1  : 0,
+        // Text cells will have a trailing new line (if they aren't the last
+        // cell in the whole notebook).
+        cell.type === 'text' && index !== notebook.length - 1 ? -2 : -1
       );
 
       // Removes empty text cells.

@@ -32,26 +32,14 @@ InspectorView.prototype.initialize = function (options) {
 };
 
 /**
- * Stops events in their tracks.
- *
- * @param  {Object} e
- */
-var stopEvent = function (e) {
-  e.preventDefault();
-  e.stopPropagation();
-};
-
-/**
  * Listen to events in the view and stop them from propagating (since parent
  * inspector views are listening to the same events).
  *
  * @type {Object}
  */
 InspectorView.prototype.events = {
-  'mouseup':   stopEvent,
-  'mousedown': stopEvent,
   'click': function (e) {
-    stopEvent(e);
+    e.stopPropagation();
     this.toggle();
   }
 };

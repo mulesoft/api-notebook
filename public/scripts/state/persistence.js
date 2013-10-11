@@ -162,13 +162,27 @@ Persistence.prototype.load = function (done) {
 
       this.set('id',       data.id);
       this.set('ownerId',  data.ownerId);
-      this.set('contents', data.contents);
+      this.set('contents', data.contents, { silent: true });
+      this.set('notebook', data.notebook, { silent: true });
 
-      this.deserialize(_.bind(function () {
+      var complete = _.bind(function () {
         this._loading = false;
         this.trigger('changeNotebook', this);
         return done && done(err);
-      }, this));
+      }, this);
+
+      // No post-processing required.
+      if (this.has('contents') && this.has('notebook')) {
+        return complete();
+      }
+
+      // Requires serializing to text.
+      if (this.has('notebook')) {
+        return this.serialize(complete);
+      }
+
+      // Requires deserializing to the notebook array.
+      return this.deserialize(complete);
     }, this)
   );
 };
@@ -262,10 +276,8 @@ persistence.listenTo(persistence, 'change:contents', (function () {
   var changeQueue = false;
 
   return function change () {
-    // Block updates when the notebook contents haven't changed.
-    if (this._loading || this.get('contents') === this.previous('contents')) {
-      return;
-    }
+    // Block updates when loading a notebook.
+    if (this._loading) { return; }
 
     // If we are already changing the data, but it has not yet been resolved,
     // set a change queue flag to `true` to let ourselves know we have changes

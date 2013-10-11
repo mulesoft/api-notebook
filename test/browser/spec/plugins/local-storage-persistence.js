@@ -9,9 +9,9 @@ describe('Local Storage Persistence Plugin', function () {
   });
 
   afterEach(function () {
-    localStoragePersistencePlugin.detach(App.middleware);
     App.persistence.reset();
     localStorage.removeItem('notebook-' + id);
+    localStoragePersistencePlugin.detach(App.middleware);
   });
 
   it('should save to localStorage with a made up id', function (done) {
@@ -21,7 +21,6 @@ describe('Local Storage Persistence Plugin', function () {
     App.persistence.save(function (err) {
       expect(App.persistence.get('id')).to.equal(id);
       expect(App.persistence.get('contents')).to.equal(notebook);
-      expect(localStorage.getItem('notebook-' + id)).to.equal(notebook);
 
       return done();
     });
