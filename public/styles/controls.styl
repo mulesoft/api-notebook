@@ -1,3 +1,5 @@
+$button_color = #5B5B5B
+
 .container
   width: 48em
   margin: 0 auto
@@ -7,26 +9,6 @@
 
 .col-large
   width: 70%
-
-.modal-toggle
-  position: relative
-  width: 26px
-  height: @width
-  padding: 0
-  border: 2px solid #fff
-  border-radius: 50%
-
-  &:after
-    content: '?'
-    display: block
-    position: absolute
-    top: 0
-    left: 0
-    width: @width - @border[0] * 2
-    height: @width
-    text-align: center
-    line-height: @height
-    color: #fff
 
 .modal
   position: fixed
@@ -97,33 +79,42 @@
     opacity: 1
     visibility: visible
 
-.notebook-exec
+.btn-round
   position: relative
   width: 26px
   height: @width
-  border: 2px solid #fff
-  border-radius: 50%
+  border: 2px solid $button_color
   background: transparent
-  text-indent: -999em
+  border-radius: 50em
 
-  &:after
-    content: ''
-    position: absolute
-    top: 6px
-    left: 8px
-    display: inline-block
-    width: 0
-    height: 0
-    border: 5px solid transparent
-    border-left: 9px solid #fff
+
+.notebook-exec:after
+  content: ''
+  position: absolute
+  top: 6px
+  left: 8px
+  display: inline-block
+  width: 0
+  height: 0
+  border: 5px solid transparent
+  border-left: 9px solid $button_color
+
+.modal-toggle:after
+  content: '?'
+  display: block
+  position: absolute
+  top: 0
+  left: 0
+  width: 22px
+  height: @width
+  text-align: center
+  line-height: @height
+  color: $button_color
 
 .btn-text
   padding: 0
   border: 0
   background: transparent
-  color: #fff
+  color: $button_color
   font-size: 12px
-
-.btn-text:hover
   text-decoration: underline
-

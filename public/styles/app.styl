@@ -1,10 +1,10 @@
 .application
-  // Authentication button
+  // Authentication button.
   &.user-is-authenticated .notebook-auth,
-  // Authentication banner
-  &.user-not-owner > .notebook-header .notebook-auth,
-  // Make copy buttons
+  // Make a copy button.
   &.user-is-owner .notebook-fork,
+  &.notebook-not-saved .notebook-fork,
+  // Make another copy button.
   &.user-not-owner .notebook-clone,
-  &.user-not-saved .notebook-clone
+  &.notebook-not-saved .notebook-clone
     display: none

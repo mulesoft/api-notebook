@@ -12,13 +12,37 @@ var middleware = require('./middleware');
 var Persistence = Backbone.Model.extend({
   defaults: {
     id:         null,
+    state:      0,
     title:      'New Notebook',
-    userId:     null,
-    ownerId:    null,
+    notebook:   [],
     originalId: null,
-    notebook:   []
+    userTitle:  'Unauthenticated'
   }
 });
+
+/**
+ * Represent persistence states in event listeners as numerical entities.
+ *
+ * @type {Number}
+ */
+Persistence.prototype.NULL      = Persistence.NULL      = 0;
+Persistence.prototype.SAVING    = Persistence.SAVING    = 1;
+Persistence.prototype.LOADING   = Persistence.LOADING   = 2;
+Persistence.prototype.SAVE_FAIL = Persistence.SAVE_FAIL = 3;
+Persistence.prototype.SAVE_DONE = Persistence.SAVE_DONE = 4;
+Persistence.prototype.LOAD_FAIL = Persistence.LOAD_FAIL = 5;
+Persistence.prototype.LOAD_DONE = Persistence.LOAD_DONE = 6;
+
+/**
+ * Private method for triggering state changes and relevant events.
+ *
+ * @return {App}
+ */
+Persistence.prototype._changeState = function (state) {
+  this.set('state', state);
+
+  return this;
+};
 
 /**
  * Return whether the current user session is the owner of the current notebook.
@@ -91,17 +115,25 @@ Persistence.prototype.deserialize = function (done) {
  */
 Persistence.prototype.save = function (done) {
   if (!this.isOwner()) {
-    return done(new Error('Not the current owner.'));
+    return done(new Error('Not the current notebook owner'));
   }
+
+  this._changeState(Persistence.SAVING);
 
   middleware.trigger(
     'persistence:save',
     this.getMiddlewareData(),
     _.bind(function (err, data) {
+      if (err) {
+        this._changeState(Persistence.SAVE_FAIL);
+        return done && done(err);
+      }
+
       this.set('id',      data.id);
       this.set('ownerId', data.ownerId);
 
-      return done && done(err);
+      this._changeState(Persistence.SAVE_DONE);
+      return done && done();
     }, this)
   );
 };
@@ -114,15 +146,20 @@ Persistence.prototype.save = function (done) {
 Persistence.prototype.authenticate = function (done) {
   middleware.trigger(
     'persistence:authenticate',
-    this.getMiddlewareData(),
+    _.extend(this.getMiddlewareData(), {
+      userId:    null,
+      userTitle: null
+    }),
     _.bind(function (err, data) {
-      this.set('userId', data.userId);
+      this.set('userId',    data.userId);
+      this.set('userTitle', this.has('userId') ?
+        data.userTitle || 'Authenticated' : this.defaults.userTitle);
 
       // When we authenticate, the owner id will be out of sync here. If we
       // don't currently have an `id` and `ownerId`, we'll set the user to be
       // the notebook owner.
-      if (!this.get('id') && !this.get('ownerId')) {
-        this.set('ownerId', data.userId);
+      if (!this.has('id') && !this.has('ownerId')) {
+        this.set('ownerId', this.get('userId'));
       }
 
       return done && done(err);
@@ -150,6 +187,8 @@ Persistence.prototype.getMiddlewareData = function () {
  * @param {Function} done
  */
 Persistence.prototype.load = function (done) {
+  this._changeState(Persistence.LOADING);
+
   return middleware.trigger(
     'persistence:load',
     _.extend(this.getMiddlewareData(), {
@@ -160,15 +199,22 @@ Persistence.prototype.load = function (done) {
     _.bind(function (err, data) {
       this._loading = true;
 
+      if (err) {
+        delete this._loading;
+        this._changeState(Persistence.LOAD_FAIL);
+        return done && done(err);
+      }
+
       this.set('id',       data.id);
       this.set('ownerId',  data.ownerId);
       this.set('contents', data.contents, { silent: true });
       this.set('notebook', data.notebook, { silent: true });
 
       var complete = _.bind(function () {
-        this._loading = false;
+        delete this._loading;
         this.trigger('changeNotebook', this);
-        return done && done(err);
+        this._changeState(Persistence.LOAD_DONE);
+        return done && done();
       }, this);
 
       // No post-processing required.
@@ -202,12 +248,16 @@ Persistence.prototype.reset = function () {
 Persistence.prototype.fork = function () {
   // Allows a reference back to the original notebook. Could be a useful to
   // track where notebooks originally came from.
-  if (this.get('id')) {
+  if (this.has('id')) {
     this.set('originalId', this.get('id'));
   }
+
   // Removes the notebook id and sets the user id to the current user.
-  this.set('id', null);
+  this.unset('id');
   this.set('ownerId', this.get('userId'));
+
+  // Reset the state to default.
+  this._changeState(Persistence.NULL);
 };
 
 /**
@@ -263,9 +313,13 @@ persistence.listenTo(
  * that different parts of the application bind to and does things like
  * rerendering of notebook.
  */
-persistence.listenTo(persistence, 'change:userId change:ownerId', function () {
-  this.trigger('changeUser', this);
-});
+persistence.listenTo(
+  persistence,
+  'change:userId change:ownerId change:userTitle',
+  _.debounce(function () {
+    this.trigger('changeUser', this);
+  }, 100)
+);
 
 /**
  * Any time the notebook changes, trigger the `persistence:change` middleware
@@ -310,12 +364,15 @@ persistence.listenTo(messages, 'ready', function () {
   return middleware.trigger(
     'persistence:authenticated',
     _.extend(this.getMiddlewareData(), {
-      userId: null
+      userId:    null,
+      userTitle: null
     }), _.bind(function (err, data) {
-      this.set('userId',  data.userId);
+      this.set('userId',    data.userId);
+      this.set('userTitle', this.has('userId') ?
+        data.userTitle || 'Authenticated' : this.defaults.userTitle);
 
-      if (!this.get('id') && !this.get('ownerId')) {
-        this.set('ownerId', data.userId);
+      if (!this.has('id') && !this.has('ownerId')) {
+        this.set('ownerId', this.get('userId'));
       }
 
       // Set an `isReady` flag on the persistence model. This is used to check

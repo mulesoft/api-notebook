@@ -133,12 +133,10 @@ module.exports = function (middleware) {
    * @param  {Function} next
    */
   middleware.core('persistence:load', function (data, next) {
-    process.nextTick(function () {
-      data.id       = null;
-      data.contents = [
-        OPEN_CODE_BLOCK, '', CLOSE_CODE_BLOCK
-      ].join('\n');
-      return next();
-    });
+    data.contents = [
+      OPEN_CODE_BLOCK, '', CLOSE_CODE_BLOCK
+    ].join('\n');
+
+    return next();
   });
 };

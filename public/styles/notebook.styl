@@ -30,25 +30,15 @@
   &:focus
     outline: 0
 
-.notebook-header-primary
-  overflow: hidden
-  padding-right: 40px
-
-.notebook-header-secondary
-  float: right
-  margin-top: 5px
-  > button
-    margin-left: 5px
-    vertical-align: middle
-
-.banner
+.notebook-banner
   padding: 1em 2em
   border: 1px solid #ccc
-  border-color: darken($yellow, 20%) #ccc
-  background: $yellow
+  border-top-width: 0
+  border-bottom-color: darken($yellow, 20%)
   cursor: pointer
+  background: $yellow
 
-.banner p
+.notebook-banner p
   margin: 0
 
 .notebook .cell-result
@@ -99,3 +89,25 @@
   padding: 16px
   h1, h2, h3, h4, h5, h6, p, ul, ol
     margin: 0 0 24px;
+
+.notebook-toolbar
+  border: solid 1px #CCC
+  background-color: #F4F4F4
+  padding: 0.5em 2em
+  font-size: .8em
+  .auth-status
+    float: left
+    font-weight: bold
+    margin-top: 0.5em
+  .save-status
+    float: left
+    font-style: italic
+    margin: 0.6em 0 0 0.5em
+  .toolbar-buttons
+    float: right
+    button
+      float: left
+      margin-right: 1em
+      line-height: 28px
+    button:last-child
+      margin-right: 0

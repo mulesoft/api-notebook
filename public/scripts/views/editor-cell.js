@@ -263,6 +263,10 @@ EditorCell.prototype.renderEditor = function () {
     readOnly: !this.isOwner()
   }));
 
+  if (this.editor.getOption('readOnly')) {
+    this.editor.getWrapperElement().className += ' CodeMirror-readOnly';
+  }
+
   // Move the state of the editor
   if (doc) {
     this.editor.swapDoc(doc);

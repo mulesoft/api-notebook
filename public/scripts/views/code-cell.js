@@ -201,7 +201,7 @@ CodeCell.prototype.bindEditor = function () {
   );
 
   // Listen for code cells changes and update line numbers.
-  this.listenTo(this, 'change', _.bind(function (view, data) {
+  this.listenTo(this, 'change', function (view, data) {
     this.lastLine = this.startLine + view.editor.lastLine();
 
     var commentBlock = stripInput('/*', view.editor, data);
@@ -212,7 +212,7 @@ CodeCell.prototype.bindEditor = function () {
       if (this.getValue()) { this.execute(); }
       return this.trigger('text', this, commentBlock);
     }
-  }, this));
+  }, this);
 
   return this;
 };
