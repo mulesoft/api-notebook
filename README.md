@@ -36,9 +36,10 @@ You will need to set your environment variables on your Heroku instance. Run `gr
 
 ## Basic Authentication
 
-Enabling basic authentication to access the notebook requires adding some environment varibables to your configuration.
+Enabling basic authentication to password protect the notebook requires adding an entry to your environment variables.
 
 ```bash
-export AUTH_USERNAME="test"
-export AUTH_PASSWORD="test"
+export BASIC_AUTH="test:test another:test"
 ```
+
+A single user is specified by separating the username and password with a single colon. E.g. `username:password`. To have multiple users, append to the string with a single space between each user.
