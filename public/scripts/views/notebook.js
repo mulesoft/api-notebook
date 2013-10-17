@@ -26,11 +26,7 @@ var appendNewView = function (View) {
     var view = new View();
     this.appendView(view, el);
     view.setValue(value || '').moveCursorToEnd();
-    // Remove the history of the editor, stops the user from accidently undoing
-    // the initially loaded content and ending up with an empty cell.
-    if (view.editor) {
-      view.editor.doc.clearHistory();
-    }
+
     return view;
   };
 };

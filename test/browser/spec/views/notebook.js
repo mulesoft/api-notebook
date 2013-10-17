@@ -505,7 +505,7 @@ describe('Notebook', function () {
     });
 
     describe('Authentication integration', function () {
-      it('should rerender the notebook when the user changes', function () {
+      it('should re-render the notebook when the user changes', function () {
         view.render().appendTo(fixture);
 
         var cell = view.appendCodeView();

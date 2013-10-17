@@ -176,6 +176,19 @@ describe('Editor Cell', function () {
         expect(editor.getCursor().ch).to.equal(4);
         expect(editor.getCursor().line).to.equal(1);
       });
+
+      it('should keep CodeMirror history when re-rendering', function () {
+        editor.setValue('var');
+        editor.setValue('var test');
+        editor.setValue('var test = true;');
+
+        expect(editor.getValue()).to.equal('var test = true;');
+        view.render();
+        expect(editor.getValue()).to.equal('var test = true;');
+
+        editor.doc.undo();
+        expect(editor.getValue()).to.equal('var test');
+      });
     });
   });
 });
