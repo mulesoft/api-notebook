@@ -10,6 +10,19 @@ var Backbone = require('backbone');
 var Store = Backbone.Model.extend();
 
 /**
+ * Set all the attributes from localStorage on initialization.
+ */
+Store.prototype.initialize = function () {
+  if (!storage.enabled) { return; }
+
+  _.each(storage.getAll(), function (value, key) {
+    if (!this._isPersistenceKey(key)) { return; }
+
+    this.attributes[key.substr(this._prefix.length + 1)] = value;
+  }, this);
+};
+
+/**
  * The prefix for storing in localStorage.
  *
  * @type {String}
@@ -33,22 +46,7 @@ Store.prototype._persistenceKey = function (key) {
  * @return {Boolean}
  */
 Store.prototype._isPersistenceKey = function (key) {
-  return key.substr(0, this._prefix.length) === this._prefix;
-};
-
-/**
- * Override `get` to lazy load data from localStorage.
- *
- * @param  {String} key
- * @return {*}
- */
-Store.prototype.get = function (key) {
-  // Lazy load attributes from storage.
-  if (!(key in this.attributes) && storage.enabled) {
-    return this.attributes[key] = storage.get(this._persistenceKey(key));
-  }
-
-  return Backbone.Model.prototype.get.apply(this, arguments);
+  return key.substr(0, this._prefix.length + 1) === this._prefix + '-';
 };
 
 /**
@@ -117,14 +115,14 @@ Store.prototype.unset = function (key) {
  */
 Store.prototype.customStore = function (name) {
   if (!_.isString(name)) {
-    throw new Error('The custom store requires a name');
+    throw new Error('Custom stores require a storage prefix');
   }
 
   var CustomStore = this.constructor.extend({
     _prefix: name
   });
 
-  return (this._ || (this._ = {}))[name] = new CustomStore();
+  return (this._ = this._ || {})[name] = new CustomStore();
 };
 
 /**

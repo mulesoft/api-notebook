@@ -14,15 +14,16 @@ describe('Authentication', function () {
       window.open.restore();
     });
 
-    it('should do the normal oauth2 authentication flow', function (done) {
+    it('should be able to do the server-side code flow', function (done) {
       var tokenUrl         = 'https://www.example.com/oauth2/token';
       var authorizationUrl = 'https://www.example.com/oauth2/authorize';
 
       App.middleware.trigger('authenticate:oauth2', {
-        clientId:         '',
-        clientSecret:     '',
-        accessTokenUrl:   tokenUrl,
-        authorizationUrl: authorizationUrl
+        clientId:            '',
+        clientSecret:        '',
+        accessTokenUrl:      tokenUrl,
+        authorizationGrants: 'code',
+        authorizationUrl:    authorizationUrl
       }, function (err, auth) {
         expect(err).to.not.exist;
         expect(auth.accessToken).to.equal('123456');
@@ -41,11 +42,11 @@ describe('Authentication', function () {
       expect(window.open.lastCall.args[0]).to.contain(authorizationUrl);
       // Cheat and grab the state we passed through to the authentication server.
       var state = window.open.lastCall.args[0].match(/state=(\w+)/)[1];
-      window.authenticateOauth2('http://localhost:3000/?code=123&state=' + state);
-      // Respond to the request for the token
-      App.nextTick(function () {
-        server.respond();
-      });
+      window.authenticateOAuth2(App.Library.url.resolve(
+        location.href, '/authentication/oauth2.html?code=123&state=' + state
+      ));
+
+      server.respond();
     });
   });
 });

@@ -1,10 +1,17 @@
 /* global App */
-var _         = App._;
-var OAUTH_KEY = 'github-oauth';
-var CLIENT_ID = process.env.GITHUB_CLIENT_ID;
-var AUTH_URL  = 'https://github.com/login/oauth/authorize';
-var TOKEN_URL = 'https://github.com/login/oauth/access_token';
-var VALID_URL = 'https://api.github.com/user';
+var _            = App._;
+var OAUTH_KEY    = 'github-oauth';
+var CLIENT_ID    = process.env.GITHUB_CLIENT_ID;
+var AUTH_URL     = 'https://github.com/login/oauth/authorize';
+var TOKEN_URL    = 'https://github.com/login/oauth/access_token';
+var VALIDATE_URL = 'https://api.github.com/user';
+
+/**
+ * Generate a custom store for the Github token.
+ *
+ * @type {Object}
+ */
+var oauth2Store = App.store.customStore('github');
 
 /**
  * Any time a change occurs, we'll sync the change with our Github gist.
@@ -23,18 +30,16 @@ var changePlugin = function (data, next, done) {
  * @param {Function} done
  */
 var authenticatedUserId = function (done) {
-  App.middleware.trigger('authenticate:oauth2:validate', {
-    validateUrl:      VALID_URL,
-    authorizationUrl: AUTH_URL
-  }, function (err, auth) {
+  App.middleware.trigger('ajax:oauth2', {
+    url:    VALIDATE_URL,
+    oauth2: oauth2Store.toJSON()
+  }, function (err, xhr) {
     var content;
 
-    if (err || !auth) {
-      return done(err);
-    }
+    if (err) { return done(err); }
 
     try {
-      content = JSON.parse(auth.xhr.responseText);
+      content = JSON.parse(xhr.responseText);
     } catch (e) {
       return done(e);
     }
@@ -57,16 +62,16 @@ var authenticatedUserId = function (done) {
  */
 var authenticatePlugin = function (data, next, done) {
   App.middleware.trigger('authenticate:oauth2', {
-    scopes:           ['gist'],
-    clientId:         CLIENT_ID,
-    clientSecret:     '', // Replaced by proxy
-    validateUrl:      VALID_URL,
-    accessTokenUrl:   TOKEN_URL,
-    authorizationUrl: AUTH_URL
+    scopes:              ['gist'],
+    clientId:            CLIENT_ID,
+    clientSecret:        '', // Injected by proxy
+    accessTokenUrl:      TOKEN_URL,
+    authorizationUrl:    AUTH_URL,
+    authorizationGrants: 'code'
   }, function (err, auth) {
-    if (err) {
-      return next(err);
-    }
+    if (err) { return next(err); }
+
+    oauth2Store.set(auth);
 
     return authenticatedUserId(done);
   });
@@ -80,7 +85,7 @@ var authenticatePlugin = function (data, next, done) {
  * @param {Function} done
  */
 var authenticatedPlugin = function (data, next, done) {
-  authenticatedUserId(done);
+  return authenticatedUserId(done);
 };
 
 /**
@@ -140,9 +145,7 @@ var savePlugin = function (data, next, done) {
         }
       }
     }),
-    oauth2: {
-      authorizationUrl: AUTH_URL
-    }
+    oauth2: oauth2Store.toJSON()
   }, function (err, xhr) {
     if (err) {
       return next(err);

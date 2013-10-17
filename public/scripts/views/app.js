@@ -157,9 +157,13 @@ App.prototype.updateState = function () {
   var minutes  = now.getMinutes();
   var suffix   = 'AM';
 
-  if (hours > 12) {
+  if (hours > 11) {
     hours  = hours - 12;
     suffix = 'PM';
+  }
+
+  if (hours === 0) {
+    hours = 12;
   }
 
   var stamp = hours + ':' + ('0' + minutes).slice(-2) + suffix;

@@ -1,83 +1,18 @@
 /* global App */
-var _   = require('underscore');
-var qs  = require('querystring');
-var url = require('url');
-var openPopup; // Keep a reference to open popup windows.
-
-/**
- * Generate a custom store for OAuth2 tokens.
- *
- * @type {Object}
- */
-var oauth2Store = App.store.customStore('oauth2');
+var _           = require('underscore');
+var qs          = require('querystring');
+var url         = require('url');
+var authWindow  = require('./lib/auth-window');
+var redirectUri = url.resolve(
+  global.location.href, '/authentication/oauth2.html'
+);
 
 /**
  * An array containing the supported grant types in preferred order.
  *
  * @type {Array}
  */
-var supportedGrants = ['code'];
-
-/**
- * Return a unique key for storing the access token in localStorage.
- *
- * @param  {Object} data
- * @return {String}
- */
-var tokenKey = function (data) {
-  if (!_.isString(data.authorizationUrl)) {
-    throw new Error('OAuth2: "authorizationUrl" is missing');
-  }
-
-  return data.authorizationUrl;
-};
-
-/**
- * Sanitize OAuth2 option keys.
- *
- * @param  {Object} data
- * @return {Object}
- */
-var sanitizeOptions = function (data) {
-  var options = _.extend({}, {
-    scopes:              [],
-    authorizationGrants: ['code']
-  }, data);
-
-  return options;
-};
-
-/**
- * If we already have an access token, we can do a quick validation check.
- *
- * @param {Object}   options
- * @param {Function} done
- */
-var validateToken = function (options, done) {
-  if (!options.validateUrl || !oauth2Store.has(tokenKey(options))) {
-    return done();
-  }
-
-  var auth = oauth2Store.get(tokenKey(options));
-
-  App.middleware.trigger('ajax:oauth2', {
-    url:    options.validateUrl,
-    oauth2: options
-  }, function (err, xhr) {
-    // Check if the response returned any type of error.
-    if (err || Math.floor(xhr.status / 100) !== 2) {
-      oauth2Store.unset(tokenKey(options));
-      return done(err);
-    }
-
-    oauth2Store.set(tokenKey(options), auth);
-
-    // Return the auth object extended with the ajax request.
-    return done(null, _.extend({}, auth, {
-      xhr: xhr
-    }));
-  });
-};
+var supportedGrants = ['token', 'code'];
 
 /**
  * Format error response types to regular strings for displaying the clients.
@@ -146,99 +81,167 @@ var erroredResponse = function (data) {
 };
 
 /**
+ * Fix passed in options objects.
+ *
+ * @param  {Object} options
+ * @return {Object}
+ */
+var sanitizeOptions = function (options) {
+  // Fix up reference to the `scopes` array.
+  options.scope = options.scopes;
+
+  if (_.isArray(options.scope)) {
+    options.scope = options.scopes.join(' ');
+  }
+
+  return options;
+};
+
+/**
+ * Validate an OAuth2 response object.
+ *
+ * @param {Object}   response
+ * @param {Function} done
+ */
+var authResponse = function (options, response, done) {
+  if (erroredResponse(response)) {
+    return done(new Error(erroredResponse(response)));
+  }
+
+  var data = {
+    scope:       response.scope || options.scope,
+    response:    _.omit(response, [
+      'access_token', 'refresh_token', 'token_type', 'expires_in', 'scope',
+      'state', 'error', 'error_description', 'error_uri'
+    ]),
+    accessToken: response.access_token
+  };
+
+  if (response.token_type) {
+    data.tokenType = response.token_type;
+  }
+
+  if (+response.expires_in) {
+    data.expires = Date.now() + (response.expires_in * 1000);
+  }
+
+  if (response.refresh_token) {
+    data.refreshToken = response.refresh_token;
+  }
+
+  return done(null, data);
+};
+
+/**
+ * Trigger the client-side implicit OAuth2 flow.
+ *
+ * @param {Object}   options
+ * @param {Function} done
+ */
+var oauth2TokenFlow = function (options, done) {
+  if (!_.isString(options.clientId)) {
+    return done(new TypeError('"clientId" expected'));
+  }
+
+  if (!_.isString(options.authorizationUrl)) {
+    return done(new TypeError('"authorizationUrl" expected'));
+  }
+
+  var state = ('' + Math.random()).substr(2);
+  var popup = authWindow(options.authorizationUrl + '?' + qs.stringify({
+    'state':         state,
+    'scope':         options.scope,
+    'client_id':     options.clientId,
+    'redirect_uri':  redirectUri,
+    'response_type': 'token'
+  }), done);
+
+  global.authenticateOAuth2 = function (href) {
+    popup.close();
+    delete global.authenticateOAuth2;
+
+    var uri      = url.parse(href, true);
+    var response = _.extend(qs.parse(uri.hash.substr(1)), uri.query);
+
+    if (href.substr(0, redirectUri.length) !== redirectUri) {
+      return done(new Error('Invalid redirect uri'));
+    }
+
+    if (response.state !== state) {
+      return done(new Error('State mismatch'));
+    }
+
+    // Pass the response off for validation. At least Instagram has a bug where
+    // the state is being passed back as part of the query string instead of the
+    // hash, so we merge both options together.
+    return authResponse(options, response, done);
+  };
+};
+
+/**
  * Trigger the full server-side OAuth2 flow.
  *
  * @param {Object}   options
  * @param {Function} done
  */
 var oAuth2CodeFlow = function (options, done) {
-  var errorPrefix = 'OAuth2 Code Grant: ';
-
   if (!_.isString(options.clientId)) {
-    return done(new Error(errorPrefix + '"clientId" is missing'));
+    return done(new TypeError('"clientId" expected'));
   }
 
   if (!_.isString(options.clientSecret)) {
-    return done(new Error(errorPrefix + '"clientSecret" is missing'));
+    return done(new TypeError('"clientSecret" expected'));
   }
 
   if (!_.isString(options.accessTokenUrl)) {
-    return done(new Error(errorPrefix + '"accessTokenUrl" is missing'));
+    return done(new TypeError('"accessTokenUrl" expected'));
   }
 
   if (!_.isString(options.authorizationUrl)) {
-    return done(new Error(errorPrefix + '"authorizationUrl" is missing'));
+    return done(new TypeError('"authorizationUrl" expected'));
   }
 
-  var width       = 720;
-  var height      = 480;
-  var left        = (window.screen.availWidth - width) / 2;
-  var state       = ('' + Math.random()).substr(2);
-  var redirectUri = url.resolve(
-    global.location.href, '/authentication/oauth2.html'
-  );
-
-  // Stringify the query string data.
-  var query  = qs.stringify({
+  var state = ('' + Math.random()).substr(2);
+  var popup = authWindow(options.authorizationUrl + '?' + qs.stringify({
     'state':         state,
-    'scope':         options.scopes.join(' '),
+    'scope':         options.scope,
     'client_id':     options.clientId,
     'redirect_uri':  redirectUri,
     'response_type': 'code'
-  });
-
-  // Close any previously open popup.
-  if (openPopup) {
-    openPopup.close();
-  }
-
-  openPopup = window.open(
-    options.authorizationUrl + '?' + query,
-    'authenticateOauth2',
-    'left=' + left + ',top=100,width=' + width + ',height=' + height
-  );
-
-  if (!_.isObject(openPopup)) {
-    return done(new Error(errorPrefix + 'Popup window blocked'));
-  }
-
-  // Catch the client closing the window before authentication is complete.
-  var closeInterval = window.setInterval(function () {
-    if (openPopup.closed) {
-      window.clearInterval(closeInterval);
-      return done(new Error(errorPrefix + 'Authentication Cancelled'));
-    }
-  }, 300);
+  }), done);
 
   /**
    * Assigns a global variable that the oauth authentication window should
    * be able to access and send the callback data.
    */
-  global.authenticateOauth2 = function (href) {
-    openPopup = null;
-    delete global.authenticateOauth2;
-    window.clearInterval(closeInterval);
+  global.authenticateOAuth2 = function (href) {
+    popup.close();
+    delete global.authenticateOAuth2;
 
-    // Parse the url and prepare to do an ajax request to get the acces token.
+    // Parse the url and prepare to do an POST request to get the access token.
     var query = url.parse(href, true).query;
 
+    if (href.substr(0, redirectUri.length) !== redirectUri) {
+      return done(new Error('Invalid redirect uri'));
+    }
+
     if (erroredResponse(query)) {
-      return done(new Error(errorPrefix + erroredResponse(query)));
+      return done(new Error(erroredResponse(query)));
     }
 
     if (query.state !== state) {
-      return done(new Error(errorPrefix + 'State mismatch'));
+      return done(new Error('State mismatch'));
     }
 
     if (!query.code) {
-      return done(new Error(errorPrefix + 'Response code missing'));
+      return done(new Error('Response code missing'));
     }
 
     App.middleware.trigger('ajax', {
       url: options.accessTokenUrl,
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
+        'Accept':       'application/json',
         'Content-Type': 'application/x-www-form-urlencoded'
       },
       data: qs.stringify({
@@ -249,34 +252,9 @@ var oAuth2CodeFlow = function (options, done) {
         'client_secret': options.clientSecret
       })
     }, function (err, xhr) {
-      if (err) {
-        return done(err);
-      }
+      if (err) { return done(err); }
 
-      var response = JSON.parse(xhr.responseText);
-
-      // Repond with the error body.
-      if (erroredResponse(response)) {
-        return done(new Error(errorPrefix + erroredResponse(response)));
-      }
-
-      var data = {
-        scopes:      options.scopes,
-        accessToken: response.access_token
-      };
-
-      if (response.token_type) {
-        data.tokenType = response.token_type;
-      }
-
-      if (+response.expires_in) {
-        data.expires = Date.now() + (response.expires_in * 1000);
-      }
-
-      // Persist the auth data in localStorage.
-      oauth2Store.set(tokenKey(options), data);
-
-      return done(null, data);
+      return authResponse(options, JSON.parse(xhr.responseText), done);
     });
   };
 };
@@ -296,14 +274,14 @@ var proxyDone = function (done) {
 };
 
 /**
- * Register oauth2 based middleware. Handles oauth2 implicit auth flow, and the
- * normal oauth2 authentication flow when using the notebook proxy server.
+ * Register OAuth2 based middleware. Handles OAuth2 implicit auth flow, and the
+ * normal OAuth2 authentication flow when using with a proxy server.
  *
  * @param {Object} middleware
  */
 module.exports = function (middleware) {
   /**
-   * Trigger authentication via OAuth2 in the browser. Valid data properties:
+   * Trigger authentication via OAuth2.0 in the browser. Valid data properties:
    *
    *   `accessTokenUrl`      - "https://www.example.com/oauth2/token"
    *   `authorizationUrl`    - "https://www.example.com/oauth2/authorize"
@@ -311,99 +289,88 @@ module.exports = function (middleware) {
    *   `clientSecret`        - EXAMPLE_CLIENT_SECRET
    *   `authorizationGrants` - ["code"]
    *   `scopes`              - ["user", "read", "write"]
-   *   `validateUrl`         - "http://www.example.com/user/self"
    *
    * @param {Object}   data
    * @param {Function} next
    * @param {Function} done
    */
   middleware.core('authenticate:oauth2', function (data, next, done) {
-    var options = sanitizeOptions(data);
+    // Sanitize authorization grants to an array.
+    if (_.isString(data.authorizationGrants)) {
+      data.authorizationGrants = [data.authorizationGrants];
+    }
 
+    // Use insection to get the accepted grant types in the order of the
+    // supported grant types (which are ordered by preference).
+    var grantType = _.intersection(
+      supportedGrants, data.authorizationGrants
+    )[0];
+
+    if (!grantType) {
+      return done(new Error(
+        'Unsupported OAuth2 Grant Flow. Supported flows include ' +
+        supportedGrants.join(', ')
+      ));
+    }
+
+    // Commit to the whole OAuth2 dance using the accepted grant type.
     return middleware.trigger(
-      'authenticate:oauth2:validate',
-      options,
-      function (err, auth) {
-        // Break before doing the Oauth2 dance if we received an auth object.
-        if (err || auth) {
-          return done(err, auth);
-        }
-
-        // Use insection to get the accepted grant types in the order of the
-        // supported grant types (which are ordered by preference).
-        var grantType = _.intersection(
-          supportedGrants, options.authorizationGrants
-        )[0];
-
-        if (!grantType) {
-          return done(new Error(
-            'Unsupported OAuth2 Grant Flow. Supported flows include ' +
-            supportedGrants.join(', ')
-          ));
-        }
-
-        // Commit to the whole OAuth2 dance using the accepted grant type.
-        return middleware.trigger(
-          'authenticate:oauth2:' + grantType, options, done
-        );
-      }
+      'authenticate:oauth2:' + grantType, data, done
     );
   });
 
   /**
-   * Middleware for checking if the OAuth2 token is valid without actually
-   * triggering the OAuth2 flow.
+   * Middleware for authenticating using the OAuth2 code grant flow.
+   * Reference: http://tools.ietf.org/html/rfc6749#section-4.1
    *
    * @param {Object}   data
    * @param {Function} next
    * @param {Function} done
-   */
-  middleware.core('authenticate:oauth2:validate', function (data, next, done) {
-    return validateToken(sanitizeOptions(data), proxyDone(done));
-  });
-
-  /**
-   * Middleware for authenticating using the Oauth2 code grant flow.
-   * Reference: http://tools.ietf.org/html/rfc6749#section-4.1
-   *
-   * @param  {Object}   data
-   * @param  {Function} next
-   * @param  {Function} done
    */
   middleware.core('authenticate:oauth2:code', function (data, next, done) {
     return oAuth2CodeFlow(sanitizeOptions(data), proxyDone(done));
   });
 
   /**
-   * Add a new ajax flow for oauth2-based URLs.
+   * Middleware for authenticating with the OAuth2 implicit auth flow.
+   * Reference: http://tools.ietf.org/html/rfc6749#section-4.2
+   *
+   * @param {Object}   data
+   * @param {Function} next
+   * @param {Function} done
+   */
+  middleware.core('authenticate:oauth2:token', function (data, next, done) {
+    return oauth2TokenFlow(sanitizeOptions(data), proxyDone(done));
+  });
+
+  /**
+   * Allow a new ajax flow for OAuth2-based URLs. Accepts an `oauth2` property
+   * on the data object in the format that is returned from the middleware.
    *
    * @param {Object}   data
    * @param {Function} next
    * @param {Function} done
    */
   middleware.core('ajax:oauth2', function (data, next, done) {
-    if (!_.isObject(data.oauth2) || !data.oauth2.authorizationUrl) {
-      throw new Error('OAuth2 XHR: "authorizationUrl" is missing');
+    if (!_.isObject(data.oauth2) || !data.oauth2.accessToken) {
+      return done(new TypeError('"oauth2" config object expected'), null);
     }
 
-    var auth = oauth2Store.get(tokenKey(data.oauth2));
+    if (data.oauth2.tokenType === 'bearer') {
+      data.headers = _.extend({
+        'Authorization': 'Bearer ' + data.oauth2.accessToken
+      }, data.headers);
+    } else {
+      // Add the access token to the request query.
+      var uri = url.parse(data.url, true);
+      uri.query.access_token = data.oauth2.accessToken;
 
-    if (_.isObject(auth)) {
-      if (auth.tokenType === 'bearer') {
-        data.headers = _.extend({
-          'Authorization': 'Bearer ' + auth.accessToken
-        }, data.headers);
-      } else {
-        // Add the access token to the request.
-        var uri = url.parse(data.url, true);
-        uri.query.access_token = auth.accessToken;
-
-        // Update ajax data.
-        data.url = url.format(uri);
-        data.headers = _.extend({
-          'Cache-Control': 'no-store'
-        }, data.headers);
-      }
+      // Update ajax data headers and url.
+      data.url = url.format(uri);
+      data.headers = _.extend({
+        'Pragma':        'no-store',
+        'Cache-Control': 'no-store'
+      }, data.headers);
     }
 
     // Trigger the regular ajax method.

@@ -17,7 +17,7 @@ describe('Gist Persistence Plugin', function () {
   beforeEach(function () {
     App.persistence.reset();
     sinon.stub(window, 'open').returns({});
-    App.store._.oauth2.clear();
+    App.store._.github.clear();
     server = sinon.fakeServer.create();
     gistPersistencePlugin.attach(App.middleware);
   });
@@ -63,7 +63,9 @@ describe('Gist Persistence Plugin', function () {
     });
 
     var state = window.open.lastCall.args[0].match(/state=(\w+)/)[1];
-    window.authenticateOauth2('http://localhost:3000/?code=123&state=' + state);
+    window.authenticateOAuth2(App.Library.url.resolve(
+      location.href, '/authentication/oauth2.html?code=123&state=' + state
+    ));
 
     server.respond();
   });
@@ -72,9 +74,7 @@ describe('Gist Persistence Plugin', function () {
     App.persistence.set('userId',   userId);
     App.persistence.set('ownerId',  userId);
     App.persistence.set('contents', notebook);
-    App.store._.oauth2.set('https://github.com/login/oauth/authorize', {
-      accessToken: accessToken
-    });
+    App.store._.github.set('accessToken', accessToken);
 
     server.respondWith(
       'POST',
