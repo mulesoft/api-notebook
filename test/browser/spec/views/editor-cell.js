@@ -74,6 +74,7 @@ describe('Editor Cell', function () {
       describe('Keyboard Shortcuts', function () {
         var UP     = 38;
         var DOWN   = 40;
+        var ENTER  = 13;
         var DELETE = 8;
 
         it('Navigate Up (`Alt-Up`)', function () {
@@ -123,6 +124,15 @@ describe('Editor Cell', function () {
           view.on('switch', spy);
           fakeKey(editor, 'B', { metaKey: true, altKey: true });
           expect(spy).to.have.been.calledOnce;
+        });
+
+        it('New Line Below (`Cmd-Enter`)', function () {
+          editor.setValue('var test = true;');
+          editor.setCursor({ line: 0, ch: 5 });
+
+          expect(editor.getValue()).to.equal('var test = true;');
+          fakeKey(editor, ENTER, { metaKey: true });
+          expect(editor.getValue()).to.equal('var test = true;\n');
         });
       });
 

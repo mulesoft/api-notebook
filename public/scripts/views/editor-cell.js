@@ -113,6 +113,28 @@ EditorCell.prototype.appendNew = ownerProtect(function () {
 });
 
 /**
+ * Inserts a new line directly below the current line. Keeps previous cursor
+ * history so undo puts the cursor back to the same position.
+ */
+EditorCell.prototype.newLineBelow = ownerProtect(function () {
+  var line = this.editor.getCursor().line;
+
+  this.editor.doc.replaceRange('\n', {
+    ch:   Infinity,
+    line: line++
+  });
+  this.editor.indentLine(line, null, true);
+  this.editor.doc.setCursor({
+    cm:   Infinity,
+    line: line
+  });
+});
+
+EditorCell.prototype.toggleComment = ownerProtect(function () {
+  this.editor.execCommand('toggleComment');
+});
+
+/**
  * Focus the editor cell.
  *
  * @return {EditorCell}

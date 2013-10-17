@@ -75,7 +75,6 @@ var defineEditorShortcut = function (options) {
  *
  * @param {Object} options
  */
-
 var defineCodeShortcut = function (options) {
   codeControls.push(define(options));
 };
@@ -85,7 +84,6 @@ var defineCodeShortcut = function (options) {
  *
  * @param {Object} options
  */
-
 var defineTextShortcut = function (options) {
   textControls.push(define(options));
 };
@@ -146,6 +144,20 @@ defineEditorShortcut({
   description: 'Focus on next cell'
 });
 
+defineEditorShortcut({
+  label: 'New Line Below',
+  command: 'newLineBelow',
+  keyMap: [isMac ? 'Cmd' : 'Ctrl', 'Enter'],
+  description: 'Insert a new line below the current line'
+});
+
+defineEditorShortcut({
+  label: 'Toggle Comment',
+  command: 'toggleComment',
+  keyMap: [isMac ? 'Cmd' : 'Ctrl', '/'],
+  description: 'Toggle comments on the current line'
+});
+
 defineCodeShortcut({
   label: 'Browse Up',
   command: 'browseUp',
@@ -171,7 +183,7 @@ defineCodeShortcut({
   label: 'New Line',
   command: 'newLine',
   keyMap: ['Shift', 'Enter'],
-  description: 'Create a new line'
+  description: 'Insert a new line'
 });
 
 defineCodeShortcut({

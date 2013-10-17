@@ -5,6 +5,7 @@ Backbone.$   = require('../../vendor/backbone.native').$;
 // Require all CodeMirror functionality.
 require('codemirror');
 require('codemirror/addon/mode/overlay');
+require('codemirror/addon/comment/comment');
 require('codemirror/mode/gfm/gfm');
 require('codemirror/mode/markdown/markdown');
 require('codemirror/mode/css/css');

@@ -153,7 +153,7 @@ CodeCell.prototype.browseUp = ownerProtect(function () {
     return this.trigger('browseUp', this, this._editorCid);
   }
 
-  CodeMirror.commands.goLineUp(this.editor);
+  this.editor.execCommand('goLineUp');
 });
 
 /**
@@ -164,14 +164,14 @@ CodeCell.prototype.browseDown = ownerProtect(function () {
     return this.trigger('browseDown', this, this._editorCid);
   }
 
-  CodeMirror.commands.goLineDown(this.editor);
+  this.editor.execCommand('goLineDown');
 });
 
 /**
  * Create a new line in the editor.
  */
 CodeCell.prototype.newLine = ownerProtect(function () {
-  CodeMirror.commands.newlineAndIndent(this.editor);
+  this.editor.execCommand('newlineAndIndent');
 });
 
 /**
