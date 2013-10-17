@@ -24,6 +24,14 @@ Augment the property context lookup, which is used as the object of property loo
 
 Augment a property name lookup with custom results. Works the same as `completion:variable`, but you will probably want to use the `context` property (which is the current object).
 
+**completion:arguments**
+
+Inject an array of arguments to be used as completion results.
+
+**completion:describe**
+
+Describe any variable or property using Tern.js definition notation.
+
 **inspector:filter**
 
 Filter properties from displaying in the inspector. If the middleware can process it, pass a boolean to `done`. Otherwise ignore it and call `next`.

@@ -147,10 +147,15 @@ middleware.listenTo(middleware, 'all', function (name, data, out) {
   // It should also be passed as a parameter of the data object to each
   // middleware operation since we could short-circuit the entire stack.
   var done = function (err, data) {
-    if (sent)                 { return; }
+    // Don't call the final function more than once.
+    if (sent) { return; }
+    // If we pass in two arguments, the second will be the updated data object.
     if (arguments.length < 2) { data = prevData; }
+    // Set the function to have "run" and call the final function.
     sent = true;
-    if (_.isFunction(out)) { out(err, data); }
+    if (_.isFunction(out)) {
+      return out(err, data);
+    }
   };
 
   // Call the next function on the stack, passing errors from the previous

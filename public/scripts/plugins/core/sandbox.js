@@ -113,8 +113,10 @@ var executePlugin = function (data, next, done) {
   process.nextTick(function () {
     App._executeWindow  = data.window;
     App._executeContext = context;
+
     // Sets up the initial timeout.
     timeout(ASYNC_TIMEOUT);
+
     try {
       /* jshint evil: true */
       exec.result  = data.window.eval(code);

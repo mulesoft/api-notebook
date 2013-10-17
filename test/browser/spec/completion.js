@@ -1,32 +1,45 @@
 /* global describe, it */
 
 describe('Completion', function () {
-  var editor;
+  var editor, completion;
 
   beforeEach(function () {
     editor = new CodeMirror(document.body, {
       mode: 'javascript'
     });
-    new App.CodeMirror.Completion(editor);
+
+    new App.CodeMirror.Completion(editor, {
+      global:  window,
+      context: window
+    });
+
+    // Requires the built-in Tern.js description completion data.
+    completion = App.CodeMirror.sandboxCompletion(window);
+    completion.attach(App.middleware);
   });
 
   afterEach(function () {
     delete window.test;
+    completion.detach(App.middleware);
     document.body.removeChild(editor.getWrapperElement());
   });
 
   var testAutocomplete = function (text, expected, unexpected) {
     return function (done) {
       testCompletion(editor, text, function (results) {
-        if (expected) {
-          expect(results).to.contain(expected);
+        try {
+          if (expected) {
+            expect(results).to.contain(expected);
+          }
+
+          if (unexpected) {
+            expect(results).to.not.contain(unexpected);
+          }
+        } catch (e) {
+          return done(e);
         }
 
-        if (unexpected) {
-          expect(results).to.not.contain(unexpected);
-        }
-
-        done();
+        return done();
       });
     };
   };
@@ -102,6 +115,11 @@ describe('Completion', function () {
     );
 
     it(
+      'nested constructor should work without parens',
+      testAutocomplete('(new window.Date).get', 'getMonth')
+    );
+
+    it(
       'should work with parens around the value',
       testAutocomplete('(123).to', 'toFixed')
     );
@@ -119,9 +137,223 @@ describe('Completion', function () {
     });
 
     it(
-      'should complete as soon as the property period is entered',
-      testAutocomplete('window.', 'window')
+      'should not complete global variables with multiline parens',
+      testAutocomplete('test(\n"test").', null, 'window')
     );
+
+    it(
+      'should not assume the wrong context with multiline parens',
+      testAutocomplete('test(\n"string").', null, 'substr')
+    );
+
+    it(
+      'should not complete made up functions',
+      testAutocomplete('"test".fake().', null, 'substr')
+    );
+
+    it('should complete numbers in the square brackets', function (done) {
+      window.test = ['string'];
+
+      testAutocomplete('test[0].', 'substr')(done);
+    });
+
+    it('should complete strings in the square brackets', function (done) {
+      window.test = {
+        string: 'test'
+      };
+
+      testAutocomplete('test["string"].', 'substr')(done);
+    });
+
+    it('should complete booleans in the square brackets', function (done) {
+      window.test = {
+        'true': 'test'
+      };
+
+      testAutocomplete('test[true].', 'substr')(done);
+    });
+
+    it('should complete undefined in the square brackets', function (done) {
+      window.test = {
+        'undefined': 'test'
+      };
+
+      testAutocomplete('test[undefined].', 'substr')(done);
+    });
+
+    it('should complete a regex in the square brackets', function (done) {
+      window.test = {
+        '/./': 'test'
+      };
+
+      testAutocomplete('test[/./].', 'substr')(done);
+    });
+
+    it('should complete basic variables in the square brackets', function (done) {
+      window.test = {
+        test: 'test'
+      };
+
+      window.variable = 'test';
+
+      testAutocomplete('test[variable].', 'substr')(done);
+    });
+
+    it('should complete properties in the square brackets', function (done) {
+      window.test = {
+        test: 'test'
+      };
+
+      window.property = {
+        nested: {
+          test: 'test'
+        }
+      };
+
+      testAutocomplete('test[property.nested.test].', 'substr')(done);
+    });
+
+    it('should complete sequential square bracket properties', function (done) {
+      window.test = {
+        test: {
+          again: 'test'
+        }
+      };
+
+      testAutocomplete('test["test"]["again"].', 'substr')(done);
+    });
+
+    it('should not complete empty bracket notation', function (done) {
+      window.test = [1, 2, 3];
+
+      testAutocomplete('test[].', null, 'concat')(done);
+    });
+
+    it('should complete nested square bracket properties', function (done) {
+      window.test = {
+        test: 42
+      };
+
+      window.property = {
+        nested: 'test'
+      };
+
+      testAutocomplete('test[property["nested"]].', 'toFixed')(done);
+    });
+
+    it(
+      'should complete array literals',
+      testAutocomplete('[1, 2, 3].con', 'concat')
+    );
+
+    it(
+      'should complete in property literals',
+      testAutocomplete('({ wind', 'window')
+    );
+
+    it(
+      'should not complete square brackets that can\'t be done statically',
+      testAutocomplete('window[1 + 2 + 3].w', null, 'window')
+    );
+
+    describe('Multiple Lines', function () {
+      it(
+        'should complete properties across multiple lines',
+        testAutocomplete('document\n.getEle', 'getElementById')
+      );
+
+      it(
+        'should complete properties across multiple lines with whitespace',
+        testAutocomplete('document \n\t.getEle', 'getElementById')
+      );
+
+      it(
+        'should complete properties over multiple parts and lines',
+        testAutocomplete('document\n  .\t\n getEl', 'getElementById')
+      );
+
+      it(
+        'should complete square brackets over multiple lines',
+        testAutocomplete('window\n["Date"]\n.', 'now')
+      );
+
+      it(
+        'should complete square brackets over multiple lines with whitespace',
+        testAutocomplete('window \n\t[ "Date"  ].\n\tn', 'now')
+      );
+
+      it(
+        'should complete arrays over multiple lines',
+        testAutocomplete('[\n1, 2, 3\n].', 'concat')
+      );
+    });
+
+    describe('Function Returns', function () {
+      it(
+        'should work with square brackets',
+        testAutocomplete('Date["now"]().', 'toFixed')
+      );
+
+      it(
+        'should work as expected with new in parens',
+        testAutocomplete('(new Date).getHours().', 'toFixed')
+      );
+
+      it(
+        'should work as expected with string literals',
+        testAutocomplete('"test".substr(0).', 'substr')
+      );
+
+      it(
+        'should work as expected with numbers',
+        testAutocomplete('(5).toFixed().', 'substr')
+      );
+
+      it(
+        'should work as expected with booleans',
+        testAutocomplete('true.toString().', 'substr')
+      );
+
+      it(
+        'should work with the math object',
+        testAutocomplete('Math.random().', 'toFixed')
+      );
+
+      it(
+        'should work with root number functions',
+        testAutocomplete('parseInt(10).', 'toFixed')
+      );
+
+      it(
+        'should work with root string functions',
+        testAutocomplete('encodeURI(" ").', 'substr')
+      );
+
+      it(
+        'should work with nested array returns',
+        testAutocomplete('[].concat(1).concat(2).', 'concat')
+      );
+
+      it(
+        'should work with nested regex returns',
+        testAutocomplete('(/./).exec("go").', 'concat')
+      );
+
+      it(
+        'should work with odd nested function parens',
+        testAutocomplete('("test".substr)(0).', 'substr')
+      );
+
+      it(
+        'should work with rediculous nested function parens',
+        testAutocomplete('((("test".substr)))(((0))).', 'substr')
+      );
+
+      it(
+        'should work with nested square bracket notation',
+        testAutocomplete('Math["random"]()["toFixed"]().', 'substr')
+      );
+    });
 
     describe('Whitespace', function () {
       it(
@@ -153,6 +385,12 @@ describe('Completion', function () {
         'should ignore whitespace at the beginning and end of parens',
         testAutocomplete('(    123    ).to', 'toFixed')
       );
+
+      it('should ignore whitespace with square brackets', function (done) {
+        window.test = ['string'];
+
+        testAutocomplete('test  [ 0  ].', 'substr')(done);
+      });
     });
   });
 

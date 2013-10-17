@@ -15,6 +15,8 @@ var insertAfter = require('../lib/browser/insert-after');
 var middleware  = require('../state/middleware');
 var persistence = require('../state/persistence');
 
+var completionMiddleware = require('../lib/sandbox-completion');
+
 /**
  * Generates a generic function for appending new view instances.
  *
@@ -51,8 +53,16 @@ Notebook.prototype.initialize = function (options) {
   this.collection = new NotebookCollection();
 
   // Set up autocompletion environment.
-  this.completionOptions = {};
+  this.completionOptions = {
+    global: this.sandbox.window
+  };
   this.updateCompletion();
+
+  // Get the middleware listeners for autocompletion and attach.
+  this.sandboxCompletion = completionMiddleware(this.sandbox.window);
+
+  // Attach the sandbox specific completion as middleware.
+  this.sandboxCompletion.attach(middleware);
 
   // When the user changes, we may have been given permission to do things like
   // edit the notebook. Hence, we need to rerender certain aspects of the app.
@@ -68,6 +78,15 @@ Notebook.prototype.initialize = function (options) {
 Notebook.prototype.remove = function () {
   persistence.reset();
   this.sandbox.remove();
+  this.sandboxCompletion.detach(middleware);
+
+  // Remove references
+  delete this.sandbox;
+  delete this.controls;
+  delete this.collection;
+  delete this.completionOptions;
+  delete this.sandboxCompletion;
+
   return View.prototype.remove.call(this);
 };
 

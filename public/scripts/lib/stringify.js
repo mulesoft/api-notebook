@@ -26,12 +26,17 @@ var getInternalName = (function () {
   }
 
   return function (object) {
-    // PhantomJS constructor are objects instead of functions.
-    if (typeof object.constructor === 'object') {
-      return Object.prototype.toString.call(object).slice(8, -1);
-    }
-    // Caters for `Object.create(null)`.
-    return object.constructor ? getName(object.constructor) : 'Object';
+    var name = 'Object';
+
+    do {
+      if (typeof object.constructor === 'object') {
+        name = Object.prototype.toString.call(object).slice(8, -1);
+      } else {
+        name = getName(object.constructor);
+      }
+    } while (!name && (object = Object.getPrototypeOf(object)));
+
+    return name;
   };
 })();
 

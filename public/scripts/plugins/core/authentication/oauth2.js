@@ -336,7 +336,10 @@ module.exports = function (middleware) {
         )[0];
 
         if (!grantType) {
-          return done(new Error('Unsupported OAuth2 Grant Flow'));
+          return done(new Error(
+            'Unsupported OAuth2 Grant Flow. Supported flows include ' +
+            supportedGrants.join(', ')
+          ));
         }
 
         // Commit to the whole OAuth2 dance using the accepted grant type.

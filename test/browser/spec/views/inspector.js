@@ -179,9 +179,9 @@ describe('Inspector', function () {
 
       it('should inspect object prototypes', function () {
         inputOutputPrototype({}, {
-          'valueOf':        '' + {}.valueOf,
-          'toString':       '' + {}.toString,
-          'hasOwnProperty': '' + {}.hasOwnProperty,
+          'valueOf':        ('' + {}.valueOf).replace(/\n/g, '↵'),
+          'toString':       ('' + {}.toString).replace(/\n/g, '↵'),
+          'hasOwnProperty': ('' + {}.hasOwnProperty).replace(/\n/g, '↵')
         });
       });
     });

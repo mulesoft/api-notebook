@@ -1,3 +1,6 @@
+var _        = require('underscore');
+var getToken = require('./get-token');
+
 /**
  * Grabs and corrects the grabbed token. Useful really only for sanitising a
  * `.` as a property. This helps when we need to do completion on the initial
@@ -8,18 +11,20 @@
  * @return {Object}
  */
 module.exports = function (cm, pos) {
-  var token = cm.getTokenAt(pos);
+  var token = getToken(cm, pos);
 
   token.state = CodeMirror.innerMode(cm.getMode(), token.state).state;
 
   if (token.string === '.') {
-    token = {
+    _.extend(token, {
       start:  token.end,
       end:    token.end,
       string: '',
-      type:   'property',
-      state:  token.state
-    };
+      type:   'property'
+    });
+
+    // Increment token position.
+    token.pos.ch = token.start;
   }
 
   return token;

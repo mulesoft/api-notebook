@@ -7,13 +7,13 @@ var escape   = require('escape-regexp');
 var parser   = require('uri-template');
 var fromPath = require('../../../lib/from-path');
 
-var toString         = Object.prototype.toString;
-var HTTP_METHODS     = ['get', 'head', 'put', 'post', 'patch', 'delete'];
-var RETURN_PROPERTY  = '@return';
-var RESERVED_METHODS = _.object(HTTP_METHODS.concat('headers', 'query'), true);
-
-// List of supported OAuth2 grant types in order of preference.
-var supportedOAuth2Grants = ['code'];
+var toString             = Object.prototype.toString;
+var HTTP_METHODS         = ['get', 'head', 'put', 'post', 'patch', 'delete'];
+var RETURN_PROPERTY      = '@return';
+var DESCRIPTION_PROPERTY = '@description';
+var RESERVED_METHODS     = _.object(
+  HTTP_METHODS.concat('headers', 'query'), true
+);
 
 /**
  * Runs validation logic against uri parameters from the RAML spec. Throws an
@@ -128,6 +128,20 @@ var validateParams = function (object, params) {
 };
 
 /**
+ * Accepts a params object and transforms it into a regex for matching the
+ * tokens in the route.
+ *
+ * @param  {Object} params
+ * @return {RegExp}
+ */
+var uriParamRegex = function (params) {
+  // Transform the params into a regular expression for matching.
+  return new RegExp('{(' + _.map(_.keys(params), function (param) {
+    return escape(param);
+  }).join('|') + ')}', 'g');
+};
+
+/**
  * Simple "template" function for working with the uri param variables.
  *
  * @param  {String}       template
@@ -141,12 +155,7 @@ var template = function (string, params, context) {
   if (_.isArray(context)) {
     var index = -1;
 
-    // Transform the params into a regular expression for matching.
-    var paramRegex = new RegExp('{(' + _.map(_.keys(params), function (param) {
-      return escape(param);
-    }).join('|') + ')}', 'g');
-
-    string = string.replace(paramRegex, function (match, param) {
+    string = string.replace(uriParamRegex(params), function (match, param) {
       validateParam(context[++index], params[param]);
       return '{' + index + '}';
     });
@@ -155,6 +164,22 @@ var template = function (string, params, context) {
   }
 
   return parser.parse(string).expand(context);
+};
+
+/**
+ * Transform a general RAML method describing object into a tooltip
+ * documentation object.
+ *
+ * @param  {Object} object
+ * @return {Object}
+ */
+var toDescriptionObject = function (object) {
+  var description = {};
+
+  // Documentation/description is usually available.
+  description['!doc'] = object.description;
+
+  return description;
 };
 
 /**
@@ -191,20 +216,38 @@ var sanitizeAST = function (ast) {
         resource.resources = flattenResources(resource.resources);
       }
 
-      var resourcePath = [];
+      (function attachResource (object, segments) {
+        var segment = segments.shift();
 
-      _.each(resource.relativeUri.substr(1).split('/'), function (node, index) {
-        // Prepend `resources` to each path node after the first one. This is
-        // required because of the way the AST is structured.
-        if (index > 0) {
-          resourcePath.push('resources');
+        // Only the one segment part left, embed the entire resource.
+        if (!segments.length) {
+          return object[segment] = resource;
         }
 
-        resourcePath.push(node);
-      });
+        // Pull any potential tags out of the relative uri part.
+        var tags = _.map(segment.match(/\{([^\{\}]+)\}/g), function (tag) {
+          return tag.slice(1, -1);
+        });
 
-      // Attach the resource map at the correct endpoint on the map.
-      fromPath(map, resourcePath, resource);
+        // Nested segments need access to the relative uri parameters.
+        object[segment] = {
+          // Extends any resources already attached to the same property.
+          resources: _.extend({}, object[segment] && object[segment].resources),
+          // Dodgy `relativeUri` patch.
+          relativeUri: '/' + segment,
+          // Pick out the applicable template tags.
+          uriParameters: _.pick(resource.uriParameters, tags)
+        };
+
+        // Remove the segment from the original relative uri.
+        resource.relativeUri = resource.relativeUri.substr(segment.length + 1);
+
+        // Remove tags no longer applicable to other parts.
+        // Note: This *will* break if the same tag name is in multiple parts.
+        resource.uriParameters = _.omit(resource.uriParameters, tags);
+
+        return attachResource(object[segment].resources, segments);
+      })(map, resource.relativeUri.substr(1).split('/'));
     });
 
     return map;
@@ -228,6 +271,32 @@ var httpMethods = _.chain(HTTP_METHODS).map(function (method) {
   }).object().value();
 
 /**
+ * Map of methods to their tooltip description objects.
+ *
+ * @type {Object}
+ */
+var methodDescription = {
+  'get': {
+    '!type': 'fn(query?: object, async?: ?)'
+  },
+  'head': {
+    '!type': 'fn(query?: object, async?: ?)'
+  },
+  'put': {
+    '!type': 'fn(body?: ?, async?: ?)'
+  },
+  'post': {
+    '!type': 'fn(body?: ?, async?: ?)'
+  },
+  'patch': {
+    '!type': 'fn(body?: ?, async?: ?)'
+  },
+  'delete': {
+    '!type': 'fn(body?: ?, async?: ?)'
+  }
+};
+
+/**
  * Parse an XHR request for response headers and return as an object. Pass an
  * additional flag to filter any potential duplicate headers (E.g. different
  * cases).
@@ -243,9 +312,15 @@ var getReponseHeaders = function (xhr, filterDuplicates) {
     header = header.split(':');
 
     // Make sure we have both parts of the header.
-    if (header.length === 2) {
-      var name  = filterDuplicates ? header[0].toLowerCase() : header[0];
-      var value = trim(header[1]);
+    if (header.length > 1) {
+      var name  = header.shift();
+      var value = trim(header.join(':'));
+
+      // Lowercase the header name to filter duplicate headers.
+      if (filterDuplicates) {
+        name = name.toLowerCase();
+      }
+
       responseHeaders[name] = value;
     }
   });
@@ -392,10 +467,13 @@ var httpRequest = function (nodes, method) {
       headers['Content-Type'] = mime = _.keys(method.body).pop();
     }
 
-    var canSerialize = ['[object Object]', '[object Array]'];
+    var canSerialize = {
+      '[object Array]':  true,
+      '[object Object]': true
+    };
 
     // If we were passed in data, attempt to sanitize it to the correct type.
-    if (_.contains(canSerialize, toString.call(data))) {
+    if (canSerialize[toString.call(data)]) {
       if (isJSON(mime)) {
         data = JSON.stringify(data);
       } else if (isUrlEncoded(mime)) {
@@ -547,6 +625,9 @@ var attachMethods = function (nodes, context, methods) {
   // Iterate over all the possible methods and attach.
   _.each(methods, function (method, verb) {
     context[verb] = httpRequest(nodes, method);
+    context[verb][DESCRIPTION_PROPERTY] = _.extend(
+      toDescriptionObject(method), methodDescription[verb]
+    );
   });
 
   return context;
@@ -571,6 +652,7 @@ var attachResources = function attachResources (nodes, context, resources) {
     var routeNodes   = _.extend([], nodes);
     var templateTags = resource.uriParameters && _.keys(resource.uriParameters);
 
+    // Push the current route into the route array.
     routeNodes.push(route);
 
     if (templateTags && templateTags.length) {
@@ -616,6 +698,21 @@ var attachResources = function attachResources (nodes, context, resources) {
           return attachResources(routeNodes, newContext, resources);
         }, context[routeName]);
 
+        // Generate the description object for helping tooltip display.
+        context[routeName][DESCRIPTION_PROPERTY] = {
+          '!type': 'fn(' + _.map(
+            route.match(uriParamRegex(resource.uriParameters)),
+            function (parameter) {
+              var name    = parameter.slice(1, -1);
+              var param   = resource.uriParameters[name];
+              var display = param.displayName + (!param.required ? '?' : '');
+
+              return display + ': ' + (param.type || '?');
+            }
+          ).join(', ') + ')'
+        };
+
+        // Generate the return property for helping autocompletion.
         var returnPropContext = {};
         attachMethods(routeNodes, returnPropContext, resource.methods);
         attachResources(routeNodes, returnPropContext, resources);
@@ -658,9 +755,8 @@ var authenticateOAuth2 = function (nodes, scheme) {
       'authenticate:oauth2',
       options,
       function (err, auth) {
-        // Set the nodes authentication details. This will be used by in the
+        // Set the nodes authentication details. This will be used with the
         // final http request.
-        nodes.config.authentication = nodes.config.authentication || {};
         nodes.config.authentication[scheme.type] = true;
         return done(err, auth);
       }
@@ -682,11 +778,14 @@ var attachSecuritySchemes = function (nodes, context, schemes) {
     var methodName = 'authenticate' + cases.pascal(title);
 
     if (scheme.type === 'OAuth 2.0') {
-      var acceptedGrants = scheme.settings.authorizationGrants;
-
-      if (_.intersection(acceptedGrants, supportedOAuth2Grants).length) {
-        context[methodName] = authenticateOAuth2(nodes, scheme);
-      }
+      context[methodName] = authenticateOAuth2(nodes, scheme);
+      context[methodName][DESCRIPTION_PROPERTY] = _.extend(
+        toDescriptionObject(scheme), {
+          // Don't expect anything to parse this since it deviates from the
+          // Tern.js spec. However, it is somewhat more useful to read.
+          '!type': 'fn(options: { clientId: string, clientSecret: string })'
+        }
+      );
     }
   });
 
@@ -708,6 +807,7 @@ var generateClient = function (ast) {
     config: {
       baseUri:         ast.baseUri.replace(/\/+$/, ''),
       securedBy:       ast.securedBy,
+      authentication:  {},
       securitySchemes: ast.securitySchemes
     }
   });
@@ -731,6 +831,15 @@ var generateClient = function (ast) {
 
   // Enable the `@return` property used by the completion plugin.
   client[RETURN_PROPERTY] = attachMethods(nodes, {}, httpMethods);
+
+  // Enable the `@description` property used by the completion tooltip helper.
+  client[DESCRIPTION_PROPERTY] = {
+    '!type': 'fn(url: string, data?: object)',
+    '!doc': [
+      'Make an API request to a custom URL. Pass in a `data` object to replace',
+      'any template tags before making the request.'
+    ].join(' ')
+  };
 
   // Attach all the resources to the returned client function.
   attachResources(nodes, client, ast.resources);

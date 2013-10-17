@@ -4,6 +4,9 @@ var ramlParser      = require('raml-parser');
 var clientGenerator = require('./lib/client-generator');
 var fromPath        = require('../../lib/from-path');
 
+// Special documentation parameter.
+var DESCRIPTION_PROPERTY = '@description';
+
 /**
  * Override the RAML parser read file functionality and replace with middleware.
  *
@@ -78,6 +81,13 @@ API.createClient = function (name, url, done) {
   }, function (err) {
     return done(err);
   });
+};
+
+API.createClient[DESCRIPTION_PROPERTY] = {
+  '!type': 'fn(alias: string, url: string, cb?: fn(error, client))',
+  '!doc': [
+    'Generate an API client from a RAML document and alias it on the window.'
+  ].join(' ')
 };
 
 /**

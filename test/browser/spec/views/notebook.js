@@ -506,6 +506,7 @@ describe('Notebook', function () {
 
     describe('Authentication integration', function () {
       it('should re-render the notebook when the user changes', function () {
+        var clock = sinon.useFakeTimers();
         view.render().appendTo(fixture);
 
         var cell = view.appendCodeView();
@@ -514,9 +515,14 @@ describe('Notebook', function () {
         // Set different user and gist owners
         App.persistence.isReady = true;
         App.persistence.set('userId', 'test');
-        expect(cell.editor.options.readOnly).to.be.true;
+
+        // User changes are throttled.
+        clock.tick(100);
+
+        expect(cell.editor.getOption('readOnly')).to.be.true;
 
         view.remove();
+        clock.restore();
         App.persistence.isReady = false;
       });
     });

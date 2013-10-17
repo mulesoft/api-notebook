@@ -32,10 +32,12 @@ App.persistence = require('./state/persistence');
 App.Sandbox     = require('./lib/sandbox');
 App.PostMessage = require('./lib/post-message');
 
+
 // Exposes CodeMirror to the world with our custom mods.
 App.CodeMirror = {
-  Editor:     CodeMirror, // Programatically create an editor in tests
-  Completion: require('./lib/completion')
+  Editor:            CodeMirror,
+  Completion:        require('./lib/completion'),
+  sandboxCompletion: require('./lib/sandbox-completion')
 };
 
 // Expose all application views

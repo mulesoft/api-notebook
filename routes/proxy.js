@@ -4,9 +4,11 @@ var express = require('express');
 var app     = module.exports = express();
 var request = require('request');
 
-// Remove `X-Powered-By: Express` header. Disable wasn't working.
+// Remove inherited response headers.
 app.use(function (req, res, next) {
   res.removeHeader('X-Powered-By');
+  res.removeHeader('Access-Control-Allow-Origin');
+  res.removeHeader('Access-Control-Allow-Headers');
   return next();
 });
 

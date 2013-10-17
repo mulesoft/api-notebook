@@ -2,6 +2,9 @@
 var Backbone = require('backbone');
 Backbone.$   = require('../../vendor/backbone.native').$;
 
+// ES6 Feature Shim
+require('es6-collections');
+
 // Require all CodeMirror functionality.
 require('codemirror');
 require('codemirror/addon/mode/overlay');

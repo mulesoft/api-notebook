@@ -51,7 +51,7 @@ var testCompletion = function (editor, text, done) {
   // Listens to an event triggered by the widget
   editor.on('refreshCompletion', function refresh (cm, results) {
     editor.off('refreshCompletion', refresh);
-    return done(results);
+    return done(App._.pluck(results, 'value'));
   });
 
   // Set the correct positioning

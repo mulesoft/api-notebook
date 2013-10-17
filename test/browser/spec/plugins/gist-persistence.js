@@ -88,7 +88,8 @@ describe('Gist Persistence Plugin', function () {
       ]
     );
 
-    App.persistence.save(function (err, notebookId) {
+    App.persistence.save(function (err) {
+      expect(err).to.not.exist;
       expect(App.persistence.get('id')).to.equal(id);
       expect(App.persistence.get('userId')).to.equal(userId);
       expect(App.persistence.get('ownerId')).to.equal(userId);

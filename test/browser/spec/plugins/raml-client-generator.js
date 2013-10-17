@@ -715,15 +715,14 @@ describe('RAML Client Generator Plugin', function () {
       };
 
       beforeEach(function () {
-        functionReturnPlugin.attach(App.middleware);
+        functionPropertyFilterPlugin.attach(App.middleware);
 
-        view = new App.View.CodeCell({
-          sandbox: sandbox
-        });
+        view = new App.View.CodeCell();
 
         view.notebook = {
           sandbox: sandbox,
           completionOptions: {
+            global:  sandbox.window,
             context: sandbox.window
           }
         };
@@ -738,7 +737,7 @@ describe('RAML Client Generator Plugin', function () {
       });
 
       afterEach(function () {
-        functionReturnPlugin.detach(App.middleware);
+        functionPropertyFilterPlugin.detach(App.middleware);
 
         view.remove();
       });
@@ -746,7 +745,6 @@ describe('RAML Client Generator Plugin', function () {
       it('should autocomplete the root function', function (done) {
         testAutocomplete('example("/test").', function (results) {
           expect(results).to.include.members(methods.concat('query', 'headers'));
-
           return done();
         });
       });
@@ -754,7 +752,6 @@ describe('RAML Client Generator Plugin', function () {
       it('should autocomplete function properties', function (done) {
         testAutocomplete('example.collection.', function (results) {
           expect(results).to.include.members(['get', 'post', 'collectionId', 'query', 'headers']);
-
           return done();
         });
       });
@@ -762,7 +759,6 @@ describe('RAML Client Generator Plugin', function () {
       it('should autocomplete variable route', function (done) {
         testAutocomplete('example.collection("123").', function (results) {
           expect(results).to.include.members(['get', 'post', 'query', 'headers']);
-
           return done();
         });
       });
@@ -770,7 +766,6 @@ describe('RAML Client Generator Plugin', function () {
       it('should autocomplete nested variable routes', function (done) {
         testAutocomplete('example.collection.collectionId("123").nestedId("456").', function (results) {
           expect(results).to.include.members(['get', 'query', 'headers']);
-
           return done();
         });
       });
@@ -778,7 +773,6 @@ describe('RAML Client Generator Plugin', function () {
       it('should autocomplete with combined text and variables', function (done) {
         testAutocomplete('example.mixed("123", "456").', function (results) {
           expect(results).to.include.members(['get', 'query', 'headers']);
-
           return done();
         });
       });
@@ -786,7 +780,6 @@ describe('RAML Client Generator Plugin', function () {
       it('should not repeat query or other routes after using query', function (done) {
         testAutocomplete('example.collection.query("test=true").', function (results) {
           expect(results).to.not.include.members(['collectionId', 'query']);
-
           return done();
         });
       });
@@ -794,7 +787,6 @@ describe('RAML Client Generator Plugin', function () {
       it('should not repeat headers or other routes after using headers', function (done) {
         testAutocomplete('example.collection.headers({ test: true }).', function (results) {
           expect(results).to.not.include.members(['collectionId', 'headers']);
-
           return done();
         });
       });
@@ -802,7 +794,6 @@ describe('RAML Client Generator Plugin', function () {
       it('should not repeat either headers or query after using both', function (done) {
         testAutocomplete('example.collection.headers({ test: true }).query("test=true").', function (results) {
           expect(results).to.not.include.members(['collectionId', 'headers', 'query']);
-
           return done();
         });
       });

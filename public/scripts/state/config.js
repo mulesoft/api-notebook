@@ -68,14 +68,6 @@ config.listenTo(config, 'change:alias', function (model, alias) {
  * to be maintained.
  */
 config.listenTo(config, 'change:id', function (_, id) {
-  return persistence.set('id', id);
-});
-
-/**
- * Listens for config data changes and sets a config property on the middleware
- * object that represents the config. Useful for middleware to access config
- * variables.
- */
-config.listenTo(config, 'change', function () {
-  middleware.config = config.toJSON();
+  persistence.set('id', id);
+  return persistence.load();
 });

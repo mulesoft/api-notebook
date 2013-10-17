@@ -132,6 +132,8 @@ Persistence.prototype.save = function (done) {
       this.set('id',      data.id);
       this.set('ownerId', data.ownerId);
 
+      Backbone.history.navigate(data.id);
+
       this._changeState(Persistence.SAVE_DONE);
       return done && done();
     }, this)
@@ -192,7 +194,6 @@ Persistence.prototype.load = function (done) {
   return middleware.trigger(
     'persistence:load',
     _.extend(this.getMiddlewareData(), {
-      ownerId:  null,
       contents: null,
       notebook: null
     }),
@@ -209,6 +210,8 @@ Persistence.prototype.load = function (done) {
       this.set('ownerId',  data.ownerId);
       this.set('contents', data.contents, { silent: true });
       this.set('notebook', data.notebook, { silent: true });
+
+      Backbone.history.navigate(data.id);
 
       var complete = _.bind(function () {
         delete this._loading;
@@ -239,7 +242,7 @@ Persistence.prototype.load = function (done) {
 Persistence.prototype.reset = function () {
   return this.set(_.extend(this.defaults, {
     notebook: []
-  }), { silent: true });
+  }));
 };
 
 /**
@@ -253,11 +256,13 @@ Persistence.prototype.fork = function () {
   }
 
   // Removes the notebook id and sets the user id to the current user.
-  this.unset('id');
+  this.set('id', null);
   this.set('ownerId', this.get('userId'));
 
-  // Reset the state to default.
+  // Reset the state to default and save.
+  Backbone.history.navigate('');
   this._changeState(Persistence.NULL);
+  this.save();
 };
 
 /**
@@ -265,7 +270,7 @@ Persistence.prototype.fork = function () {
  *
  * @type {Object}
  */
-var persistence = module.exports = window.persistence = new Persistence();
+var persistence = module.exports = new Persistence();
 
 /**
  * Simple function used as a safeguard to block any accidental recursion with
@@ -280,7 +285,7 @@ var syncProtection = function (fn) {
     if (persistence._syncing) { return; }
 
     persistence._syncing = true;
-    fn.apply(this, arguments);
+    return fn.apply(this, arguments);
   };
 };
 
@@ -346,7 +351,7 @@ persistence.listenTo(persistence, 'change:contents', (function () {
         changing = false;
         if (changeQueue) {
           changeQueue = false;
-          change.call(this);
+          return change.call(this);
         }
       }, this)
     );
@@ -359,8 +364,6 @@ persistence.listenTo(persistence, 'change:contents', (function () {
  * jarring experience. Also load the initial notebook contents alongside.
  */
 persistence.listenTo(messages, 'ready', function () {
-  persistence.load();
-
   return middleware.trigger(
     'persistence:authenticated',
     _.extend(this.getMiddlewareData(), {
@@ -383,21 +386,13 @@ persistence.listenTo(messages, 'ready', function () {
 });
 
 /**
- * Redirects the page to the updated id.
- */
-persistence.listenTo(persistence, 'change:id', function (model, id) {
-  process.nextTick(function () {
-    Backbone.history.navigate(id == null ? '' : id.toString());
-  });
-});
-
-/**
  * Loads the notebook from the persistence layer.
  *
  * @param  {String} id
  */
 persistence.listenTo(
   router, 'route:newNotebook route:loadNotebook', function (id) {
-    return persistence.set('id', id);
+    persistence.set('id', id);
+    return persistence.load();
   }
 );

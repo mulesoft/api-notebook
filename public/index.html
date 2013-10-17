@@ -8,16 +8,16 @@
   <body>
     <script src="/scripts/bundle.js"></script>
     <script src="/plugins/proxy.js"></script>
-    <script src="/plugins/function-return.js"></script>
     <script src="/plugins/gist-persistence.js"></script>
     <script src="/plugins/filter-properties.js"></script>
     <script src="/plugins/raml-client-generator.js"></script>
+    <script src="/plugins/function-property-filter.js"></script>
     <script>
       proxyPlugin.attach(App.middleware);
-      functionReturnPlugin.attach(App.middleware);
       gistPersistencePlugin.attach(App.middleware);
       filterPropertiesPlugin.attach(App.middleware);
       ramlClientGeneratorPlugin.attach(App.middleware);
+      functionPropertyFilterPlugin.attach(App.middleware);
       App.start(document.body);
     </script>
   </body>

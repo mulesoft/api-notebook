@@ -130,10 +130,6 @@ var savePlugin = function (data, next, done) {
     return next();
   }
 
-  if (navigator.onLine === false) {
-    return next(new Error('No internet available'));
-  }
-
   App.middleware.trigger('ajax:oauth2', {
     url: 'https://api.github.com/gists' + (data.id ? '/' + data.id : ''),
     method: data.id ? 'PATCH' : 'POST',

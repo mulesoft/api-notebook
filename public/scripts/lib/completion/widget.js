@@ -10,10 +10,9 @@ var asyncFilter  = require('async').filter;
  *
  * @param  {Completion} completion
  * @param  {Object}     data
- * @param  {Function}   done
  * @return {Widget}
  */
-var Widget = module.exports = function (completion, data, done) {
+var Widget = module.exports = function (completion, data) {
   this.data       = data;
   this.completion = completion;
 
@@ -23,7 +22,7 @@ var Widget = module.exports = function (completion, data, done) {
     'Esc': _.bind(function () { this.remove(); }, this)
   });
 
-  this.refresh(done);
+  this.refresh();
 };
 
 /**
@@ -35,6 +34,7 @@ var Widget = module.exports = function (completion, data, done) {
 Widget.prototype.remove = function () {
   this.removeGhost();
   this.removeHints();
+  this.completion._completionActive = false;
   this.completion.cm.removeKeyMap(this.keyMap);
   CodeMirror.signal(this.completion.cm, 'endCompletion', this.completion.cm);
   delete this.keyMap;
@@ -82,9 +82,11 @@ Widget.prototype.removeGhost = function () {
  * @param  {Function} done
  */
 Widget.prototype.refresh = function (done) {
+  if (!this.data.results) { return; }
+
   var that = this;
   var cm   = this.completion.cm;
-  var list = this.data.list;
+  var list = this.data.results;
 
   // Removes the previous ghost and hints before we start rendering the new
   // display widgets.
@@ -103,9 +105,12 @@ Widget.prototype.refresh = function (done) {
     delete this._refreshing;
     CodeMirror.signal(cm, 'refreshCompletion', cm, results);
 
+    // Break completion if we have no suggestions.
+    if (results.length === 0) { return; }
+
     // If we have less than two available results, there is no reason to render
     // the hints overlay menu.
-    if (results.length < 2) {
+    if (results.length === 1) {
       return this.ghost = new Ghost(this, this.data, results[0]);
     }
 
@@ -114,25 +119,36 @@ Widget.prototype.refresh = function (done) {
 
     // Loop through each of the results and append an item to the hints list
     _.each(results, function (result, index) {
-      var el = hints.appendChild(document.createElement('li'));
-      el.hintId    = index;
-      el.className = 'CodeMirror-hint';
+      var el      = hints.appendChild(document.createElement('li'));
+      var isMatch = (result.name === result.value);
+      var indexOf, hint;
+
+      el.hintId      = index;
+      el.className   = 'CodeMirror-hint';
+      el.ghostResult = result;
 
       // Do Blink-style bolding of the completed text
-      var indexOf = result.indexOf(text);
-      if (indexOf > -1) {
-        var prefix = result.substr(0, indexOf);
-        var match  = result.substr(indexOf, text.length);
-        var suffix = result.substr(indexOf + text.length);
+      if (isMatch && (indexOf = result.name.indexOf(text)) > -1) {
+        var prefix = result.name.substr(0, indexOf);
+        var match  = result.name.substr(indexOf, text.length);
+        var suffix = result.name.substr(indexOf + text.length);
 
-        var highlight = document.createElement('span');
-        highlight.className = 'CodeMirror-hint-match';
-        highlight.appendChild(document.createTextNode(match));
+        hint = document.createElement('span');
+        hint.className = 'CodeMirror-hint-match';
+        hint.appendChild(document.createTextNode(match));
         el.appendChild(document.createTextNode(prefix));
-        el.appendChild(highlight);
+        el.appendChild(hint);
         el.appendChild(document.createTextNode(suffix));
       } else {
-        el.appendChild(document.createTextNode(result));
+        hint = document.createTextNode(result.name);
+
+        // Italicize special properties to make them distinct from regular
+        // completion results.
+        if (result.special) {
+          hint.className = 'CodeMirror-hint-special';
+        }
+
+        el.appendChild(hint);
       }
     });
 
@@ -187,7 +203,9 @@ Widget.prototype.refresh = function (done) {
  * @return {Widget}
  */
 Widget.prototype.reposition = function () {
-  if (this.onScroll) { this.completion.cm.off('scroll', this.onScroll); }
+  if (this.onScroll) {
+    this.completion.cm.off('scroll', this.onScroll);
+  }
 
   var cm    = this.completion.cm;
   var pos   = cm.cursorCoords(this.data.from);
@@ -196,9 +214,10 @@ Widget.prototype.reposition = function () {
   var that  = this;
   var hints = this.hints;
 
-  hints.className  = hints.className.replace(' CodeMirror-hints-top', '');
-  hints.style.top  = top  + 'px';
-  hints.style.left = left + 'px';
+  hints.className    = hints.className.replace(' CodeMirror-hints-top', '');
+  hints.style.top    = top  + 'px';
+  hints.style.left   = left + 'px';
+  hints.style.height = 'auto';
 
   var box       = hints.getBoundingClientRect();
   var padding   = 5;
@@ -210,17 +229,19 @@ Widget.prototype.reposition = function () {
 
   if (overlapX > 0) {
     if (box.right - box.left > winWidth) {
-      hints.style.width = (winWidth - padding * 2) + 'px';
       overlapX -= (box.right - box.left) - winWidth;
+      hints.style.width = (winWidth - padding * 2) + 'px';
     }
+
     hints.style.left = (left = pos.left - overlapX - padding) + 'px';
   }
 
   if (overlapY > 0) {
     var height = box.bottom - box.top;
     var winPos = cm.cursorCoords(this.data.from, 'window');
+
     // Switch the hints to be above instead of below
-    if (winHeight - top < winPos.top) {
+    if (winHeight - winPos.bottom < winPos.top) {
       // When the box is larger than the available height, resize it. Otherwise,
       // we need to position `x` from the top taking into account the height.
       if (height > (winPos.top - padding)) {
@@ -229,10 +250,11 @@ Widget.prototype.reposition = function () {
       } else {
         top = pos.top - height;
       }
+
       hints.style.top = top + 'px';
       hints.className += ' CodeMirror-hints-top';
-    } else if (top + height > winHeight) {
-      hints.style.height = (winHeight - pos.bottom - 5) + 'px';
+    } else {
+      hints.style.height = (winHeight - winPos.bottom - padding) + 'px';
     }
   }
 
@@ -262,7 +284,6 @@ Widget.prototype.reposition = function () {
  */
 Widget.prototype.accept = function () {
   this.ghost.accept();
-  this.remove();
 
   return this;
 };
@@ -273,11 +294,15 @@ Widget.prototype.accept = function () {
  * @param  {String}   string
  * @param  {Function} done
  */
-Widget.prototype._filter = function (string, done) {
+Widget.prototype._filter = function (result, done) {
+  // Don't ever filter special properties.
+  if (result.special === true) {
+    return done(true);
+  }
+
   return middleware.trigger('completion:filter', {
     token:   this.data.token,
-    string:  string,
-    filter:  true,
+    result:  result,
     context: this.data.context
   }, function (err, filter) {
     if (err) { throw err; }
@@ -319,7 +344,7 @@ Widget.prototype.setActive = function (i) {
   // ghost is appended, trigger a reposition event to align the autocompletion
   // with the text (This can be an issue on end of lines).
   this.removeGhost();
-  this.ghost = new Ghost(this, this.data, node.textContent);
+  this.ghost = new Ghost(this, this.data, node.ghostResult);
   this.reposition();
 
   if (node.offsetTop < this.hints.scrollTop) {

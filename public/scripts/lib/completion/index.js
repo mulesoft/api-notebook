@@ -1,6 +1,8 @@
-var _          = require('underscore');
-var Widget     = require('./widget');
-var completion = require('../codemirror/sandbox-completion');
+var _              = require('underscore');
+var Widget         = require('./widget');
+var Tooltip        = require('./tooltip');
+var tooltipData    = require('../codemirror/sandbox-tooltip');
+var completionData = require('../codemirror/sandbox-completion');
 
 /**
  * The completion widget is a constructor function that is used with CodeMirror
@@ -25,7 +27,10 @@ var Completion = module.exports = function (cm, options) {
    * to allow a small grace period in case we are clicking a widget suggestion.
    */
   this.onBlur = function () {
-    closeOnBlur = window.setTimeout(function () { that.removeWidget(); }, 20);
+    closeOnBlur = window.setTimeout(function () {
+      that.removeWidget();
+      that.removeTooltip();
+    }, 20);
   };
 
   /**
@@ -48,24 +53,23 @@ var Completion = module.exports = function (cm, options) {
       return that.removeWidget();
     }
 
-    var closeOn  = /[^$_a-zA-Z0-9]/;
-    var remove   = event.origin === '+delete';
-    var text     = event[remove ? 'removed' : 'text'].join('\n');
-    var line     = cm.getLine(event.from.line);
-    var prevPos  = event.from.ch + (remove ? -1 : 0);
-    var prevChar = line.charAt(prevPos);
+    var closeOn = /[^$_a-zA-Z0-9]/;
+    var remove  = event.origin === '+delete';
+    var text    = event[remove ? 'removed' : 'text'].join('\n');
+    var line    = cm.getLine(event.from.line);
+    var curPos  = event.from.ch + (remove ? -1 : 0);
+    var curChar = line.charAt(curPos);
 
     // Checks whether any of the characters are a close character. If they are,
     // close the widget and remove from the DOM. However, we should also close
     // the widget when there is no previous character.
-    if (!prevChar || closeOn.test(text)) {
+    if (!curChar || closeOn.test(curChar) || closeOn.test(text)) {
       that.removeWidget();
-      // Save some additional processing by returning if the previous character
-      // is not a period (since we want to trigger completion immediately).
-      if (prevChar !== '.') { return; }
+    } else if (curPos > 0 && closeOn.test(line.charAt(curPos - 1))) {
+      that.removeWidget();
     }
 
-    var nextChar = line.charAt(prevPos + 1);
+    var nextChar = line.charAt(curPos + 1);
 
     // If completion is currently active, trigger a refresh event (filter the
     // current suggestions using updated character position information).
@@ -84,6 +88,11 @@ var Completion = module.exports = function (cm, options) {
    * @param  {CodeMirror} cm
    */
   this.onCursorActivity = function (cm) {
+    // Cursor activity is triggered even when we don't have focus.
+    if (!cm.hasFocus() || cm.getOption('readOnly')) { return; }
+
+    that.showTooltip();
+
     if (closeOnCursor) {
       return that.removeWidget();
     }
@@ -105,6 +114,7 @@ var Completion = module.exports = function (cm, options) {
  */
 Completion.prototype.remove = function () {
   this.removeWidget();
+  this.removeTooltip();
   delete this.cm.state.completionActive;
   this.cm.off('blur',           this.onBlur);
   this.cm.off('focus',          this.onFocus);
@@ -133,7 +143,7 @@ Completion.prototype.refresh = function (done) {
 Completion.prototype.showWidget = function () {
   this.removeWidget();
   this._completionActive = true;
-  completion(this.cm, this.options, _.bind(function (err, data) {
+  completionData(this.cm, this.options, _.bind(function (err, data) {
     if (this._completionActive && data) {
       this.widget = new Widget(this, data);
     } else {
@@ -146,6 +156,29 @@ Completion.prototype.showWidget = function () {
  * Removes the currently display widget.
  */
 Completion.prototype.removeWidget = function () {
-  this._completionActive = false;
-  if (this.widget) { this.widget.remove(); }
+  if (this.widget) {
+    this.widget.remove();
+  }
+};
+
+/**
+ * Show an overlay tooltip with relevant documentation.
+ */
+Completion.prototype.showTooltip = function () {
+  this.removeTooltip();
+
+  tooltipData(this.cm, this.options, _.bind(function (err, data) {
+    if (data) {
+      this.tooltip = new Tooltip(this, data);
+    }
+  }, this));
+};
+
+/**
+ * Remove the overlay toolip.
+ */
+Completion.prototype.removeTooltip = function () {
+  if (this.tooltip) {
+    this.tooltip.remove();
+  }
 };

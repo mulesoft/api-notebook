@@ -211,6 +211,7 @@ InspectorView.prototype.renderPreview = function () {
   var html    = '';
   var prefix  = '';
   var special = !!this.internal;
+  var preview = this.stringifyPreview();
   var parent  = this.parent && this.parent.inspect;
   var desc;
 
@@ -249,8 +250,8 @@ InspectorView.prototype.renderPreview = function () {
     html += _.escape('' + prefix);
     html += '</span>: ';
   }
-  html += '<span class="inspect">';
-  html += _.escape(this.stringifyPreview());
+  html += '<span class="inspect" title="' + _.escape(preview) + '">';
+  html += _.escape(preview.split('\n').join('↵'));
   html += '</span>';
   html += '</div>';
 
@@ -259,7 +260,6 @@ InspectorView.prototype.renderPreview = function () {
   // Run filter middleware to check if the property should be filtered from
   // the basic display.
   middleware.trigger('inspector:filter', {
-    filter:     true,
     parent:     parent,
     property:   this.property,
     internal:   this.internal,

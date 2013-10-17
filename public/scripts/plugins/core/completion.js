@@ -43,20 +43,61 @@ var isValidVariableName = function (name) {
 };
 
 /**
+ * Sadly we need to do some additional processing for primitive types and ensure
+ * they will use the primitive prototype from the correct global context. This
+ * is because primitives lose their prototypes when brought through iframes,
+ * regardless of the origin.
+ *
+ * @param  {*}      object
+ * @param  {Object} global
+ * @return {Object}
+ */
+var mapObject = function (object, global) {
+  // Sadly we need to do some additional help for primitives since the
+  // prototype is lost between the iframe and main frame.
+  if (typeof object === 'string') {
+    return global.String.prototype;
+  }
+
+  if (typeof object === 'number') {
+    return global.Number.prototype;
+  }
+
+  if (typeof object === 'boolean') {
+    return global.Boolean.prototype;
+  }
+
+  return object;
+};
+
+/**
  * Returns a flat object of all valid JavaScript literal property names.
  *
  * @param  {Object} obj
+ * @param  {Object} global
  * @return {Object}
  */
-var getPropertyNames = function (obj) {
+var getPropertyNames = function (obj, global) {
   var props = {};
-  var addProp;
 
-  addProp = function (property) {
-    // Avoid any property that is not a valid JavaScript literal variable,
-    // since the autocompletion result wouldn't be valid JavaScript
-    if (isValidVariableName(property)) { props[property] = true; }
+  /**
+   * Adds the property to the property names object. Skips any property names
+   * that aren't valid JavaScript literals since completion should not display
+   * invalid JavaScript suggestions.
+   *
+   * @param {String} property
+   */
+  var addProp = function (property) {
+    if (isValidVariableName(property)) {
+      props[property] = true;
+    }
   };
+
+  // Sanitize the object to a type that we can grab keys from. If it still isn't
+  // an object after being sanitized, break before we try to get keys.
+  if (!_.isObject(obj = mapObject(obj, global))) {
+    return props;
+  }
 
   do {
     _.each(Object.getOwnPropertyNames(obj), addProp);
@@ -68,16 +109,17 @@ var getPropertyNames = function (obj) {
 /**
  * Registers all the core plugins for the completion widgets.
  *
- * @param  {Object} middleware
+ * @param {Object} middleware
  */
 module.exports = function (middleware) {
   /**
    * Completes the completion variable suggestions.
    *
-   * @param  {Object}   data
-   * @param  {Function} next
+   * @param {Object}   data
+   * @param {Function} next
+   * @param {Function} done
    */
-  middleware.core('completion:variable', function (data, next) {
+  middleware.core('completion:variable', function (data, next, done) {
     var token = data.token;
 
     _.extend(data.results, varsToObject(token.state.localVars));
@@ -90,20 +132,22 @@ module.exports = function (middleware) {
     }
 
     _.extend(data.results, varsToObject(token.state.globalVars));
-    _.extend(data.results, getPropertyNames(data.context), keywords);
+    _.extend(data.results, keywords);
+    _.extend(data.results, getPropertyNames(data.context, data.global));
 
-    return next();
+    return done();
   });
 
   /**
    * Augments the property completion data with all property names.
    *
-   * @param  {Object}   data
-   * @param  {Function} next
+   * @param {Object}   data
+   * @param {Function} next
+   * @param {Function} done
    */
-  middleware.core('completion:property', function (data, next) {
-    _.extend(data.results, getPropertyNames(data.context));
-    return next();
+  middleware.core('completion:property', function (data, next, done) {
+    _.extend(data.results, getPropertyNames(data.context, data.global));
+    return done();
   });
 
   /**
@@ -111,67 +155,119 @@ module.exports = function (middleware) {
    * the global scope and coerces other types detected by CodeMirror (such as
    * strings and numbers) into the correct representation.
    *
-   * @param  {Object}   data
-   * @param  {Function} next
+   * Important: Needs to use the `global` property when recreating objects so
+   * that middleware will continue to get the correct context. Otherwise you
+   * will be switching global contexts to the main frame and there will be
+   * discrepancies.
+   *
+   * @param {Object}   data
+   * @param {Function} next
+   * @param {Function} done
    */
-  middleware.core('completion:context', function (data, next) {
+  middleware.core('completion:context', function (data, next, done) {
     var token  = data.token;
     var type   = token.type;
     var string = token.string;
 
-    if (type === 'variable' || type === 'property') {
-      var context = data[type === 'variable' ? 'global' : 'context'];
-      // Lookup the property on the current context
-      data.context = context[string];
-      // If the variable/property is a constructor function, we can provide
-      // some additional context by looking at the `prototype` property. Normal
-      // functions have no built in way of inferring the return value.
-      if (token.isFunction) {
-        if (token.isConstructor && typeof data.context === 'function') {
-          data.context = data.context.prototype;
-        } else {
-          data.context = null;
-        }
-      }
-      return next();
+    if (type === 'variable') {
+      data.context = data.context[string];
+      return done();
+    }
+
+    if (type === 'property') {
+      data.context = mapObject(data.context, data.global);
+      data.context = data.context[string];
+      return done();
+    }
+
+    if (type === 'array') {
+      data.context = new data.global.Array();
+      return done();
     }
 
     if (type === 'string') {
-      data.context = String(string);
-      return next();
+      data.context = data.global.String(string.slice(1, -1));
+      return done();
     }
 
     if (type === 'number') {
-      data.context = Number(string);
-      return next();
+      data.context = data.global.Number(string);
+      return done();
     }
 
     if (type === 'string-2') {
       var parts = token.string.split('/');
-      data.context = new RegExp(parts[1].replace('\\', '\\\\'), parts[2]);
-      return next();
+      data.context = new data.global.RegExp(
+        parts[1].replace('\\', '\\\\'), parts[2]
+      );
+      return done();
     }
 
-    if (type === 'atom' && (string === 'true' || string === 'false')) {
-      data.context = Boolean(string);
-      return next();
+    if (type === 'atom') {
+      if (string === 'true' || string === 'false') {
+        data.context = data.global.Boolean(string);
+      } else if (string === 'null') {
+        data.context = null;
+      } else if (string === 'undefined') {
+        data.context = undefined;
+      }
+
+      return done();
     }
 
     data.context = null;
-    return next();
+    return done();
   });
 
   /**
    * Filter autocompletion suggestions. Checks the given suggestion is actually
    * the start of the current token.
    *
-   * @param  {Object}   data
-   * @param  {Function} next
+   * @param {Object}   data
+   * @param {Function} next
+   * @param {Function} done
    */
   middleware.core('completion:filter', function (data, next, done) {
-    var str    = data.token.string;
-    var longer = data.string.length >= str.length;
+    var value  = data.result.value;
+    var string = data.token.string;
+    var length = value.length >= string.length;
 
-    return done(null, longer && data.string.substr(0, str.length) === str);
+    return done(null, length && value.substr(0, string.length) === string);
+  });
+
+  /**
+   * Provides completion suggestions for a functions arguments.
+   *
+   * @param {Object}   data
+   * @param {Function} next
+   * @param {Function} done
+   */
+  middleware.core('completion:arguments', function (data, next, done) {
+    return done(null, []);
+  });
+
+  /**
+   * Provides completion middleware for resolving the returned context of a
+   * function.
+   *
+   * @param {Object}   data
+   * @param {Function} next
+   * @param {Function} done
+   */
+  middleware.core('completion:function', function (data, next, done) {
+    // Intentionally return `null` as the data object.
+    return done(null, null);
+  });
+
+  /**
+   * Provides a description object of an object, function, variable, etc.
+   *
+   * @param {Object}   data
+   * @param {Function} next
+   * @param {Function} done
+   */
+  middleware.core('completion:describe', function (data, next, done) {
+    // Intentionally returning an empty description object.
+    return done(null, {});
   });
 };

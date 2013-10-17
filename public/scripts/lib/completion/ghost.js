@@ -6,8 +6,9 @@
  * @param  {String} text
  * @return {Ghost}
  */
-var Ghost = module.exports = function (widget, data, text) {
+var Ghost = module.exports = function (widget, data, result) {
   var that = this;
+  var text;
 
   this.cm         = widget.completion.cm;
   this.data       = data;
@@ -19,17 +20,22 @@ var Ghost = module.exports = function (widget, data, text) {
     'Right': function () { that.accept(); }
   });
 
-  if (!text) { return this.remove(); }
+  if (result.special) {
+    text = result.value;
+  } else {
+    var substring = result.value.substr(0, this.data.to.ch - this.data.from.ch);
 
-  // At the moment, the ghost is going to assume the prefix text is accurate
-  var suffix = this.suffix = text.substr(this.data.to.ch - this.data.from.ch);
-
-  if (!suffix.length) { return this.remove(); }
+    if (substring === data.token.string) {
+      text = result.value.substr(this.data.to.ch - this.data.from.ch);
+    } else {
+      return this.remove();
+    }
+  }
 
   // Creates the ghost element to be styled.
   var ghostHint = document.createElement('span');
   ghostHint.className = 'CodeMirror-hint-ghost';
-  ghostHint.appendChild(document.createTextNode(suffix));
+  ghostHint.appendChild(document.createTextNode(this.text = text));
 
   // Abuse the bookmark feature of CodeMirror to achieve the desired completion
   // effect without modifying source code.
@@ -40,13 +46,13 @@ var Ghost = module.exports = function (widget, data, text) {
 };
 
 /**
- * Accept the text string.
+ * Accept the display ghost text.
  *
  * @return {Ghost}
  */
 Ghost.prototype.accept = function () {
-  if (this.suffix && this.data) {
-    this.cm.replaceRange(this.suffix, this.data.to, this.data.to);
+  if (this.text && this.data) {
+    this.cm.replaceRange(this.text, this.data.to, this.data.to);
   }
 
   return this.remove();
