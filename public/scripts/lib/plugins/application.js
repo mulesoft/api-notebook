@@ -145,3 +145,28 @@ middleware.register('application:start', function (options, next) {
    */
   postMessage.trigger('ready');
 });
+
+/**
+ * Check whether the browser supports core JavaScript ES5 APIs needed for the
+ * notebook to function.
+ *
+ * @param {Object}   app
+ * @param {Function} next
+ */
+middleware.register('application:start', function (app, next) {
+  if (
+    window.addEventListener && Object.getOwnPropertyNames &&
+    Object.getPrototypeOf && Object.getOwnPropertyDescriptor
+  ) {
+    return next();
+  }
+
+  middleware.trigger('ui:modal', {
+    title: 'Unsupported Browser',
+    content: '<p>Your browser is out of date. Please consider upgrading to ' +
+      'get the full experience of this application. <a target="_blank" ' +
+      'href="http://browsehappy.com/">You can find a list of up-to-date ' +
+      'browsers here.</a></p><div class="text-center">' +
+      '<button class="btn btn-primary" data-dismiss>Close</button></div>'
+  }, next);
+});
