@@ -1,0 +1,52 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Mocha Spec Runner</title>
+  <link rel="stylesheet" href="../build/styles/main.css">
+  <link rel="stylesheet" href="../node_modules/mocha/mocha.css">
+</head>
+<body>
+  <div id="mocha"></div>
+  <div id="fixture"></div>
+
+  <script src="../node_modules/mocha/mocha.js"></script>
+  <script src="../node_modules/chai/chai.js"></script>
+  <script src="../node_modules/sinon/pkg/sinon.js"></script>
+  <script src="../node_modules/sinon-chai/lib/sinon-chai.js"></script>
+
+  <script src="../build/test/scripts/bundle.js"></script>
+
+  <script src="../build/scripts/bundle.js"></script>
+  <script src="../build/scripts/embed.js" data-manual></script>
+  <script src="../build/plugins/filter-properties.js"></script>
+  <script src="../build/plugins/gist-persistence.js"></script>
+  <script src="../build/plugins/raml-client-generator.js"></script>
+  <script src="../build/plugins/function-property-filter.js"></script>
+
+  <script src="spec/views/app.js"></script>
+  <script src="spec/views/view.js"></script>
+  <script src="spec/views/editor-cell.js"></script>
+  <script src="spec/views/code-cell.js"></script>
+  <script src="spec/views/text-cell.js"></script>
+  <script src="spec/views/result-cell.js"></script>
+  <script src="spec/views/notebook.js"></script>
+  <script src="spec/views/inspector.js"></script>
+  <script src="spec/views/error-inspector.js"></script>
+
+  <script src="spec/embed.js"></script>
+  <script src="spec/middleware.js"></script>
+  <script src="spec/completion.js"></script>
+  <script src="spec/persistence.js"></script>
+  <script src="spec/authentication.js"></script>
+
+  <script src="spec/plugins/gist-persistence.js"></script>
+  <script src="spec/plugins/filter-properties.js"></script>
+  <script src="spec/plugins/raml-client-generator.js"></script>
+  <script src="spec/plugins/function-property-filter.js"></script>
+
+  <script>
+    (window.mochaPhantomJS || window.mocha).run();
+  </script>
+</body>
+</html>

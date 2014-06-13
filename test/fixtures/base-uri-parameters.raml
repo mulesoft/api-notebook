@@ -1,0 +1,8 @@
+#%RAML 0.8
+title: Multi-Homed API Example
+baseUri: http://{zone}.example.com/
+baseUriParameters:
+  zone:
+    enum: [ us-east, us-west, emea, apac ]
+/api:
+  get:

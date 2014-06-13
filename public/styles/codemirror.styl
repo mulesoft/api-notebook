@@ -1,0 +1,155 @@
+// Import initial codemirror stylesheet
+@import "../../node_modules/codemirror/lib/codemirror.css"
+
+// Allow CodeMirror to have an automatic height
+.CodeMirror
+  border: 1px solid #eee
+  height: auto
+  line-height: normal
+
+.CodeMirror-gutters
+  border-right: 1px solid #eee
+
+
+// Theme altered for `text-cell` theme
+.cm-s-text-cell .cm-keyword    { color: #cda869; }
+.cm-s-text-cell .cm-atom       { color: #CF7EA9; }
+.cm-s-text-cell .cm-number     { color: #78CF8A; }
+.cm-s-text-cell .cm-def        { color: #aac6e3; }
+.cm-s-text-cell .cm-variable   { color: #ffb795; }
+.cm-s-text-cell .cm-variable-2 { color: #eed1b3; }
+.cm-s-text-cell .cm-variable-3 { color: #faded3; }
+.cm-s-text-cell .cm-property   { color: #eed1b3; }
+.cm-s-text-cell .cm-operator   { color: #fa8d6a; }
+.cm-s-text-cell .cm-comment    { color: #555; font-style: italic; }
+.cm-s-text-cell .cm-string     { color: #428BCA; }
+.cm-s-text-cell .cm-string-2   { color: #9d937c; }
+.cm-s-text-cell .cm-meta       { color: #D2A8A1; }
+.cm-s-text-cell .cm-error      { color: #AF2018; }
+.cm-s-text-cell .cm-qualifier  { color: yellow; }
+.cm-s-text-cell .cm-builtin    { color: #9999cc; }
+.cm-s-text-cell .cm-bracket    { color: #24C2C7; }
+.cm-s-text-cell .cm-tag        { color: #fee4ff; }
+.cm-s-text-cell .cm-attribute  { color: #9B859D; }
+.cm-s-text-cell .cm-quote      { color: #24C2C7; }
+.cm-s-text-cell .cm-hr         { color: pink; }
+.cm-s-text-cell .cm-link       { color: #428BCA; }
+.cm-s-text-cell .cm-special    { color: #FF9D00; }
+
+.cm-s-text-cell .CodeMirror-matchingbracket    { color: #0f0; }
+.cm-s-text-cell .CodeMirror-nonmatchingbracket { color: #f22; }
+
+.cm-s-text-cell
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif
+
+.cm-s-text-cell .CodeMirror-selected
+  background: rgba(0, 0, 0, 0.15)
+
+.cm-s-text-cell .CodeMirror-focused .CodeMirror-selected
+  background: rgba(0, 0, 0, 0.10)
+
+.cm-s-text-cell .CodeMirror-lines
+  padding: 8px 0
+
+.cm-s-text-cell .CodeMirror-linenumber
+  font-family: monospace
+
+// Read-only hide cursor since its too weird.
+.CodeMirror-readOnly .CodeMirror-cursor
+  display: none
+
+// CodeMirror hinting
+.CodeMirror-code .CodeMirror-hint-ghost
+  color: #999
+
+.CodeMirror-hints
+  position: absolute
+  margin: 5px
+  padding: 0
+  z-index: 20
+  max-height: 20em
+  font-size: 95%
+  font-family: monospace
+  overflow: auto
+  list-style: none
+  border: 1px solid #a8a8a8
+  border-radius: 0 4px 4px 4px
+  background-color: white
+
+.CodeMirror-hints-top
+  border-top-left-radius: 4px
+  border-bottom-left-radius: 0
+
+.CodeMirror-hint
+  margin: 0
+  padding: 0 4px
+  border: 1px solid transparent
+  color: #313942
+  cursor: pointer
+  overflow: hidden
+  white-space: pre
+  &:hover
+    border-color: #ccc
+
+.CodeMirror-hint-active
+  background-color: #d4d4d4
+
+.CodeMirror-hint-match
+  font-weight: bold
+
+.CodeMirror-hint-text
+  float: left
+
+.CodeMirror-hint-type
+  float: right
+  color: #888
+  font-style: italic
+  margin-left: 0.5em
+
+.CodeMirror-hint-documentation
+  @extends .CodeMirror-hints
+  max-width: 30em
+  border-radius: 4px
+
+.CodeMirror-hint-documentation-doc,
+.CodeMirror-hint-documentation-url,
+.CodeMirror-hint-documentation-type
+  margin: 0.3em 0.5em
+
+.CodeMirror-hint-documentation-type
+  font-weight: bold
+
+.CodeMirror-hint-documentation-doc
+  > p,
+  > h1,
+  > h2,
+  > h3,
+  > h4,
+  > h5,
+  > h6,
+  > pre
+    margin-bottom: 8px
+
+.CodeMirror-documentation
+  margin: 3px 0
+  padding: 4px
+  font-size: 90%
+  overflow: scroll
+  max-height: 8em
+  border-top: 1px solid #eee
+  border-bottom: 1px solid #eee
+  background-color: #f7f7f7
+
+.CodeMirror-documentation-title,
+.CodeMirror-documentation-description-doc,
+.CodeMirror-documentation-description-url,
+.CodeMirror-documentation-description-type
+  margin-bottom: 4px
+  &:last-child
+    margin-bottom: 0
+
+.CodeMirror-documentation-argument-active
+  font-weight: bold
+
+.CodeMirror-documentation-description-type
+  font-style: italic

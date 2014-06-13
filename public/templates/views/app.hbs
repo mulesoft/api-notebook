@@ -1,0 +1,92 @@
+{{#if @config.header}}
+  <header class="notebook-header clearfix">
+    <input class="notebook-title" autocomplete="off" value="{{@persistence.notebook.meta.title}}">
+  </header>
+
+  <div class="notebook-toolbar clearfix notebook-{{@data.activeView}}-active">
+    <div class="toolbar-end">
+      <button class="edit-source toggle-notebook hint--bottom" data-hint="Edit source">
+        <i class="icon"></i>
+      </button>
+    </div>
+
+    <div class="toolbar-inner">
+      {{#if @data.stateText}}
+        <div class="persistence-status">{{@data.stateText}}.</div>
+      {{/if}}
+      <div class="toolbar-buttons">
+        <span class="btn-edit">
+          <button class="btn-text toggle-notebook">Return to notebook view</button>
+        </span>
+        <span class="btn-view">
+          <span class="btn-group">
+            <button class="btn-round notebook-new hint--bottom" data-hint="New notebook">
+              <i class="icon-doc"></i>
+            </button>
+            {{#if @config.savable}}
+            <button class="btn-round notebook-save hint--bottom {{#unless @data.savable}}btn-disabled{{/unless}}" data-hint="{{#if @data.savable}}Save notebook{{else}}Clone the notebook to save{{/if}}">
+              <i class="icon-floppy"></i>
+            </button>
+            <button class="btn-round notebook-clone hint--bottom {{#unless @data.cloneable}}btn-disabled{{/unless}}" data-hint="{{#if @data.cloneable}}Clone notebook{{else}}Save notebook to fork{{/if}}">
+              <i class="icon-fork"></i>
+            </button>
+            {{/if}}
+            <button class="btn-round notebook-share hint--bottom" data-hint="Share {{#if @data.shareable}}current{{/if}} notebook">
+              <i class="icon-share"></i>
+            </button>
+          </span><span class="btn-group">
+            <button class="btn-round notebook-exec hint--bottom" data-hint="Play notebook">
+              <i class="icon-play"></i>
+            </button>
+            <button class="btn-round notebook-help hint--bottom" data-hint="Shortcuts">
+              <i class="icon"></i>
+            </button>
+          </span>
+        </span>
+      </div>
+    </div>
+  </div>
+{{/if}}
+
+<div class="notebook">
+  {{#if @config.sidebar}}
+    {{{view @data.sidebar}}}
+  {{/if}}
+
+  <div class="notebook-content">
+    {{{view @data.notebook}}}
+
+    {{#unless @config.embedded}}
+      <a href="http://mulesoft.com" class="ir powered-by-logo">Mulesoft</a>
+    {{/unless}}
+  </div>
+</div>
+
+{{#if @state.loading}}
+  <div class="modal ui-loading">
+    <i class="ui-loading-icon icon-arrows-cw animate-spin"></i>
+  </div>
+{{/if}}
+
+{{#if @config.footer}}
+  <div class="notebook-footer clearfix">
+    <div class="footer-end">
+      <button class="btn-footer notebook-exec hint--top" data-hint="Execute all cells">
+        Play notebook<i class="icon-play"></i>
+      </button>
+      {{#unlessEqual @config.fullUrl @config.siteUrl}}
+        <a href="{{@config.fullUrl}}" class="btn-footer hint--top" data-hint="Make your own copy of this notebook">
+          Clone notebook<i class="icon-fork"></i>
+        </a>
+      {{/unlessEqual}}
+    </div>
+
+    <div class="footer-inner">
+      {{#if @data.shareable}}
+        <a href="{{@config.fullUrl}}">{{@persistence.notebook.meta.title}}</a> hosted by <a href="{{@config.siteUrl}}">{{@config.siteTitle}}</a>
+      {{else}}
+        Hosted by <a href="{{@config.siteUrl}}">{{@config.siteTitle}}</a>
+      {{/if}}
+    </div>
+  </div>
+{{/if}}

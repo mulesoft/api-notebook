@@ -1,0 +1,374 @@
+#%RAML 0.8
+---
+title: Example API
+version: v1
+baseUri: http://example.com
+resourceTypes:
+  - base:
+      get?:
+        responses: &standardResponses
+          200:
+            description: OK
+      head?:
+        responses: *standardResponses
+      put?:
+        responses: *standardResponses
+      patch?:
+        responses: *standardResponses
+      post?:
+        responses: *standardResponses
+      delete?:
+        responses: *standardResponses
+  - collection:
+      type: base
+      get:
+        is: [ paged ]
+      post:
+        responses:
+          201:
+            description: Created
+  - member:
+      type: base
+      get: {}
+      head: {}
+      put: {}
+      post: {}
+      patch: {}
+      delete: {}
+  - mediaTypeExtension:
+      type: member
+      uriParameters:
+        mediaTypeExtension:
+          enum: [ .json, .xml ]
+          description: Use .json to specify application/json or .xml to specify text/xml
+
+
+traits:
+  - paged:
+      displayName: paged
+      queryParameters:
+        page:
+          type: integer
+          displayName: start
+          description: The page number to view
+  - secured:
+      displayName: secured
+      headers:
+        Authorization:
+          description: The auth token for this request
+      responses:
+        401:
+          description: Unauthorized
+
+# Random test endpoint.
+/api:
+  type: collection
+
+# Test nested routes.
+/collection:
+  type: collection
+  /{collectionId}:
+    type: member
+    /{nestedId}:
+      type: member
+
+# Dynamic variable and route name clash.
+/{collection}:
+  type: collection
+
+# Multiple variables with text.
+/mixed{variable}{route}:
+  type: member
+
+# Automatically populate single enum values.
+/enum{test}:
+  type: member
+  uriParameters:
+    test:
+      enum: ['value']
+
+# Test every uri parameter validation.
+/validation:
+  /string:
+    /{basic}:
+      type: member
+      uriParameters:
+        basic:
+          type: string
+          required: false
+    /{enum}:
+      type: member
+      uriParameters:
+        enum:
+          type: string
+          enum: ['test']
+    /{pattern}:
+      type: member
+      uriParameters:
+        pattern:
+          type: string
+          pattern: "^test$"
+    /{minLength}:
+      type: member
+      uriParameters:
+        minLength:
+          type: string
+          minLength: 5
+    /{maxLength}:
+      type: member
+      uriParameters:
+        maxLength:
+          type: string
+          maxLength: 5
+    /{required}:
+      type: member
+      uriParameters:
+        required:
+          type: string
+          required: true
+  /number:
+    /{basic}:
+      type: member
+      uriParameters:
+        basic:
+          type: number
+          required: false
+    /{minimum}:
+      type: member
+      uriParameters:
+        minimum:
+          type: number
+          minimum: 5
+    /{maximum}:
+      type: member
+      uriParameters:
+        maximum:
+          type: number
+          maximum: 5
+    /{required}:
+      type: member
+      uriParameters:
+        required:
+          type: number
+          required: true
+  /integer:
+    /{basic}:
+      type: member
+      uriParameters:
+        basic:
+          type: integer
+          required: false
+    /{minimum}:
+      type: member
+      uriParameters:
+        minimum:
+          type: integer
+          minimum: 5
+    /{maximum}:
+      type: member
+      uriParameters:
+        maximum:
+          type: integer
+          maximum: 5
+    /{required}:
+      type: member
+      uriParameters:
+        required:
+          type: integer
+          required: true
+  /date:
+    /{basic}:
+      type: member
+      uriParameters:
+        basic:
+          type: date
+          required: false
+    /{required}:
+      type: member
+      uriParameters:
+        required:
+          type: date
+          required: true
+  /boolean:
+    /{basic}:
+      type: member
+      uriParameters:
+        basic:
+          type: boolean
+          required: false
+    /{required}:
+      type: member
+      uriParameters:
+        required:
+          type: boolean
+          required: true
+
+# Test automatically serialising request bodies.
+/body:
+  /json:
+    put:
+      body:
+        application/json: !!null
+    post:
+      body:
+        application/json: !!null
+    patch:
+      body:
+        application/json: !!null
+    delete:
+      body:
+        application/json: !!null
+  /urlEncoded:
+    put:
+      body:
+        application/x-www-form-urlencoded: !!null
+    post:
+      body:
+        application/x-www-form-urlencoded: !!null
+    patch:
+      body:
+        application/x-www-form-urlencoded: !!null
+    delete:
+      body:
+        application/x-www-form-urlencoded: !!null
+  /formData:
+    put:
+      body:
+        multipart/form-data: !!null
+    post:
+      body:
+        multipart/form-data: !!null
+    patch:
+      body:
+        multipart/form-data: !!null
+    delete:
+      body:
+        multipart/form-data: !!null
+
+# Test every query string validation.
+/queryValidation:
+  /string:
+    /basic:
+      get:
+        queryParameters:
+          basic:
+            type: string
+            required: false
+    /enum:
+      get:
+        queryParameters:
+          enum:
+            type: string
+            enum: ['test']
+    /pattern:
+      get:
+        queryParameters:
+          pattern:
+            type: string
+            pattern: "^test$"
+    /minLength:
+      get:
+        queryParameters:
+          minLength:
+            type: string
+            minLength: 5
+    /maxLength:
+      get:
+        queryParameters:
+          maxLength:
+            type: string
+            maxLength: 5
+    /required:
+      get:
+        queryParameters:
+          required:
+            type: string
+            required: true
+  /number:
+    /basic:
+      get:
+        queryParameters:
+          basic:
+            type: number
+            required: false
+    /minimum:
+      get:
+        queryParameters:
+          minimum:
+            type: number
+            minimum: 5
+    /maximum:
+      get:
+        queryParameters:
+          maximum:
+            type: number
+            maximum: 5
+    /required:
+      get:
+        queryParameters:
+          required:
+            type: number
+            required: true
+  /integer:
+    /basic:
+      get:
+        queryParameters:
+          basic:
+            type: integer
+            required: false
+    /minimum:
+      get:
+        queryParameters:
+          minimum:
+            type: integer
+            minimum: 5
+    /maximum:
+      get:
+        queryParameters:
+          maximum:
+            type: integer
+            maximum: 5
+    /required:
+      get:
+        queryParameters:
+          required:
+            type: integer
+            required: true
+  /date:
+    /basic:
+      get:
+        queryParameters:
+          basic:
+            type: date
+            required: false
+    /required:
+      get:
+        queryParameters:
+          required:
+            type: date
+            required: true
+  /boolean:
+    /basic:
+      get:
+        queryParameters:
+          basic:
+            type: boolean
+            required: false
+    /required:
+      get:
+        queryParameters:
+          required:
+            type: boolean
+            required: true
+
+# Test special characters.
+/~{test}:
+  type: member
+
+# Test the special `mediaTypeExtension` tag.
+/user{mediaTypeExtension}:
+  type: mediaTypeExtension
+
+# Test the trickier `mediaTypeExtension` with a parameter.
+/user/{userId}{mediaTypeExtension}:
+  type: mediaTypeExtension

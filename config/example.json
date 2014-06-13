@@ -1,0 +1,25 @@
+{
+  "plugins": {
+    "ramlClient": {
+      "oauth1": {
+        "https://api.twitter.com/oauth/authorize": {
+          "consumerKey": "abc",
+          "consumerSecret": "123"
+        }
+      },
+      "oauth2": {
+        "https://api.instagram.com/oauth/authorize": {
+          "clientId": "abc",
+          "clientSecret": "123"
+        }
+      }
+    },
+    "proxy": {
+      "url": "/proxy"
+    },
+    "github": {
+      "clientId": "abc",
+      "clientSecret": "123"
+    }
+  }
+}

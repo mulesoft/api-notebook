@@ -1,0 +1,12 @@
+<!doctype html>
+<html>
+  <head>
+    <title>OAuth Callback</title>
+  </head>
+  <body>
+    <script>
+      window.opener.authenticateOAuth(window.location.href);
+      window.close();
+    </script>
+  </body>
+</html>
