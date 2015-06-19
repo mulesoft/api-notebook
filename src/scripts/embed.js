@@ -1,10 +1,8 @@
+var url     = require('url');
 var css     = require('css-component');
 var each    = require('foreach');
 var Kamino  = require('kamino');
 var __slice = Array.prototype.slice;
-
-// Set the location to load the notebook from
-var NOTEBOOK_URL = process.env.application.url;
 
 /**
  * Extend any object with the properties from other objects, overriding of left
@@ -61,6 +59,7 @@ var getDataAttributes = function (el) {
  * @type {Object}
  */
 var defaultOptions = {
+  url:     process.env.application.url, // Location to load the notebook from
   id:      null, // Initial id to pull content from
   content: '',   // Fallback content in case of no id
   style:   {},   // Set styles on the iframe
@@ -95,6 +94,10 @@ var Notebook = module.exports = function (el, options, styles) {
   }
 
   var notebook = this;
+
+  if (options && options.url) {
+    options.url = url.resolve(window.location.href, options.url);
+  }
 
   notebook._makeFrame(el, extend({}, defaultOptions, options));
   notebook._styleFrame(extend({}, defaultStyles, styles));
@@ -165,7 +168,7 @@ Notebook.unsubscribe = function (fn) {
  */
 Notebook.prototype._makeFrame = function (el, options) {
   var notebook = this;
-  var src      = NOTEBOOK_URL + '/embed.html';
+  var src      = options.url + '/embed.html';
   var frame    = this.el = document.createElement('iframe');
 
   // Configure base frame options.
@@ -402,7 +405,7 @@ Notebook.prototype.trigger = function (name /*, ..args */) {
   }
 
   args = __slice.call(arguments, 0);
-  this.el.contentWindow.postMessage(Kamino.stringify(args), NOTEBOOK_URL);
+  this.el.contentWindow.postMessage(Kamino.stringify(args), this.options.url);
   return this;
 };
 
