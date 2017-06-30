@@ -426,7 +426,7 @@ EditorCell.prototype.render = function () {
  *
  * @return {CellControls}
  */
-EditorCell.prototype.showControls = function () {
+EditorCell.prototype.showControls = embedProtect(function () {
   var that = this;
 
   setTimeout(function () {
@@ -448,7 +448,7 @@ EditorCell.prototype.showControls = function () {
   }, 0);
 
   return controls;
-};
+});
 
 /**
  * Create a cell buttons instance and show it above the notebook cell.
