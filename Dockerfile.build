@@ -1,5 +1,5 @@
 # Base buildbox
-FROM node:4.3.1
+FROM node:6.11
 # Folder to copy source to be built
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
