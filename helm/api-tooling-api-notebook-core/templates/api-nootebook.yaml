@@ -45,12 +45,11 @@ spec:
         name: api-notebook-service
         k8s-app: api-notebook
     spec:
+{{ include "image-pull-secret-name" . | indent 6 }}
       containers:
         - name: api-notebook-service
-          image: "{{.Values.image.registry}}/{{.Values.image.org}}/{{.Values.image.name}}:{{default "latest" .Values.image.tag}}"
+          image: "{{ template "image-name" . }}"
           imagePullPolicy: Always
       volumes:
         - name: api-notebook-service-storage
           emptyDir: {}
-      imagePullSecrets:
-        - name: devdocker-registrykey
