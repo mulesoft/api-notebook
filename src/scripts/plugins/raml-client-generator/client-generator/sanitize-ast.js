@@ -43,9 +43,10 @@ module.exports = function (ast) {
     'title',
     'version',
     'baseUri',
-    'baseUriParameters'
+    'baseUriParameters',
+    'RAMLVersion'
   ]);
-
+  console.error('from sanitize  - '+ sanitizedAst);
   // Merge an array of objects into a single object using `_.extend` and
   // `apply` (since `_.extend` accepts unlimited number of arguments).
   if (ast.securitySchemes) {

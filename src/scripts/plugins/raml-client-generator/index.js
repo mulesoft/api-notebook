@@ -283,6 +283,11 @@ API.authenticate = function (client, method, options, done) {
   var clientOption    = client['!client'];
   var securitySchemes = clientOption.securitySchemes;
 
+  console.error('in raml-client-generator index - client Options are '+clientOption+
+    ' security schames: '+ securitySchemes+
+    ' client[!config]: '+ client['!config']+
+    ' options: '+ options
+  );
   // Extend passed in options with global options (for `baseUriParameters`).
   options = _.extend({}, options, client['!config']);
 

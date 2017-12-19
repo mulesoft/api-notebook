@@ -21,8 +21,10 @@ var REDIRECT_URI = url.resolve(
  *
  * @type {Array}
  */
-var SUPPORTED_GRANTS = ['token', 'code', 'credentials'];
-
+var SUPPORTED_GRANTS_0_8 = ['token', 'code', 'credentials']; //,
+  // 'authorization_code','password','client_credentials','implicit'];
+// var SUPPORTED_GRANTS_1_0 = ['authorization_code','password','client_credentials','implicit'];
+var SUPPORTED_GRANTS;
 /**
  * Format error response types to regular strings for displaying the clients.
  * Reference: http://tools.ietf.org/html/rfc6749#section-4.1.2.1
@@ -355,9 +357,13 @@ var oAuth2CredentialsFlow = function (options, done) {
  * @type {Object}
  */
 var authenticate = {
-  code:        oAuth2CodeFlow,
-  token:       oAuth2TokenFlow,
-  credentials: oAuth2CredentialsFlow
+  code:               oAuth2CodeFlow,
+  token:              oAuth2TokenFlow,
+  credentials:        oAuth2CredentialsFlow,
+  authorization_code: oAuth2CodeFlow,
+  password:           oAuth2CodeFlow,
+  client_credentials: oAuth2CodeFlow,
+  implicit:           oAuth2CodeFlow
 };
 
 /**
@@ -383,7 +389,7 @@ middleware.register('authenticate', function (options, next, done) {
   if (_.isString(options.authorizationGrants)) {
     options.authorizationGrants = [options.authorizationGrants];
   }
-
+  SUPPORTED_GRANTS = SUPPORTED_GRANTS_0_8;
   // Use insection to get the accepted grant types in the order of the
   // supported grant types (which are ordered by preference).
   var grantType = _.intersection(
@@ -392,7 +398,7 @@ middleware.register('authenticate', function (options, next, done) {
 
   if (!grantType) {
     return done(new Error(
-      'Unsupported OAuth2 Grant Flow. Supported flows include ' +
+      'Unsupported OAuth2 Grant Flow ('+ options.authorizationGrants.join(', ')+'). Supported flows include ' +
       SUPPORTED_GRANTS.join(', ')
     ));
   }

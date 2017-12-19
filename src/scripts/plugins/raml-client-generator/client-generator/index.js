@@ -921,7 +921,8 @@ var generateClient = function (ast, config) {
       securedBy:         ast.securedBy,
       authentication:    {},
       securitySchemes:   ast.securitySchemes,
-      baseUriParameters: ast.baseUriParameters
+      baseUriParameters: ast.baseUriParameters,
+      RAMLVersion: ast.RAMLVersion
     }
   });
 
@@ -951,7 +952,9 @@ var generateClient = function (ast, config) {
   client[CLIENT_PROPERTY]      = nodes.client;
   client[DESCRIPTION_PROPERTY] = CLIENT_DESCRIPTION;
   client[RETURN_PROPERTY]      = attachMethods(nodes, {}, allHttpMethods);
-
+  console.error('in -client-generator index - client Options are '+nodes.config+
+    ' security schames: '+ nodes
+    );
   attachResources(nodes, client, ast.resources);
 
   return client;
