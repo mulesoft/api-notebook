@@ -91,7 +91,7 @@ module.exports = function (grunt) {
 
     // Enables cross-domain requests.
     middleware.push(function (req, res, next) {
-      res.setHeader('Access-Control-Allow-Origin', process.env.cors.whitelist);
+      res.setHeader('Access-Control-Allow-Origin',  '*');
       res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With');
       return next();
     });

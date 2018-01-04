@@ -16,8 +16,5 @@ module.exports = {
       clientId: process.env.GITHUB_CLIENT_ID ? process.env.GITHUB_CLIENT_ID : '',
       clientSecret: process.env.GITHUB_CLIENT_SECRET ? process.env.GITHUB_CLIENT_SECRET : ''
     }
-  },
-  cors: {
-    whitelist: process.env.WHITELIST ? process.env.WHITELIST : '*'
   }
 };
