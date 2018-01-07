@@ -6,6 +6,7 @@ var BUILD_DIR   = path.join(__dirname, 'build');
 var TEST_DIR    = path.join(BUILD_DIR, 'test');
 var FIXTURE_DIR = path.join(TEST_DIR, 'fixtures');
 var PORT        = process.env.PORT || 3000;
+// var util = require('util');
 
 /**
  * Exports the grunt configuration.
@@ -55,8 +56,12 @@ module.exports = function (grunt) {
    */
   var serverMiddleware = function (connect, options) {
     var middleware = [];
+    var whitelist = ['http:localhost:3000'];
 
+    console.log('Before entering middleware');
     middleware.push(function (req, res, next) {
+      console.log('Inside middleware'+req);
+
       if (req.url.substr(0, 7) !== '/proxy/') {
         return next();
       }
@@ -87,12 +92,29 @@ module.exports = function (grunt) {
       // response object. This avoids having to buffer the request body in cases
       // where they could be unexepectedly large and/or slow.
       return req.pipe(proxy).pipe(res);
+
     });
 
     // Enables cross-domain requests.
     middleware.push(function (req, res, next) {
-      res.setHeader('Access-Control-Allow-Origin',  '*');
-      res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With');
+      // regex to validate the receiving hosts
+      // https?:\/\/[^/]*\.anypoint\.mulesoft\.com\/(.+) --> qax.anypoint.mulesoft.com, etc
+      // https?:\/\/anypoint\.mulesoft\.com\/(.+) --> anypoint.mulesoft.com
+
+      // var str = 'https://qax.anypoint.mulesoft.com/designcenter/' +
+      //   'designer/#/project/398a83d1-1934-4caf-8083-1ac4b992ec7e';
+
+      var str = 'http:localhost:3000';
+      var re = /https?:\/\/[^/]*\.anypoint\.mulesoft\.com\/(.+)/g;
+      var found = str.match(re);
+
+      console.log('Request Origin: ' + req.headers.origin);
+      console.log('Matcheo: ' + found);
+
+      if(found){
+        res.setHeader('Access-Control-Allow-Origin', whitelist.join(','));
+        res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With');
+      }
       return next();
     });
 

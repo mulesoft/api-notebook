@@ -2,7 +2,8 @@ module.exports = {
   application: {
     url: process.env.URL ? process.env.URL :  'http://localhost:3000',
     title:         process.env.TITLE ? process.env.TITLE : 'Notebook Site',
-    oauthCallback: process.env.OAUTH_CALLBACK ? process.env.OAUTH_CALLBACK : '/authenticate/oauth.html'
+    oauthCallback: process.env.OAUTH_CALLBACK ? process.env.OAUTH_CALLBACK : '/authenticate/oauth.html',
+    whitelist: process.env.WHITELIST ? process.env.WHITELIST : '*'
   },
   pkg: require('../package.json'),
   embed: {
