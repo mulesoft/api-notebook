@@ -6,7 +6,6 @@ var BUILD_DIR   = path.join(__dirname, 'build');
 var TEST_DIR    = path.join(BUILD_DIR, 'test');
 var FIXTURE_DIR = path.join(TEST_DIR, 'fixtures');
 var PORT        = process.env.PORT || 3000;
-// var util = require('util');
 
 /**
  * Exports the grunt configuration.
@@ -56,7 +55,6 @@ module.exports = function (grunt) {
    */
   var serverMiddleware = function (connect, options) {
     var middleware = [];
-    var whitelist = ['http:localhost:3000'];
 
     console.log('Before entering middleware');
     middleware.push(function (req, res, next) {
@@ -101,18 +99,15 @@ module.exports = function (grunt) {
       // https?:\/\/[^/]*\.anypoint\.mulesoft\.com\/(.+) --> qax.anypoint.mulesoft.com, etc
       // https?:\/\/anypoint\.mulesoft\.com\/(.+) --> anypoint.mulesoft.com
 
-      // var str = 'https://qax.anypoint.mulesoft.com/designcenter/' +
-      //   'designer/#/project/398a83d1-1934-4caf-8083-1ac4b992ec7e';
+      var origin = req.headers.origin;
+      var isAllowedDomain;
+      if(origin && (origin.match(/https?:\/\/[^/]*\.anypoint\.mulesoft\.com\/(.+)/g) ||
+        origin.match(/https?:\/\/anypoint\.mulesoft\.com\/(.+)/g))){
+        isAllowedDomain = true;
+      }
 
-      var str = 'http:localhost:3000';
-      var re = /https?:\/\/[^/]*\.anypoint\.mulesoft\.com\/(.+)/g;
-      var found = str.match(re);
-
-      console.log('Request Origin: ' + req.headers.origin);
-      console.log('Matcheo: ' + found);
-
-      if(found){
-        res.setHeader('Access-Control-Allow-Origin', whitelist.join(','));
+      if(isAllowedDomain){
+        res.setHeader('Access-Control-Allow-Origin', origin);
         res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With');
       }
       return next();

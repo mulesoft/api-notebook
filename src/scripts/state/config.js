@@ -17,7 +17,6 @@ var config = module.exports = new Backbone.Model({
   fullUrl:   process.env.application.url,
   siteUrl:   process.env.application.url,
   siteTitle: process.env.application.title,
-  whitelist: process.env.application.whitelist,
 
   // Alter the visible UI.
   header:         true,
