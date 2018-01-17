@@ -6,6 +6,7 @@ var BUILD_DIR   = path.join(__dirname, 'build');
 var TEST_DIR    = path.join(BUILD_DIR, 'test');
 var FIXTURE_DIR = path.join(TEST_DIR, 'fixtures');
 var PORT        = process.env.PORT || 3000;
+var REGEX = process.env.domainRegex || require('./config/default.js').domainRegex;
 
 /**
  * Exports the grunt configuration.
@@ -56,10 +57,7 @@ module.exports = function (grunt) {
   var serverMiddleware = function (connect, options) {
     var middleware = [];
 
-    console.log('Before entering middleware');
     middleware.push(function (req, res, next) {
-      console.log('Inside middleware'+req);
-
       if (req.url.substr(0, 7) !== '/proxy/') {
         return next();
       }
@@ -90,23 +88,16 @@ module.exports = function (grunt) {
       // response object. This avoids having to buffer the request body in cases
       // where they could be unexepectedly large and/or slow.
       return req.pipe(proxy).pipe(res);
-
     });
 
     // Enables cross-domain requests.
     middleware.push(function (req, res, next) {
-      // regex to validate the receiving hosts
-      // https?:\/\/[^/]*\.anypoint\.mulesoft\.com\/(.+) --> qax.anypoint.mulesoft.com, etc
-      // https?:\/\/anypoint\.mulesoft\.com\/(.+) --> anypoint.mulesoft.com
-
       var origin = req.headers.origin;
-      var isAllowedDomain;
-      if(origin && (origin.match(/https?:\/\/[^/]*\.anypoint\.mulesoft\.com\/(.+)/g) ||
-        origin.match(/https?:\/\/anypoint\.mulesoft\.com\/(.+)/g))){
-        isAllowedDomain = true;
+      var allowRequest;
+      if(origin && isAllowedDomain(origin)){
+        allowRequest = true;
       }
-
-      if(isAllowedDomain){
+      if(allowRequest){
         res.setHeader('Access-Control-Allow-Origin', origin);
         res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With');
       }
@@ -117,6 +108,14 @@ module.exports = function (grunt) {
     middleware.push(connect.static(options.base));
 
     return middleware;
+  };
+
+  var isAllowedDomain = function(origin){
+    return REGEX.some(function (regex) {
+      if(origin.match(regex)){
+        return true;
+      }
+    });
   };
 
   grunt.initConfig({

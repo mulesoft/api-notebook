@@ -2,9 +2,13 @@ module.exports = {
   application: {
     url: process.env.URL ? process.env.URL :  'http://localhost:3000',
     title:         process.env.TITLE ? process.env.TITLE : 'Notebook Site',
-    oauthCallback: process.env.OAUTH_CALLBACK ? process.env.OAUTH_CALLBACK : '/authenticate/oauth.html',
-    whitelist: process.env.WHITELIST ? process.env.WHITELIST : '*'
+    oauthCallback: process.env.OAUTH_CALLBACK ? process.env.OAUTH_CALLBACK : '/authenticate/oauth.html'
   },
+  domainRegex:  [/https?:\/\/[^/]*\.anypoint\.mulesoft\.com\/(.+)/g,
+    /https?:\/\/anypoint\.mulesoft\.com\/(.+)/g,
+    /https?:\/\/[^\/]*\.cloudhub\.io\/(.+)/g,
+    /https?:\/\/[^\/]*\.msap\.io\/(.+)/g,
+    /https?:\/\/[^\/]*\.msap\.int\/(.+)/g],
   pkg: require('../package.json'),
   embed: {
     script: process.env.EMBED_SCRIPT ? process.env.EMBED_SCRIPT : 'http://localhost:3000/scripts/embed.js'
