@@ -1,6 +1,7 @@
 # API Notebook
 
 [![Build Status](https://travis-ci.org/mulesoft/api-notebook.svg)](https://travis-ci.org/mulesoft/api-notebook)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmulesoft%2Fapi-notebook.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmulesoft%2Fapi-notebook?ref=badge_shield)
 
 Interactive API notebook - [demo](http://apinotebook.com).
 
@@ -70,3 +71,7 @@ The project is split with multiple HTML files acting as entry points to fulfil t
 Project configuration is through [node-config](https://github.com/lorenwest/node-config). To add or override config options, just add a file for your environment (E.g. `development.json`). All plugin config options should be stored under the `plugins` key, while other options are depicted in the `example.json` and `default.json` files.
 
 To use the GitHub plugin functionality, [register a new application on Github](https://github.com/settings/applications/new) and set your keys in under `plugins.github`. Make sure that your new application has the application.url as Authorization callback URL. 
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmulesoft%2Fapi-notebook.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmulesoft%2Fapi-notebook?ref=badge_large)
