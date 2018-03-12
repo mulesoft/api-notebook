@@ -4,7 +4,7 @@ module.exports = {
     title:         process.env.TITLE ? process.env.TITLE : 'Notebook Site',
     oauthCallback: process.env.OAUTH_CALLBACK ? process.env.OAUTH_CALLBACK : '/authenticate/oauth.html'
   },
-  domainRegex:  [/https?:\/\/[^/]*\.anypoint\.mulesoft\.com\/(.+)/g,
+  domainRegex:  [/https?:\/\/[^\/]*\.anypoint\.mulesoft\.com\/(.+)/g,
     /https?:\/\/anypoint\.mulesoft\.com\/(.+)/g,
     /https?:\/\/[^\/]*\.cloudhub\.io\/(.+)/g,
     /https?:\/\/[^\/]*\.msap\.io\/(.+)/g,
