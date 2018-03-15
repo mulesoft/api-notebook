@@ -60,8 +60,7 @@
     "uglifyify": "1.2.1"
   },
   "scripts": {
-    "build": "grunt build && ./generateLib.sh",
-    "prepublish": "npm run build",
+    "build": "grunt build",
     "grunt": "grunt",
     "start": "grunt",
     "git:version": "git-rev",

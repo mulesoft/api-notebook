@@ -5,7 +5,12 @@ PROD_IMAGE = $(IMAGE_NAME):$$(git describe)
 
 SRC_VOLUME_PARAM = -v $$(pwd):/usr/src/app
 
-#### BUILD DOCKER IMAGE
+#### BUILD the artifacts
+.PHONY: build-artifacts
+build-artifacts:
+	echo "No artifacts."
+
+#### BUILD docker image
 .PHONY: build-image
 build-image:
 	docker build -t $(PROD_IMAGE) .

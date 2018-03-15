@@ -1,27 +1,35 @@
 #################
 # BUILD CONTAINER
-FROM node:6.11-alpine as build
+FROM devdocker.mulesoft.com:18078/mulesoft/core-paas-base-image-node-6.11:v0.3.1 as BUILD
 
 # Add dependencies and setup working directory
-RUN apk update \
- && apk add git
-RUN mkdir -p /code
-WORKDIR /code
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+    git \
+    phantomjs \
+    bzip2 \
+ && rm -rf /var/lib/apt/lists/*
+
+# Add app user
+RUN groupadd -g 2020 app
+RUN useradd -u 2020 -g 2020 -r -m -d /usr/src/app app
 
 # Install and cache node_modules/
-COPY package.json /code/package.json
+COPY --chown=app:app package*.json /code/
+WORKDIR /code
+USER app
 RUN npm set progress=false && \
-    npm install -g --no-progress grunt && \
     npm install -s --no-progress
 
 # Build project
 COPY . /code
-RUN grunt build && \
+RUN npm run build && \
     npm prune -s --production
+
 
 ###################
 # RUNTIME CONTAINER
-FROM devdocker.mulesoft.com:18078/base/ubuntu:trusty-1.5.0-31-g1dc737a
+FROM devdocker.mulesoft.com:18078/mulesoft/core-paas-base-image-ubuntu:v2.2.149
 
 # Intall build dependencies
 RUN apt-get update \
@@ -30,17 +38,16 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # Add app user
-RUN groupadd -r app && useradd -r -g app app
-
-# Set up folder to deploy artifacts
-RUN mkdir -p /usr/src/app && chown -R app:app /usr/src/app
-WORKDIR /usr/src/app
+RUN groupadd -g 2020 app
+RUN useradd -u 2020 -g 2020 -r -m -d /usr/src/app app
 
 # Copy built artifacts from build container
-COPY --from=build /code/build /usr/src/app
-COPY server.py /usr/src/app/
+COPY --from=BUILD /code/build /usr/src/app
 
-# Change to user with lower privileges and set run command
+# Copy python server file
+COPY --chown=app:app server.py /usr/src/app/
+WORKDIR /usr/src/app
 USER app
+
 EXPOSE 3000
 CMD python server.py '/' 3000
