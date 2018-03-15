@@ -92,16 +92,15 @@ module.exports = function (grunt) {
 
     // Enables cross-domain requests.
     middleware.push(function (req, res, next) {
-      // var origin = req.headers.origin;
-      // var allowRequest;
-      // if(origin && isAllowedDomain(origin)){
-      //   allowRequest = true;
-      // }
-      // if(allowRequest){
-      //   res.setHeader('Access-Control-Allow-Origin', origin);
-        res.setHeader('Access-Control-Allow-Origin', '*');
+      var origin = req.headers.origin;
+      var allowRequest;
+      if(origin && isAllowedDomain(origin)){
+        allowRequest = true;
+      }
+      if(allowRequest){
+        res.setHeader('Access-Control-Allow-Origin', origin);
         res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With');
-      // }
+      }
       return next();
     });
 
