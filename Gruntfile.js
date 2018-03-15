@@ -6,7 +6,7 @@ var BUILD_DIR   = path.join(__dirname, 'build');
 var TEST_DIR    = path.join(BUILD_DIR, 'test');
 var FIXTURE_DIR = path.join(TEST_DIR, 'fixtures');
 var PORT        = process.env.PORT || 3000;
-var REGEX = process.env.domainRegex || require('./config/default.js').domainRegex;
+// var REGEX = process.env.domainRegex || require('./config/default.js').domainRegex;
 
 /**
  * Exports the grunt configuration.
@@ -111,13 +111,13 @@ module.exports = function (grunt) {
     return middleware;
   };
 
-  var isAllowedDomain = function(origin){
-    return REGEX.some(function (regex) {
-      if(origin.match(regex)){
-        return true;
-      }
-    });
-  };
+  // var isAllowedDomain = function(origin){
+  //   return REGEX.some(function (regex) {
+  //     if(origin.match(regex)){
+  //       return true;
+  //     }
+  //   });
+  // };
 
   grunt.initConfig({
     /**
