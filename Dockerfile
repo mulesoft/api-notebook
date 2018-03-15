@@ -1,4 +1,35 @@
-FROM devdocker.mulesoft.com:18078/base/ubuntu:trusty-1.5.0-31-g1dc737a
+#################
+# BUILD CONTAINER
+FROM devdocker.mulesoft.com:18078/mulesoft/core-paas-base-image-node-6.11:v0.3.1 as BUILD
+
+# Add dependencies and setup working directory
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+    git \
+    phantomjs \
+    bzip2 \
+ && rm -rf /var/lib/apt/lists/*
+
+# Add app user
+RUN groupadd -g 2020 app
+RUN useradd -u 2020 -g 2020 -r -m -d /usr/src/app app
+
+# Install and cache node_modules/
+COPY --chown=app:app package*.json /code/
+WORKDIR /code
+USER app
+RUN npm set progress=false && \
+    npm install -s --no-progress
+
+# Build project
+COPY . /code
+RUN npm run build && \
+    npm prune -s --production
+
+
+###################
+# RUNTIME CONTAINER
+FROM devdocker.mulesoft.com:18078/mulesoft/core-paas-base-image-ubuntu:v2.2.149
 
 # Intall build dependencies
 RUN apt-get update \
@@ -7,17 +38,16 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # Add app user
-RUN groupadd -r app && useradd -r -g app app
+RUN groupadd -g 2020 app
+RUN useradd -u 2020 -g 2020 -r -m -d /usr/src/app app
 
-# Folder to deploy artifacts
-RUN mkdir -p /usr/src/app && chown -R app:app /usr/src/app
+# Copy built artifacts from build container
+COPY --from=BUILD /code/build /usr/src/app
+
+# Copy python server file
+COPY --chown=app:app server.py /usr/src/app/
 WORKDIR /usr/src/app
-COPY ./artifacts /usr/src/app/
-COPY server.py /usr/src/app/
-
-EXPOSE 3000
-
-# Change to user with lower privileges
 USER app
 
+EXPOSE 3000
 CMD python server.py '/' 3000
