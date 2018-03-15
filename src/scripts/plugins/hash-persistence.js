@@ -9,7 +9,7 @@
  */
 var configurePlugin = function (config, next) {
   if (!config.id) {
-    config.id = window.location.hash.substr(1);
+    config.id = window.parent.location.hash.substr(1);
   }
 
   return next();
@@ -25,14 +25,14 @@ var configurePlugin = function (config, next) {
 App.config.on('change:id', function (_, id) {
   id = (id == null ? '' : String(id));
 
-  window.location.hash = id;
+  window.parent.location.hash = id;
 });
 
 /**
  * A user can use the forward and back buttons to navigate between notebooks.
  */
 window.addEventListener('hashchange', function () {
-  var id  = window.location.hash.substr(1);
+  var id  = window.parent.location.hash.substr(1);
   var url = window.location.href;
 
   App.config.set('id',      id);
