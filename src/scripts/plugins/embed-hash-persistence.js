@@ -14,7 +14,7 @@ module.exports = function (Notebook) {
   Notebook.subscribe(function (notebook) {
     // Update the id and url when the hash of the window changes.
     var updateId = function () {
-      var id  = window.parent.location.hash.substr(1);
+      var id  = window.location.hash.substr(1);
       var url = window.location.href;
 
       notebook.config('id',  id);
@@ -27,8 +27,8 @@ module.exports = function (Notebook) {
       id = (id == null ? '' : String(id));
 
       // Update the hash url if it changed.
-      if (window.parent.location.hash.substr(1) !== id) {
-        window.parent.location.hash = id;
+      if (window.location.hash.substr(1) !== id) {
+        window.location.hash = id;
         notebook.config('fullUrl', NOTEBOOK_URL + (id ? '#' + id : ''));
       }
     };
