@@ -7,6 +7,7 @@ var TEST_DIR    = path.join(BUILD_DIR, 'test');
 var FIXTURE_DIR = path.join(TEST_DIR, 'fixtures');
 var PORT        = process.env.PORT || 3000;
 var REGEX = process.env.domainRegex || require('./config/default.js').domainRegex;
+var istanbul = require('browserify-istanbul');
 
 /**
  * Exports the grunt configuration.
@@ -19,7 +20,9 @@ module.exports = function (grunt) {
   var _                   = grunt.util._;
   var jsRegex             = /\.js$/;
   var browserifyPlugins   = {};
-  var browserifyTransform = [];
+  var browserifyTransform = [istanbul({
+    ignore: ['**/*.hbs'],
+  })];
 
   if (!DEV) {
     browserifyTransform.push('hbsify');
@@ -157,6 +160,29 @@ module.exports = function (grunt) {
         ]
       }
     },
+    mocha_istanbul: {
+      coverage: {
+        src: 'test',
+        options: {
+          mask: '**/*.js',
+          coverage: true,
+          reporter: 'spec',
+          reportFormats: ['html', 'lcovonly'],
+          root: 'src'
+        }
+      }
+    },
+    istanbul_check_coverage: {
+      default: {
+        options: {
+          coverageFolder: 'coverage*',
+          check: {
+            lines: 80,
+            statements: 80
+          }
+        }
+      }
+    },
 
     /**
      * Lint all the JavaScript for potential errors.
@@ -181,7 +207,9 @@ module.exports = function (grunt) {
       'mocha-browser': {
         command: './node_modules/phantomjs-prebuilt/bin/phantomjs --web-security=false ' +
         './node_modules/mocha-phantomjs-core/mocha-phantomjs-core.js test/index.html spec ' +
-        '\'{ \"ignoreResourceErrors\": true }\''
+        '\'{ \"ignoreResourceErrors\": true,' +
+        '\"reporter\": \"lcov\",' +
+        '\"hooks\": \"mocha-phantomjs-istanbul\", \"coverageFile\": \"coverage/coverage.json\"}\''
       },
       'build-gh-pages': {
         command: 'NODE_ENV="gh-pages" grunt build'
@@ -294,6 +322,11 @@ module.exports = function (grunt) {
       }
     }
   });
+
+  grunt.loadNpmTasks('grunt-mocha-istanbul');
+
+  // Generate coverage report
+  grunt.registerTask('coverage', ['mocha_istanbul:coverage']);
 
   // Test the application in a headless browser environment.
   grunt.registerTask('test-browser', [
