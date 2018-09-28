@@ -12,10 +12,6 @@ RUN apt-get update \
     bzip2 \
  && rm -rf /var/lib/apt/lists/*
 
-# Add app user
-RUN groupadd -g 2020 app
-RUN useradd -u 2020 -g 2020 -r -m -d /usr/src/app app
-
 # Install and cache node_modules/
 COPY --chown=app:app package*.json /code/
 WORKDIR /code
