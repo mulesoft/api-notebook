@@ -4,6 +4,8 @@ asset: core
 
 strategy: node
 version: 1.2
+nexusiq:
+  enabled: true
 requires:
   db: false
   deployment: false
