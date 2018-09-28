@@ -50,4 +50,4 @@ WORKDIR /usr/src/app
 USER app
 
 EXPOSE 3000
-CMD python server.py '/' 3000
+CMD ["python", "server.py", "'/'", "3000"]
