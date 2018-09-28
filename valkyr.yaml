@@ -3,6 +3,7 @@ component: api-notebook
 asset: core
 
 strategy: node
+strategyVersion: 8
 version: 1.2
 nexusiq:
   enabled: true
