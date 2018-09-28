@@ -9,3 +9,4 @@ config/runtime.json
 *.iml
 .idea
 lib
+coverage
