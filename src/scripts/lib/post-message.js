@@ -1,6 +1,6 @@
 var _      = require('underscore');
 var Events = require('backbone').Events;
-var Kamino = require('kamino');
+// var Kamino = require('kamino');
 
 /**
  * Set up event messaging with an external frame.
@@ -24,7 +24,7 @@ var PostMessage = module.exports = function (parentFrame) {
 
     this._frameEvent = e;
     // Messages being passed by the parent window should always be in an array
-    this.trigger.apply(this, Kamino.parse(e.data));
+    this.trigger.apply(this, JSON.parse(e.data));
   }, this), false);
 };
 
@@ -46,7 +46,7 @@ PostMessage.prototype.trigger = function (/* name , ...args */) {
   }
 
   this.parentFrame.postMessage(
-    Kamino.stringify(_.toArray(arguments)),
+    JSON.stringify(_.toArray(arguments)),
     this.origin || '*'
   );
 

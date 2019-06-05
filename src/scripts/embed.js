@@ -1,7 +1,7 @@
 var url     = require('url');
 var css     = require('css-component');
 var each    = require('foreach');
-var Kamino  = require('kamino');
+// var Kamino  = require('kamino');
 var __slice = Array.prototype.slice;
 
 /**
@@ -233,7 +233,7 @@ Notebook.prototype._makeFrame = function (el, options) {
     if (e.source !== frame.contentWindow) { return; }
 
     notebook._frameEvent = e;
-    notebook.trigger.apply(notebook, Kamino.parse(e.data));
+    notebook.trigger.apply(notebook, JSON.parse(e.data));
   }, false);
 
   if (typeof el.appendChild === 'function') {
@@ -410,7 +410,7 @@ Notebook.prototype.trigger = function (name /*, ..args */) {
   }
 
   args = __slice.call(arguments, 0);
-  this.el.contentWindow.postMessage(Kamino.stringify(args), this.options.url);
+  this.el.contentWindow.postMessage(JSON.stringify(args), this.options.url);
   return this;
 };
 
