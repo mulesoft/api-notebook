@@ -1,0 +1,11 @@
+{{#if @config.embedded}}
+  <button class="btn cell-controls-btn cell-execute">
+    <i class="icon-play"></i>
+  </button>
+{{/if}}
+
+{{#if @data.executing}}
+  <i class="cell-ui-execute icon-arrows-cw animate-spin"></i>
+{{/if}}
+
+{{{view @view.resultCell}}}
