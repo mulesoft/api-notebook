@@ -1,6 +1,6 @@
 {
   "name": "@mulesoft/api-notebook",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Executable JavaScript environment for running API examples.",
   "browserify": {
     "transform": [
