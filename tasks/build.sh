@@ -1,45 +1,19 @@
-#!/bin/bash
-
-# Exit immediately if a command exits with a non-zero status
-set -e
-
-# Print shell input lines as they are read
-set -v
+#!/usr/bin/env bash
+# -e Exit immediately if a command exits with a non-zero status
+# -v Print shell input lines as they are read
+set -ev
 
 # Clean dist and package folder
-rm -rf dist
-rm -rf artifact
+rm -rf dist && mkdir dist
 
-mkdir dist
-mkdir artifact
+# To prevent changes during build
+git checkout package-lock.json
 
-# Get package name and version
-PACKAGE_NAME="api-tooling-api-notebook-core"
-PACKAGE_VERSION=`node -e "console.log(require('./package.json').version);"`
+# Copy package files
+cp -r package*.json dist/
 
-# If not running in JENKINS
-if [ -z ${JENKINS_PROCESS} ]; then
-  # Install all dependencies
-  npm install
-else
-  echo 'Skipping npm install in build script since running in JENKINS'
-fi
+# Install production dependencies
+npm ci --production --prefix dist
 
-# Shrinkwrap
-#npm shrinkwrap
-
-# Git revision
-npm run git:version -- dist/VERSION
-
-# Copy assets
-cp -r package.json dist/
-
-# Install production dependencies in dist
-npm install --silent --production --prefix dist --userconfig=.npmrc
-
-# Copy
-cp -r src dist/
-cp -r config dist/
-
-# Create Tar
-tar -czf artifact/${PACKAGE_NAME}-${PACKAGE_VERSION}.tar.gz -C dist .
+# Copy over rest of the code the will be part of the docker image
+cp -r src config dist/
