@@ -1,0 +1,204 @@
+*
+  box-sizing: border-box
+
+html
+  position: relative
+  color: #333
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif
+  line-height: 1.4
+  -webkit-font-smoothing: antialiased
+
+a
+  color: #308bd8
+  text-decoration: none
+
+a:hover
+  text-decoration: underline
+
+.text-underline
+  text-decoration: underline
+
+.text-left
+  text-align: left
+
+.text-center
+  text-align: center
+
+.text-right
+  text-align: right
+
+.text-em
+  font-style: italic
+
+.text-small
+  font-size: 0.8em
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6
+  margin: 0 0 0.75em
+
+p,
+dl,
+ol,
+ul,
+pre,
+img,
+table,
+blockquote
+  margin: 0 0 1em
+
+ul
+  padding: 0 0 0 1.5em
+
+img,
+audio,
+embed,
+video,
+object
+  height: auto
+  max-width: 100%
+
+img,
+audio,
+video,
+canvas
+  display: block
+  margin-left: auto
+  margin-right: auto
+  vertical-align: middle
+
+mark
+  padding: 2px
+  background-color: #fdffb6
+
+blockquote
+  padding-left: 1em
+  font-size: 1.5em
+  border-left: 4px solid #f20
+
+hr
+  display: block
+  margin: 1.5em 0
+  border-top: 1px dashed #aaa
+  border-bottom: 1px dashed #fff
+
+pre,
+code
+  font-family: monospace
+  border-radius: 3px
+  color: #111
+  border: 1px solid #ccc
+  white-space: pre
+  background-color: #fafafa
+
+.CodeMirror-documentation pre
+  border-radius: 3px
+  color: #111
+  border: 1px solid #ccc
+  white-space: pre
+  background-color: #fff
+
+pre
+  padding: 0.6em 0.8em
+  overflow-x: auto
+  line-height: 1.3
+
+code
+  display: inline
+  padding: 0 0.3em
+  max-width: 100%
+  word-wrap: break-word
+  white-space: pre-wrap
+  overflow-x: auto
+  border-color: #ccc
+
+pre > code
+  border: none
+  padding: 0
+  font-size: 100%
+  word-wrap: normal
+  background-color: transparent
+
+pre .comment
+  color: #8e908c
+
+pre .variable,
+pre .attribute,
+pre .regexp,
+pre .lang-ruby .constant,
+pre .lang-xml .tag .title,
+pre .lang-xml .pi,
+pre .lang-xml .doctype,
+pre .lang-html .doctype,
+pre .lang-css .id,
+pre .lang-css .class,
+pre .lang-css .pseudo
+  color: #c82829
+
+pre .tag
+  color: #170
+
+pre .number
+  color: #164
+
+pre .preprocessor,
+pre .built_in,
+pre .literal,
+pre .params,
+pre .constant
+  color: #00f
+
+pre .class,
+pre .lang-ruby .class .title,
+pre .lang-css .rules .attribute,
+pre .lang-html .attribute
+  color: #00c
+
+pre .string,
+pre .value,
+pre .inheritance,
+pre .header,
+pre .lang-ruby .symbol,
+pre .lang-xml .cdata
+  color: #a11
+
+pre .function,
+pre .lang-python .decorator,
+pre .lang-python .title,
+pre .lang-ruby .function .title,
+pre .lang-ruby .title .keyword,
+pre .lang-perl .sub,
+pre .lang-javascript .title,
+pre .lang-coffeescript .title
+  color: #4271ae
+
+pre .keyword,
+pre .lang-javascript .function
+  color: #708
+
+table
+  display: block
+  max-width: 100%
+  overflow-x: auto
+  text-align: left
+  border-collapse: collapse
+
+table th,
+table td
+  padding: 0.55em 1.1em 0.4em
+  border: 1px solid #ccc
+
+table tr + tr th,
+table tr + tr td
+  border-top-width: 0
+
+table th + th,
+table td + td
+  border-left-width: 0
+
+table tr:hover td
+  background: #fafafa

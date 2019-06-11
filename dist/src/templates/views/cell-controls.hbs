@@ -1,0 +1,5 @@
+{{#each @data.controls}}
+<button class="action" data-action="{{command}}">
+  {{label}}{{#if keyCode}} <span>{{keyCode}}</span>{{/if}}
+</button>
+{{/each}}

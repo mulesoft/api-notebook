@@ -1,0 +1,89 @@
+<div class="sidebar-toggle">
+  <i class="icon"></i>
+</div>
+
+<div class="sidebar-content">
+  <div class="sidebar-user">
+    {{#if @persistence.userId}}
+      <i class="sidebar-user-icon icon-folder-open-empty"></i>
+    {{/if}}
+    <div class="sidebar-user-title" title="{{@persistence.userTitle}}">
+      {{#if @persistence.userId}}
+        {{@persistence.userTitle}}
+      {{else}}
+        Unauthenticated
+      {{/if}}
+
+      <p class="sidebar-authenticate text-small persistence-{{#if @persistence.userId}}un{{/if}}authenticate">
+        <a href="#">
+          {{#if @persistence.userId}}
+            {{@config.unauthenticateText}}
+          {{else}}
+            {{@config.authenticateText}}
+          {{/if}}
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="sidebar-list">
+    {{!-- Hard code the first element as the current persistence model --}}
+    <div class="list-item item item-active {{#unless @data.saved}}item-unsaved{{/unless}}">
+    {{#with @persistence.notebook}}
+      {{#if id}}
+        {{#equal @persistence.userId ownerId}}
+          <i class="icon-cancel-circled" data-delete="{{id}}"></i>
+        {{/equal}}
+      {{/if}}
+
+      <div class="item-description">
+        <div class="item-title">
+          {{#if meta.title}}
+            {{meta.title}}
+          {{else}}
+            <em>Untitled Notebook</em>
+          {{/if}}
+        </div>
+
+        <div class="item-timestamp">
+          {{#if updatedAt}}
+            {{dateFormat updatedAt}}
+
+            {{#unlessEqual @persistence.userId ownerId}}
+              {{#if ownerTitle}}by {{ownerTitle}}{{/if}}
+            {{/unlessEqual}}
+          {{else}}
+            Unsaved
+          {{/if}}
+        </div>
+      </div>
+    {{/with}}
+    </div>
+
+    {{#if @data.updating}}
+      <div class="list-item sidebar-updating text-center">
+        <i class="icon-arrows-cw animate-spin"></i>
+      </div>
+    {{else}}
+      {{#collection @persistence.items}}
+        <div class="list-item item {{#equal id @persistence.notebook.id}}item-hidden{{/equal}}" data-load="{{id}}">
+          <i class="icon-cancel-circled" data-delete="{{id}}"></i>
+
+          <div class="item-description">
+            <div class="item-title">
+              {{#if meta.title}}
+                {{meta.title}}
+              {{else}}
+                <em>Untitled Notebook</em>
+              {{/if}}
+            </div>
+
+            {{#if updatedAt}}
+              <div class="item-timestamp">{{dateFormat updatedAt}}</div>
+            {{/if}}
+          </div>
+        </div>
+      {{/collection}}
+    {{/if}}
+  </div>
+</div>

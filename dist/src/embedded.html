@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>Embedded Notebook Example</title>
+    <style>
+      body {
+        margin: 0;
+      }
+
+      .notebook {
+        margin: 1em auto;
+        max-width: 42em;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="scripts/embed.js"></script>
+    <script src="plugins/embed-hash-persistence.js"></script>
+    <script>
+      // Attach a parent frame plugin to the embed script.
+      embedHashPersistencePlugin(Notebook);
+
+      new Notebook(document.body, {
+        inject: [
+          'plugins/proxy.js',
+          'plugins/gist-persistence.js',
+          'plugins/filter-properties.js',
+          'plugins/raml-client-generator.js',
+          'plugins/function-property-filter.js'
+        ],
+        exec: [
+          'App.middleware.register(proxyPlugin);',
+          'App.middleware.register(gistPersistencePlugin);',
+          'App.middleware.register(filterPropertiesPlugin);',
+          'App.middleware.register(ramlClientGeneratorPlugin);',
+          'App.middleware.register(functionPropertyFilterPlugin);'
+        ].join('\n'),
+        className: 'notebook'
+      });
+    </script>
+  </body>
+</html>

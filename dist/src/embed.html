@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Notebook</title>
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+<script src="scripts/bundle.js"></script>
+<script src="plugins/proxy.js"></script>
+<script src="plugins/gist-persistence.js"></script>
+<script src="plugins/filter-properties.js"></script>
+<script src="plugins/raml-client-generator.js"></script>
+<script src="plugins/function-property-filter.js"></script>
+<script>
+  App.start(document.body);
+  App.middleware.register(proxyPlugin);
+  App.middleware.register(gistPersistencePlugin);
+  App.middleware.register(filterPropertiesPlugin);
+  App.middleware.register(ramlClientGeneratorPlugin);
+  App.middleware.register(functionPropertyFilterPlugin);
+</script>
+</body>
+</html>
