@@ -3,6 +3,7 @@ var View       = require('./template');
 var template   = require('../../templates/views/cell-controls.hbs');
 var middleware = require('../state/middleware');
 var domListen  = require('../lib/dom-listen');
+var messages    = require('../state/messages');
 
 /**
  * Displays the cell controls overlay menu.
@@ -67,6 +68,12 @@ ControlsView.prototype.onClick = function (e) {
     node = node.parentNode;
   }
 
-  this.trigger('action', this, node.getAttribute('data-action'));
+  var action = node.getAttribute('data-action');
+
+  if (action === 'execute') {
+    messages.trigger('cell:execute', action);
+  }
+
+  this.trigger('action', this, action);
   return this.remove();
 };

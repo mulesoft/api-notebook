@@ -6,6 +6,7 @@ var Completion = require('../lib/completion');
 var extraKeys  = require('./lib/extra-keys');
 var controls   = require('../lib/controls').code;
 var config     = require('../state/config');
+var messages    = require('../state/messages');
 
 /**
  * Initialize a new code cell view.
@@ -60,6 +61,9 @@ CodeCell.prototype.template = DOMBars.Utils.mergeTemplates(
  */
 CodeCell.prototype.events = _.extend({
   'click .cell-execute': function () {
+
+    messages.trigger('cell:execute');
+
     return this.execute();
   }
 }, EditorCell.prototype.events);

@@ -305,6 +305,9 @@ App.prototype.appendTo = function () {
  * Runs the entire notebook sequentially.
  */
 App.prototype.runNotebook = function () {
+
+  messages.trigger('app:run');
+
   return this.data.get('notebook').execute();
 };
 
@@ -319,6 +322,9 @@ App.prototype.cloneNotebook = function () {
  * Manually attempt to save the notebook.
  */
 App.prototype.saveNotebook = function () {
+
+  messages.trigger('app:save');
+
   return persistence.save(
     persistence.get('notebook'), notifyError('Could not save notebook')
   );
@@ -329,6 +335,9 @@ App.prototype.saveNotebook = function () {
  * changes, check with the user.
  */
 App.prototype.newNotebook = function () {
+
+  messages.trigger('app:new');
+
   var newNotebook = function (err, confirmed) {
     if (err || !confirmed) { return; }
 
