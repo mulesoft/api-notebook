@@ -1,0 +1,296 @@
+.notebook
+  display: flex
+  width: 100%
+  border: 1px solid #ccc
+  background: #fff
+  border-radius: 5px
+  .application-has-header &
+    border-top-left-radius: 0
+    border-top-right-radius: 0
+  .application-has-footer &
+    border-bottom-left-radius: 0
+    border-bottom-right-radius: 0
+
+.notebook-content
+  flex: 1
+  padding: 0.5em 1em
+
+.notebook-header
+  padding: 1em 1.5em
+  color: #fff
+  background: #333
+  border: 1px solid #000
+  border-top: 0
+  border-radius: 5px 5px 0 0
+
+.notebook-title
+  display: inline-block
+  width: 100%
+  margin: 0
+  color: #fff
+  font-size: 2em
+  font-weight: bold
+  border: solid 1px transparent
+  background-color: transparent
+  &:hover
+    background-color: rgba(255,255,255, .05)
+  &:focus
+    outline: 0
+    background-color: rgba(255,255,255, .1)
+    border: solid 1px #404040
+    border-top-color: #000
+    border-left-color: #000
+
+.notebook-view > .cell
+  margin: 1.3em 0
+  position: relative
+  min-height: 1.55em
+
+.notebook-view > .cell > .cell-content,
+.notebook-view > .cell-text > .cell-content
+  > .CodeMirror,
+  > .markdown,
+  > .cell-controls-btn
+    border: 1px solid $color-cell-border
+    min-height: 25px
+  &:hover > .CodeMirror,
+  &:hover > .markdown,
+  &:hover > .cell-controls-btn
+    border-color: #bfbfbf
+  > .cell-controls-btn
+    display: none
+  > .cell-controls-btn.open,
+  &:hover > .cell-controls-btn
+    display: block
+
+.notebook-view > .cell-text > .cell-content > .markdown,
+.notebook-view > .cell-text > .cell-content > .CodeMirror
+  padding: 0.6em
+
+.notebook-view > .cell-text > .cell-content > .markdown
+  border: 1px dotted #f2f2f2
+  font-size: 95%
+  min-height: 25px
+  *:last-child
+    margin-bottom: 0
+
+.notebook-view > .cell-code > .cell-ui-execute
+  position: absolute
+  top: 2px
+  right: 26px
+  color: #356df4
+
+.notebook-view > .cell-code > .cell-result
+  border: 1px solid $color-cell-border
+  border-top: 0
+  border-left-width: 5px
+  color: $color-result-text
+  font-size: 0.95em
+  line-height: 1.45
+  font-family: monospace
+  overflow: scroll
+  background-color: $color-result-bg
+  > .result-container
+    display: table
+    overflow: hidden
+    width: 100%;
+    > .result-label
+      display: table-cell
+      color: $color-result-label
+      padding: 0.5em 0.3em 0.5em 0.4em
+    > .result-content
+      display: table-cell
+      padding: 0.5em 0.3em 0.5em 0
+      overflow: hidden
+      > .inspector .preview .inspect
+        word-break: break-word;
+        word-wrap: normal;
+        position: inherit;
+        margin-bottom: 0;
+      > .inspector .children .inspector-trace
+        white-space: normal;
+
+.notebook-view > .cell-code > .cell-result-pending
+  display: none
+
+.notebook-view > .cell-code-error
+  > .CodeMirror,
+  > .cell-result,
+  > .cell-controls-btn
+    border-color: $color-error-border
+  > .cell-result
+    color: $color-error-text
+    background-color: $color-error-bg
+  > .cell-ui-execute
+    color: $color-error-text
+
+.cell > .cell-border
+  position: absolute
+  top: -1.15em
+  width: 100%
+  height: 1em
+  cursor: pointer
+  > .cell-border-line
+    position: absolute
+    top: 50%
+    left: 0
+    right: 0
+    border-bottom: 1px dotted #f2f2f2
+  > .cell-border-btn
+    position: absolute
+    top: 50%
+    left: 50%
+    padding: 0 4px
+    margin-top: -5px
+    margin-left: -10px
+    color: #eaeaea
+    font-size: 0.4em
+    text-shadow: 0px -1px 1px rgba(128, 128, 128, 0.3)
+    background-color: #fff
+    &:hover
+      color: #a5a5a5
+
+.cell > .cell-border-below
+  top: auto
+  bottom: -1.15em
+  display: none
+
+.cell:last-child > .cell-border-below
+  display: block
+
+.notebook-embedded .cell > .cell-border
+  display: none
+
+.cell-buttons
+  position: absolute
+  top: -5px
+  width: 100%
+  z-index: 10
+  display: none
+  text-align: center
+  .cell-buttons-container
+    display: inline-block
+  .action
+    color: #333
+    float: left
+    padding: 0.6em 1em
+    font-size: 11px
+    border: solid 1px #bfbfbf
+    background: linear-gradient(#fff, #e6e6e6)
+    box-shadow: 0 1px 1px #bfbfbf
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.55)
+    &:hover
+      color: #333333
+      background: #e7e7e7
+    + .action
+      margin-left: -1px
+  .action:first-child
+    border-radius: left 3px
+  .action:last-child
+    border-radius: right 3px
+  &.show-buttons
+    display: block
+
+.notebook-toolbar
+  position: relative
+  height: 3.2em
+  font-size: .8em
+  border: solid 1px #ccc
+  border-bottom: 0
+  background-color: #f4f4f4
+  .toolbar-inner
+    margin-right: 25px
+    .persistence-status
+      display: inline-block
+      height: 100%
+      padding: 1em
+      font-style: italic
+  .toolbar-buttons
+    float: right
+    text-align: right
+    padding: 0
+    button
+      float: left
+      margin-right: 1em
+    button:last-child
+      margin-right: 0
+    .btn-group
+      display: inline-block
+      padding: 0 1.3em
+      margin: 0.5em 0 0 0
+      border-left: solid 1px #E0E0E0
+    .btn-text
+      line-height: 26px
+  &.notebook-view-active .btn-edit
+    display: none
+  &.notebook-edit-active .btn-view
+    display: none
+  &.notebook-edit-active .toolbar-end
+    background: #f9f9f9
+  .toolbar-end
+    float: right
+    height: 100%
+    background: #e5e5e5
+    border-left: 1px solid #b2b2b2
+
+.notebook-raw > pre
+  border: 0
+  padding: 0
+  white-space: pre-wrap
+  background-color: transparent
+
+.notebook-edit
+  margin: 1em 0
+
+.powered-by-logo
+  float: right
+  width: 179px
+  height: 40px
+  margin: 0 1em 0.5em 0.5em
+  background-image: url("../images/powered-by-mulesoft.png")
+
+.notebook-share-about,
+.notebook-share-input
+  color: #8a8a8a
+  font-size: 0.75em
+
+.notebook-share-about
+  margin: 0 0 6px
+  line-height: 1
+
+
+.notebook-footer
+  border: 1px solid #ccc
+  font-size: 0.75em
+  border-top: 0
+  border-radius: 0 0 5px 5px
+  background: linear-gradient(top, #F9F9F9, #EDEDED)
+  letter-spacing: 0.05em
+  color: #999
+  text-shadow: 1px 1px rgba(255,255,255,0.8)
+  a,
+  button
+    font-weight: bold
+    color: #666
+    letter-spacing: 0.05em
+    text-shadow: 1px 1px rgba(255,255,255,0.8)
+    &:hover
+      text-decoration: underline
+    i
+      margin-left: 6px
+  .footer-inner
+    padding: 9px 10px 10px
+    border-top: solid 1px #FFF
+    overflow: hidden
+  .footer-end
+    border-top: solid 1px #FFF
+    float: right
+  .btn-footer
+    float: right
+    height: 100%
+    padding: 9px 10px 10px
+    border: 0
+    background: none
+    border-left: 1px solid #ccc
+    &:hover
+      background: rgba(0,0,0,0.05)

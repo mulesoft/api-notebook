@@ -1,0 +1,29 @@
+<!doctype html>
+<html style="height: 100%;">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>Manual Embedded Notebook Example</title>
+  </head>
+  <body style="margin: 0; height: 100%; background-color: #eee;">
+    <script src="scripts/embed.js"></script>
+    <script src="plugins/embed-hash-persistence.js"></script>
+    <script>
+      // Attach a parent frame plugin to the embed script.
+      embedHashPersistencePlugin(Notebook);
+
+      // Generate a regular notebook with all the injected plugins.
+      new Notebook(document.body, {
+        config: {
+          style: [
+            'body { padding: 1em; }',
+            '.application { max-width: 52em; margin: 0 auto; }'
+          ].join('\n'),
+          embedded: false
+        }
+      }, {
+        minHeight: '100%'
+      });
+    </script>
+  </body>
+</html>

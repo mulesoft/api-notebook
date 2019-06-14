@@ -1,0 +1,48 @@
+.inspector
+  padding-left: 1em
+
+.inspector > .preview
+  > .property
+    color: #7a3694
+    font-weight: bold
+  > .is-special
+    color: #b287c2
+
+.inspector > .preview
+  min-height: 1.4em
+  overflow: hidden
+  text-overflow: ellipsis
+
+.inspector > .children
+  display: none
+
+.inspector.open > .children
+  display: block
+
+.inspector.can-expand
+  cursor: pointer
+
+.inspector > .arrow
+  display: none
+
+.inspector.can-expand > .arrow
+  float: left
+  display: block
+  margin-top: 3px
+  margin-left: -10px
+  border: 5px solid transparent
+  border-left-width: 7px
+  border-left-color: #666
+  border-right-width: 0
+
+.inspector.can-expand.open > .arrow
+  margin-top: 5px
+  margin-left: -12px
+  border-width: 5px
+  border-color: transparent
+  border-top-width: 7px
+  border-top-color: #666
+  border-bottom-width: 0
+
+.inspector-trace
+  white-space: pre

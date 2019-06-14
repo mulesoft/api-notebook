@@ -1,0 +1,15 @@
+<div class="cell-content">
+    {{^if @config.embedded}}<button class="btn cell-controls-btn cell-menu-toggle">≡</button>{{/if}}
+</div>
+
+<div class="cell-border cell-border-above">
+  <span class="cell-border-line"></span>
+  <i class="cell-border-btn icon-plus-circled"></i>
+  {{{view @data.cellButtonsAbove}}}
+</div>
+
+<div class="cell-border cell-border-below">
+  <span class="cell-border-line"></span>
+  <i class="cell-border-btn icon-plus-circled"></i>
+  {{{view @data.cellButtonsBelow}}}
+</div>

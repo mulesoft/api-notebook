@@ -1,0 +1,130 @@
+.notebook-sidebar
+  display: flex
+  position: relative
+  width: 30%
+  max-width: 20em
+  min-height: 400px
+  transition: 0.3s width ease
+  &.sidebar-closed
+    width: 0
+    .sidebar-content
+      border-right: transparent
+    .sidebar-list
+      overflow-y: hidden
+
+.sidebar-content
+  flex: 1
+  overflow: hidden
+  border-right: 1px solid #ccc
+  background-color: #f9f9f9
+  border-bottom-left-radius: 5px
+  .notebook-embedded &
+    border-bottom-left-radius: 0
+
+.sidebar-user
+  height: 50px
+  padding: 0.75em
+  line-height: 1.2
+  font-weight: bold
+  font-size: 0.9em
+  border-bottom: 1px solid #ccc
+  .persistence-unauthenticate
+    display: none
+  &:hover
+    .persistence-unauthenticate
+      display: block
+
+.sidebar-user-icon
+  float: left
+  margin-right: 5px
+
+.sidebar-user-title
+  overflow: ellipsis
+  margin-left: 1.7em
+
+.sidebar-list
+  position: absolute
+  top: 50px
+  left: 0
+  right: 1px
+  bottom: 0
+  overflow-y: scroll
+  overflow-x: hidden
+  color: #555
+  .list-item
+    margin: 0
+    list-style: none
+  .item
+    position: relative
+    padding: 0.6em 0.8em
+    padding-left: 2.2em
+    border-top: solid 1px #FFF
+    border-bottom: 1px dotted #ccc
+    transition: 0.5s background-color ease
+    &:first-child
+      border-top: none
+    &:last-child
+      border-bottom: none
+    &:hover
+      background-color: rgba(0,0,0,0.02)
+    .icon-cancel-circled
+      float: right
+      display: none
+      margin-top: 5px
+      cursor: pointer
+    &:hover .icon-cancel-circled
+      display: block
+  .sidebar-updating
+    padding: 1em
+  .item-active
+    background-color: #F2F2F2
+    border-bottom: solid 2px #D8D8D8
+    &:hover
+      background-color: #EAEAEA
+  .item-hidden
+    display: none
+  [data-load]
+    cursor: pointer
+  .item-unsaved:before
+    content: ""
+    position: absolute
+    top: 50%
+    left: 0.95em
+    width: 8px
+    height: 8px
+    margin-top: -4px
+    border-radius: 50%
+    background-color: #555
+  .item-description
+    font-size: 0.75em
+  .item-timestamp
+    font-size: 0.8em
+    font-style: italic
+  .item-title
+    overflow: ellipsis
+    font-weight: bold
+
+.sidebar-toggle
+  cursor: pointer
+  width: 10px
+  height: 16px
+  position: absolute
+  top: 50%
+  right: -5px
+  margin-top: -8px
+  z-index: 1
+  border: 1px solid #bbb
+  border-radius: 3px
+  background-color: #eee
+  .icon
+    position: absolute
+    top: 3px
+    left: 2px
+    border: 4px solid transparent
+    margin-left: -4px
+    border-right-color: #bbb
+    .sidebar-closed &
+      border-left-color: #bbb
+      border-right-color: transparent
+      margin-left: auto
+      margin-right: -4px
