@@ -20,7 +20,7 @@ spec:
     app: api-notebook-service
     name: api-notebook-service
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: api-notebook-service
