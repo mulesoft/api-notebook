@@ -9,7 +9,6 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     git \
     phantomjs \
-    libfontconfig \
     bzip2 \
  && rm -rf /var/lib/apt/lists/*
 
