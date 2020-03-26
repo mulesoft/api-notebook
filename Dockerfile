@@ -1,6 +1,6 @@
 #################
 # BUILD CONTAINER
-FROM artifacts.msap.io/mulesoft/core-paas-base-image-node-8.12:v3.1.3 as BUILD
+FROM artifacts.msap.io/mulesoft/core-paas-base-image-node-8.12:v2.0.7 as BUILD
 
 USER root
 
@@ -27,7 +27,7 @@ RUN npm run build && \
 
 ###################
 # RUNTIME CONTAINER
-FROM artifacts.msap.io/mulesoft/core-paas-base-image-ubuntu:v3.0.197
+FROM artifacts.msap.io/mulesoft/core-paas-base-image-ubuntu:v2.2.149
 
 # Intall build dependencies
 RUN apt-get update \
