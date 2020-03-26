@@ -2,20 +2,21 @@
 # BUILD CONTAINER
 FROM artifacts.msap.io/mulesoft/core-paas-base-image-node-8.12:v2.0.7 as BUILD
 
-USER app
+USER root
 
 # Add dependencies and setup working directory
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     git \
     phantomjs \
+    libfontconfig \
     bzip2 \
  && rm -rf /var/lib/apt/lists/*
 
 # Install and cache node_modules/
 COPY --chown=app:app package*.json /code/
 WORKDIR /code
-# USER app
+USER app
 RUN npm set progress=false && \
     npm install -s --no-progress
 
