@@ -69,4 +69,4 @@ The project is split with multiple HTML files acting as entry points to fulfil t
 
 Project configuration is through [node-config](https://github.com/lorenwest/node-config). To add or override config options, just add a file for your environment (E.g. `development.json`). All plugin config options should be stored under the `plugins` key, while other options are depicted in the `example.json` and `default.json` files.
 
-To use the GitHub plugin functionality, [register a new application on Github](https://github.com/settings/applications/new) and set your keys in under `plugins.github`. Make sure that your new application has the application.url as Authorization callback URL.  
+To use the GitHub plugin functionality, [register a new application on Github](https://github.com/settings/applications/new) and set your keys in under `plugins.github`. Make sure that your new application has the application.url as Authorization callback URL. 
