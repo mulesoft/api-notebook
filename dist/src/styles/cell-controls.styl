@@ -1,0 +1,91 @@
+.cell-controls
+  top: 0
+  right: 37px
+  z-index: 100
+  position: absolute
+  margin-top: 14px
+  margin-left: 10px
+  padding: 3px 0px
+  color: #fff
+  font-size: 11px
+  border: 1px solid #eee
+  background: #333
+  border-radius: 5px
+  transform: translateY(-50%)
+  transition: 0.3s ease opacity
+  &:after
+    content: ""
+    position: absolute
+    top: 50%
+    right: -20px
+    margin-top: -10px
+    border: 10px solid transparent
+    border-left-color: #333
+  &:before
+    content: ""
+    position: absolute
+    top: 50%
+    right: -22px
+    margin-top: -11px
+    border: 11px solid transparent
+    border-left-color: #eee
+  &.pull-right
+    left: 100%
+    right: auto
+    &:after
+      left: -20px
+      right: auto
+      border-left-color: transparent
+      border-right-color: #333
+    &:before
+      left: -22px
+      right: auto
+      border-left-color: transparent
+      border-right-color: #eee
+
+.cell-controls button
+  display: block
+  width: 12.5em
+  height: 2.5em
+  margin: 2px 5px
+  border: 1px solid transparent
+  border-radius: 3px
+  background: transparent
+  color: #fff
+  line-height: 22px
+  padding: 0 7px
+  text-align: left
+  &:hover
+    border-color: $color-cell-controls-button-outline
+
+.cell-controls button i
+  top: -1px
+  position: relative
+  margin-right: 3px
+
+.cell-controls span
+  float: right
+  font-size: .75em
+  color: $color-cell-controls-keycode
+
+.cell-controls-btn
+  position: absolute
+  top: 0
+  right: 0
+  z-index: 10
+  width: 25px
+  height: @width
+  padding: 2px 0
+  color: #aaa
+  text-align: center
+  cursor: pointer
+  border: 1px solid $color-cell-border
+  background: #fff
+  [class^="icon-"]
+    position: absolute
+    top: 6px
+    left: 5px
+    font-size: 0.5em
+
+.notebook-embedded .cell-menu-toggle
+  display: none

@@ -1,0 +1,124 @@
+$button_border_color = #999999
+$button_color = #7F7F7F
+$button_hover_color =#3F3F3F
+
+.controls-table
+  width: 100%
+  margin: 0
+  table-layout: fixed
+  tr
+    border-top: 1px solid #eee
+    &:first-child
+      border-top: 0
+  th,
+  td
+    padding: 8px
+    text-align: left
+
+.controls-col-mini
+  width: 30%
+
+.controls-col-large
+  width: 70%
+
+.btn-base
+  position: relative
+  width: 28px
+  height: @width
+  padding: 0
+  color: $button_color
+  background: transparent
+  line-height: @height - 2px
+  background: transparent
+  &[class*="icon-"]:before
+    margin: 0 0.4em
+
+.btn-round
+  @extends .btn-base
+  border: 2px solid $button_border_color
+  border-radius: 50em
+  text-shadow: 1px 1px rgba(255,255,255,0.8)
+  box-shadow: 1px 1px rgba(255,255,255,0.8)
+  &:hover
+    border-color: $button_hover_color
+    color: $button_hover_color
+  &.btn-disabled
+    text-shadow: 1px 1px rgba(255,255,255,0.8)
+    border-color: #ccc
+    color: #ccc
+
+.btn-square
+  @extends .btn-base
+  border: 2px solid transparent
+
+.edit-source
+  width: 44px
+  height: 100%
+  border: 0
+  background: transparent
+
+.edit-source .icon:after
+  content: '</>'
+  color: $button_color
+  font-size: 18px
+
+.notebook-exec i:before
+  font-size: 0.9em
+  margin: 0 0 0 2px
+
+.notebook-help .icon:before
+  content: '?'
+  display: block
+  position: absolute
+  top: 1px
+  left: 0
+  width: 24px
+  height: @width
+  text-align: center
+  font-style: normal
+  text-indent: 0
+  line-height: @height
+
+.btn-text
+  padding: 6px 12px 0 0
+  border: 0
+  background: transparent
+  color: $button_color
+  font-size: 12px
+  text-decoration: underline
+
+.btn-list
+  padding-top: 1em
+  > .btn
+    margin-right: 0.75em
+
+.btn-pill
+  padding: 0.4em 1em
+  border-radius: 8px
+  &[disabled]
+    opacity: 0.5
+    pointer-events: none
+
+.btn-primary
+  @extends .btn-pill
+  color: #FFF
+  background-color: #428bca
+  border: solid 1px #357ebd
+  &:hover
+    background-color: #3276b1
+    border-color: #285e8e
+
+.btn-secondary
+  @extends .btn-pill
+  color: #343434
+  background-color: #F3F3F3
+  border: solid 1px #B5B5B5
+  &:hover
+    background-color: #E4E4E4
+    border-color: #B1B1B1
+
+
+.btn-small
+  padding: 0.6em
+  font-size: 0.8em
+  border-radius: 0.4em
