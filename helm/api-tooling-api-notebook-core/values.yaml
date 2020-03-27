@@ -1,5 +1,5 @@
 image:
-  registry: devdocker.mulesoft.com:18078
+  registry: artifacts.msap.io
   org: mulesoft
   name: api-tooling-api-notebook-core
   tag: latest

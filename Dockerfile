@@ -1,6 +1,6 @@
 #################
 # BUILD CONTAINER
-FROM devdocker.mulesoft.com:18078/mulesoft/core-paas-base-image-node-8.12:v2.0.7 as BUILD
+FROM artifacts.msap.io/mulesoft/core-paas-base-image-node-8.12:v3.3.8 as BUILD
 
 USER root
 
@@ -9,6 +9,7 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     git \
     phantomjs \
+    libfontconfig \
     bzip2 \
  && rm -rf /var/lib/apt/lists/*
 
@@ -27,7 +28,7 @@ RUN npm run build && \
 
 ###################
 # RUNTIME CONTAINER
-FROM devdocker.mulesoft.com:18078/mulesoft/core-paas-base-image-ubuntu:v2.2.149
+FROM artifacts.msap.io/mulesoft/core-paas-base-image-ubuntu:v4.0.1
 
 # Intall build dependencies
 RUN apt-get update \
