@@ -30,15 +30,13 @@ RUN npm run build && \
 # RUNTIME CONTAINER
 FROM artifacts.msap.io/mulesoft/core-paas-base-image-ubuntu:v4.0.1
 
+USER root
+
 # Intall build dependencies
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       python \
  && rm -rf /var/lib/apt/lists/*
-
-# Add app user
-RUN groupadd -g 2020 app
-RUN useradd -u 2020 -g 2020 -r -m -d /usr/src/app app
 
 # Copy built artifacts from build container
 COPY --from=BUILD /code/build /usr/src/app
