@@ -38,10 +38,6 @@ RUN apt-get update \
       python \
  && rm -rf /var/lib/apt/lists/*
 
-# Add app user
-RUN groupadd -g 2020 app
-RUN useradd -u 2020 -g 2020 -r -m -d /usr/src/app app
-
 # Copy built artifacts from build container
 COPY --from=BUILD /code/build /usr/src/app
 
