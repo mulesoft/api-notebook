@@ -30,6 +30,8 @@ RUN npm run build && \
 # RUNTIME CONTAINER
 FROM artifacts.msap.io/mulesoft/core-paas-base-image-ubuntu:v4.0.1
 
+USER root
+
 # Intall build dependencies
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
