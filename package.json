@@ -60,7 +60,8 @@
     "sinon": "1.7.3",
     "hbsfy": "^2.8.1",
     "sinon-chai": "2.5.0",
-    "uglifyify": "^5.0.2"
+    "uglifyify": "^5.0.2",
+    "istanbul": "^0.4.5"
   },
   "scripts": {
     "build": "grunt build && ./generateLib.sh",
