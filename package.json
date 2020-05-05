@@ -22,7 +22,7 @@
     "foreach": "2.0.4",
     "highlight.js": "8.1.0",
     "load-script": "0.0.2",
-    "marked": "0.3.0",
+    "marked": "0.3.18",
     "mime-component": "0.0.1",
     "normalize-css": "2.3.0",
     "raml-1-parser": "1.1.66",
