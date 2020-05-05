@@ -10,3 +10,4 @@ config/runtime.json
 .idea
 lib
 coverage
+dist
