@@ -1,6 +1,6 @@
 {
   "name": "@mulesoft/api-notebook",
-  "version": "1.4.4-SNAPSHOT",
+  "version": "1.4.3",
   "description": "Executable JavaScript environment for running API examples.",
   "browserify": {
     "transform": [
@@ -25,7 +25,7 @@
     "marked": "0.3.18",
     "mime-component": "0.0.1",
     "normalize-css": "2.3.0",
-    "raml-1-parser": "1.1.66",
+    "raml-1-parser": "1.1.20",
     "store": "1.3.14",
     "underscore": "1.6.0"
   },
@@ -39,7 +39,7 @@
     "envify-config": "0.0.1",
     "git-rev-cli": "0.1.0",
     "grunt": "0.4.2",
-    "grunt-browserify": "5.3.0",
+    "grunt-browserify": "4.0.1",
     "grunt-cli": "0.1.11",
     "grunt-contrib-clean": "0.5.0",
     "grunt-contrib-connect": "0.6.0",
@@ -58,7 +58,6 @@
     "phantomjs-prebuilt": "2.1.14",
     "request": "2.34.0",
     "sinon": "1.7.3",
-    "hbsfy": "2.8.1",
     "sinon-chai": "2.5.0",
     "uglifyify": "5.0.2",
     "istanbul": "0.4.5"
