@@ -6,3 +6,4 @@ valkyr.yaml
 Makefile
 Jenkinsfile
 .travis.yml
+node_modules
