@@ -1,6 +1,5 @@
 Dockerfile*
 helm
-build
 server.py
 valkyr.yaml
 Makefile
