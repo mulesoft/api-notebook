@@ -80,5 +80,8 @@
   },
   "author": "MuleSoft, Inc.",
   "license": "BSD",
-  "readmeFilename": "README.md"
+  "readmeFilename": "README.md",
+  "files": [
+    "lib"
+  ]
 }
