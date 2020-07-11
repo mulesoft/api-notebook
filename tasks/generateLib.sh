@@ -32,4 +32,4 @@ mv build/plugins/_raml-client-generator.js build/plugins/raml-client-generator.j
 
 rm -rf lib/
 mkdir lib
-cp -R build/ lib/
+cp -R build/* lib/
