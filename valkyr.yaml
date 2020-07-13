@@ -2,10 +2,10 @@ product: api-tooling
 component: api-notebook
 asset: core
 
-strategy: node
+strategy: node-lib
 strategyVersion: 8
 runTestImage: kilonova-node8-builder:v0.3.12
-version: 1.2
+version: 1.5
 nexusiq:
   enabled: true
 requires:

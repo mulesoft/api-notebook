@@ -63,7 +63,7 @@
     "istanbul": "0.4.5"
   },
   "scripts": {
-    "build": "grunt build && ./generateLib.sh",
+    "build": "grunt build && tasks/generateLib.sh",
     "test": "npm run unitTest && npm run generate:lcov",
     "generate:lcov": "istanbul report --include coverage/coverage.json --dir coverage lcov",
     "grunt": "grunt",
@@ -80,5 +80,8 @@
   },
   "author": "MuleSoft, Inc.",
   "license": "BSD",
-  "readmeFilename": "README.md"
+  "readmeFilename": "README.md",
+  "files": [
+    "lib"
+  ]
 }

@@ -3,17 +3,11 @@
 # -v Print shell input lines as they are read
 set -ev
 
-# Clean dist and package folder
-rm -rf dist && mkdir dist
-
 # To prevent changes during build
 git checkout package-lock.json
 
-# Copy package files
-cp -r package*.json dist/
+# Install dependencies
+npm ci
 
-# Install production dependencies
-npm ci --production --prefix dist
-
-# Copy over rest of the code the will be part of the docker image
-cp -r src config dist/
+# Build Notebook
+npm run build
