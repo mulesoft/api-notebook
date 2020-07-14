@@ -4,6 +4,7 @@ asset: core
 
 strategy: node
 strategyVersion: 12
+runTestImage: kilonova-node8-builder:v0.3.12
 version: 1.5
 nexusiq:
   enabled: true
