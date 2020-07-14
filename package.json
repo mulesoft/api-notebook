@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "brfs": "0.2.1",
-    "browserify": "13.0.0",
+    "browserify": "16.5.1",
     "browserify-istanbul": "3.0.1",
     "chai": "1.9.0",
     "dombars": "0.5.2",
@@ -55,11 +55,11 @@
     "mocha": "1.17.1",
     "mocha-phantomjs-core": "2.1.1",
     "mocha-phantomjs-istanbul": "0.0.2",
-    "phantomjs-prebuilt": "2.1.14",
+    "phantomjs-prebuilt": "2.1.16",
     "request": "2.34.0",
     "sinon": "1.7.3",
     "sinon-chai": "2.5.0",
-    "uglifyify": "5.0.2",
+    "uglify-js": "3.10.0",
     "istanbul": "0.4.5"
   },
   "scripts": {
@@ -80,8 +80,5 @@
   },
   "author": "MuleSoft, Inc.",
   "license": "BSD",
-  "readmeFilename": "README.md",
-  "files": [
-    "lib"
-  ]
+  "readmeFilename": "README.md"
 }
