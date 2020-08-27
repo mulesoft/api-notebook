@@ -1,6 +1,7 @@
 var _            = require('underscore');
 var marked       = require('marked');
 var domify       = require('domify');
+var sanitizeHtml = require('sanitize-html');
 var highlight    = require('highlight.js');
 var EditorCell   = require('./editor-cell');
 var config       = require('../state/config');
@@ -164,7 +165,13 @@ TextCell.prototype.renderEditor = function () {
     smartypants: false,
     langPrefix: 'lang-'
   }, _.bind(function (err, html) {
-    this.markdownElement.innerHTML = html;
+    this.markdownElement.innerHTML = sanitizeHtml(html, {
+      allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'img' ]),
+      allowedAttributes: {
+        a: [ 'href', 'name', 'target' ],
+        img: [ 'src', 'alt' ]
+      },
+    });
   }, this));
 
   messages.trigger('resize');
