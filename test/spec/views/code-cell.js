@@ -250,6 +250,17 @@ describe('Code Cell', function () {
         });
       });
 
+      it('should render an error when accesing to localStorage', function (done) {
+        var code   = 'localStorage.getItem(\'ajs_user_traits\')';
+
+        view.setValue(code);
+        view.execute(function () {
+          expect(view.model.get('isError')).to.be.true;
+          expect(view.model.get('result')).to.equal('Access to localStorage is not allowed');
+          return done();
+        });
+      });
+
       describe('Completion', function () {
         it('should complete from the sandbox', function (done) {
           view.notebook.sandbox.execute('var testing = "test";', function () {
