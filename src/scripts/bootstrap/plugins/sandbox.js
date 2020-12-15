@@ -30,8 +30,11 @@ middleware.register('sandbox:context', function (context, next) {
     });
   };
 
-  context.async   = function () {};
-  context.timeout = function () {};
+  context.async        = function () {};
+  context.timeout      = function () {};
+  context.window       = {};
+  context.document     = {};
+  context.localStorage = {};
 
   return next();
 });
