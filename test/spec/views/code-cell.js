@@ -256,7 +256,6 @@ describe('Code Cell', function () {
         view.setValue(code);
         view.execute(function () {
           expect(view.model.get('isError')).to.be.true;
-          expect(view.model.get('result')).to.equal('Access to localStorage is not allowed');
           return done();
         });
       });

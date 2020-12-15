@@ -122,19 +122,8 @@ CodeCell.prototype.update = function () {
  * @param {Function} done
  */
 CodeCell.prototype.execute = function (done) {
-  var value = this.editor.getValue();
-
-  if (value && value.match(/(?:^|\W+)localStorage(?!\w+)/)) {
-    this.model.set({
-      result: 'Access to localStorage is not allowed',
-      isError: true
-    });
-    this.change();
-    return done && done(this);
-  }
-
   // Set the value as our own model for executing.
-  this.model.set('value', value);
+  this.model.set('value', this.editor.getValue());
 
   // First run previous cells if they need to be run.
   this.notebook.executePrevious(this, _.bind(function () {
