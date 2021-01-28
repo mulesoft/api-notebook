@@ -170,12 +170,14 @@ var promptTokens = function (scheme, options, done) {
         // only one possible scope, just select it by default anyway.
         var hasScope = _.contains(options.scopes, scope) || scopes.length === 1;
 
+        var scopeValue = _.escape(scope);
+
         return [
           '<div class="checkbox">',
           '<label>',
-          '<input type="checkbox" id="scopes" value="' + scope + '" ' +
+          '<input type="checkbox" id="scopes" value="' + scopeValue + '" ' +
             (hasScope ? 'checked' : '') + '>',
-          scope,
+          scopeValue,
           '</label>',
           '</div>'
         ].join('');
