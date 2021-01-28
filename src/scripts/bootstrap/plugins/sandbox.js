@@ -33,6 +33,8 @@ middleware.register('sandbox:context', function (context, next) {
   context.async        = function () {};
   context.timeout      = function () {};
   context.window       = {};
+  context.top          = {};
+  context.parent       = {};
   context.document     = {};
   context.localStorage = {};
 
