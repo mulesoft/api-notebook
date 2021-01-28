@@ -34,7 +34,7 @@ A query string can be set once the API is at a point that a valid request can be
 
 ### Requesting any URL
 
-A request can be made to any URL under the RAML documents `baseUri` by executing the API as a function. It accepts two arguments, the path and a context object. The path will be parsed and injected with the context properties according to the [URI Template Spec](http://tools.ietf.org/html/rfc6570)
+A request can be made to any URL under the RAML documents `baseUri` by executing the API as a function. It accepts two arguments, the path and a context object. The path will be parsed and injected with the context properties according to the [URI Template Spec](https://tools.ietf.org/html/rfc6570)
 
 ### Predefined Resources
 

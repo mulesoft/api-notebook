@@ -66,7 +66,7 @@ var selectAPIDefinition = function (done) {
         'Insert an API client from a RAML specification. An API client is ' +
         'a JavaScript representation of an API that you can use to explore ' +
         'available endpoints and their parameters. ' +
-        '<a href="http://raml.org/" target="_blank">' +
+        '<a href="https://raml.org/" target="_blank">' +
         'Learn more about RAML</a>.' +
         '</div>' +
         '<div class="form-group">' +
