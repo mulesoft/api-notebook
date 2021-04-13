@@ -32,6 +32,7 @@ middleware.register('sandbox:context', function (context, next) {
 
   context.async        = function () {};
   context.timeout      = function () {};
+  context.eval         = function () {};
   context.window       = {};
   context.top          = {};
   context.parent       = {};
