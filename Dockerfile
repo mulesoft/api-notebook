@@ -1,6 +1,6 @@
 #################
 # BUILD CONTAINER
-FROM artifacts.msap.io/mulesoft/core-paas-base-image-node-12:v3.24.0 as BUILD
+FROM artifacts.msap.io/mulesoft/core-paas-base-image-node-12:v3.31.0 as BUILD
 
 USER root
 
