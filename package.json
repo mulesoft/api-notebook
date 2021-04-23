@@ -11,7 +11,7 @@
   "main": "lib/scripts/bundle.js",
   "dependencies": {
     "async": "0.2.9",
-    "backbone": "1.1.0",
+    "backbone": "1.4.0",
     "backbone.native": "1.0.0",
     "change-case": "1.0.6",
     "codemirror": "5.4.0",
