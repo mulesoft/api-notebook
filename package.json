@@ -10,7 +10,7 @@
   },
   "main": "lib/scripts/bundle.js",
   "dependencies": {
-    "async": "0.2.9",
+    "async": "0.9.2",
     "backbone": "1.1.0",
     "backbone.native": "1.0.0",
     "change-case": "1.0.6",
