@@ -41,7 +41,7 @@
     "git-rev-cli": "0.1.0",
     "grunt": "0.4.2",
     "grunt-browserify": "4.0.1",
-    "grunt-cli": "0.1.11",
+    "grunt-cli": "0.1.13",
     "grunt-contrib-clean": "0.5.0",
     "grunt-contrib-connect": "0.6.0",
     "grunt-contrib-copy": "0.5.0",
