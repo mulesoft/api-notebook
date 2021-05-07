@@ -21,7 +21,7 @@
     "es6-collections": "0.5.6",
     "foreach": "2.0.4",
     "highlight.js": "8.1.0",
-    "load-script": "0.0.2",
+    "load-script": "0.0.5",
     "marked": "0.3.18",
     "mime-component": "0.0.1",
     "normalize-css": "2.3.0",
