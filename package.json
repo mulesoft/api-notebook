@@ -59,7 +59,7 @@
     "phantomjs-prebuilt": "2.1.16",
     "request": "2.34.0",
     "sinon": "1.7.3",
-    "sinon-chai": "2.5.0",
+    "sinon-chai": "2.14.0",
     "uglify-es": "3.3.9",
     "istanbul": "0.4.5"
   },
