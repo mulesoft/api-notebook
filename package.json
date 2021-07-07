@@ -31,7 +31,7 @@
     "underscore": "1.6.0"
   },
   "devDependencies": {
-    "brfs": "0.2.1",
+    "brfs": "0.2.2",
     "browserify": "16.5.1",
     "browserify-istanbul": "3.0.1",
     "chai": "1.9.0",
