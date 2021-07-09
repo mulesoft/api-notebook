@@ -17,7 +17,7 @@
     "codemirror": "5.4.0",
     "config": "0.4.33",
     "css-component": "0.0.2",
-    "domify": "1.2.1",
+    "domify": "1.4.1",
     "es6-collections": "0.5.6",
     "foreach": "2.0.4",
     "highlight.js": "8.1.0",
